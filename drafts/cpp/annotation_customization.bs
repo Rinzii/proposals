@@ -670,12 +670,13 @@ This paper defines a new program point for each annotated construct and the tabl
 
 What the paragraph does give is the standard the choice is held to. A query made from outside a class reaches every declaration in its member-specification so invoking a class's annotations immediately after its class-specifier makes them see exactly what any outside query sees and no view of a class exists that only an active annotation can reach. Code inside the class body reaches an earlier member's declaration from its own evaluation context and so can see an annotation before its operator has run, which is the cost of choosing this point over an earlier one ([[#timing-members-alt]]).
 
-<table>
+<table class="data">
+<caption>The point of invocation for each annotated construct, and what is complete when the annotation runs.</caption>
 <thead>
 <tr>
     <th>Annotation written on</th>
     <th>Invoked</th>
-    <th>Complete there</th>
+    <th>Complete at that point</th>
 </tr>
 </thead>
 <tbody>
