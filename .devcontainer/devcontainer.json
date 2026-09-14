@@ -1,0 +1,14 @@
+{
+  "name": "Bikeshed Spec Workspace",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "postCreateCommand": "./scripts/setup.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "streetsidesoftware.code-spell-checker"
+      ]
+    }
+  }
+}

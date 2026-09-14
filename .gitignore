@@ -1,0 +1,10 @@
+scratch/
+.venv/
+__pycache__/
+*.pyc
+cpp/*.html
+out/
+.bikeshed/
+.DS_Store
+.AI/
+compiler_dataset.json

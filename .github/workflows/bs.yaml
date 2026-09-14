@@ -1,0 +1,61 @@
+name: bs
+on:
+  workflow_dispatch: {}
+  pull_request: {}
+  push:
+    branches: [main]
+jobs:
+  main:
+    name: Build, Validate and Deploy
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: prerequisites
+        run: |
+          sudo apt-get install pipx
+          pipx install bikeshed
+      - name: render
+        run: |
+          changes=$(git diff --name-only HEAD HEAD~1 | grep -F 'cpp/' | cat)
+          for path in cpp drafts/cpp;
+          do
+            for f in "$path"/*.bs;
+            do
+              [[ -e $f ]] || continue
+              if [[ $changes == *"$f"* ]];
+              then
+                bikeshed spec "$f"
+              fi
+            done
+          done
+      - name: upload renders
+        run: |
+          message=$(git show -s --format=%s)
+          mkdir /tmp/renders
+          for path in cpp drafts/cpp;
+          do
+            mkdir -p "/tmp/renders/$path"
+            if compgen -G "$path/*.html" > /dev/null; then
+              mv -v "$path"/*.html "/tmp/renders/$path"
+            fi
+          done
+          git checkout gh-pages
+          for path in cpp drafts/cpp;
+          do
+            if compgen -G "/tmp/renders/$path/*" > /dev/null; then
+              mkdir -p "$path"
+              mv -v "/tmp/renders/$path"/* "$path"
+            fi
+          done
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          if [[ -n "$(git status -s)" ]];
+          then
+            git add .
+            git commit -m "[Bikeshed]: $message"
+            git push
+          fi
