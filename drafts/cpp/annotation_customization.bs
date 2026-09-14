@@ -1,19 +1,19 @@
 <pre class=metadata>
-Title: Decorating Annotations: A Declaration-Aware Hook for Typed Metadata
+Title: Active Annotations: Declaration-Aware Invocation for Typed Metadata
 Shortname: Pnnnn
 Level: 0
 Status: D
 Group: WG21
 Audience: SG7, EWG
 Editor: Ian Pike, ianpike98cs@gmail.com
-Abstract: We propose that if the type of an annotation's underlying constant provides `consteval void operator()(std::meta::annotation_context) const`, the implementation invokes that operator after annotation formation. The hook receives the declaration context and may perform compile-time work over it. If it completes normally the annotation is retained, and if it fails the program is ill-formed. No new syntax, ABI surface or linker protocol is introduced.
+Abstract: We propose that if the type of an annotation's underlying constant provides `consteval void operator()(std::meta::annotation_context) const`, the implementation invokes that operator after annotation formation. We call such an annotation active. The operator receives the declaration context and may perform compile-time work over it, but cannot alter the annotation or the declaration. Failure makes the program ill-formed. No new syntax, ABI surface or linker protocol is introduced.
 Boilerplate: omit conformance, omit feedback-header
 Markup Shorthands: markdown yes
 </pre>
 
 # Introduction # {#intro}
 
-The working draft provides typed annotations ([[P3394R4]]), reflection queries that recover those annotations ([[P2996R13]]) and a compile-time metadata model based on `std::meta::info`.
+The working draft provides typed annotations ([[P3394R4]]), reflection queries that recover those annotations ([[P2996R13]]), and a compile-time metadata model based on `std::meta::info`.
 
 What it does not provide is a way for an annotation to observe the declaration to which it appertains and act on that information during translation.
 
@@ -23,9 +23,11 @@ We propose the following rule: if the type of an annotation's underlying constan
 consteval void operator()(std::meta::annotation_context) const;
 </xmp>
 
-the implementation invokes that operator once per annotation occurrence, after formation, at a defined semantic point. The hook may perform any work available during constant evaluation. Normal completion retains the annotation. Failure makes the program ill-formed.
+the implementation invokes that operator once per annotation occurrence, after formation, at a defined semantic point. The operator may perform any work available during constant evaluation but cannot alter the annotation or the declaration it is attached to. Failure makes the program ill-formed.
 
-The most common application is attachment-site validation, but the mechanism is intentionally general. No new grammar, ABI surface or linker protocol is required.
+An annotation whose type provides that operator is an active annotation. One whose type does not is passive and behaves exactly as it does today ([[#semantics-passive]]).
+
+The most common application is attachment-site validation, but the mechanism is intentionally general.
 
 # Motivation # {#motivation}
 
@@ -36,17 +38,19 @@ Annotations attach typed metadata to declarations in a form that reflection can 
 * A command annotation must require a function with a specific signature.
 * A binding annotation must require an exported declaration or a complete type.
 
-Standard C++ has no way to perform any of these checks where the annotation is written. They move instead into ad hoc library code, vendor extensions, macros or external tooling. Each of those placements separates the check from the declaration it constrains. An author then learns about a violation somewhere other than where they made it.
+Standard C++ has no way to perform any of these checks where the annotation is written. They move instead into ad hoc library code, vendor extensions, macros, or external tooling. Each of those placements separates the check from the declaration it constrains. An author then learns about a violation somewhere other than where they made it.
 
 ## Why annotations ## {#motivation-annotations-first}
 
-Annotations ([[P3394R4]]) already supply typed values, declaration-local syntax and standard reflection visibility ([[P2996R13]]). They require nothing at run time.
+Annotations ([[P3394R4]]) already supply typed values, declaration-local syntax, and standard reflection visibility ([[P2996R13]]). They require nothing at run time.
 
-A broader declaration-metadata proposal would need new syntax, ignorability rules ([[P2552R3]]), lookup machinery, runtime exposure, linker interaction and new query APIs. The facility proposed here needs none of that, because the representation it acts on already exists.
+A broader declaration-metadata proposal would need new syntax, ignorability rules ([[P2552R3]]), lookup machinery, runtime exposure, linker interaction, and new query APIs. The facility proposed here needs none of that, because the representation it acts on already exists.
 
 ## Existing practice ## {#motivation-practice}
 
-Vendor attributes, static-analysis annotation languages, library macros, code generators and template-heavy reflection techniques all address parts of this problem. Each trades away portability, diagnostic quality, locality, cross-library consistency or immediate feedback at the declaration site. A standard hook keeps the check portable and at the declaration site without committing the language to runtime registries or source injection.
+Clang's thread safety analysis takes annotations such as `GUARDED_BY(mu)` on a data member and diagnoses violations under `-Wthread-safety`. Its own documentation says to enable those attributes only with Clang and that they can be safely erased when compiling with other compilers. Microsoft's SAL covers similar ground: `_In_` and `_Out_`, defined in `<sal.h>`, are read by Visual Studio code analysis for C++. Qt's moc reads a header, finds the class declarations carrying `Q_OBJECT` and writes a separate C++ source file that must then be compiled and linked with the class. Boost.Describe stays in the source. `BOOST_DESCRIBE_STRUCT` lists the base classes and public members by hand, beside the type.
+
+Each of these is either tied to one vendor or puts the work in a separate declaration or build step. Making the annotation itself active keeps the check portable and at the declaration site without committing the language to runtime registries or source injection.
 
 # Design Rationale # {#shape}
 
@@ -56,107 +60,65 @@ Annotations are already constant expressions whose values are preserved by refle
 
 Free-standing functions would separate the payload from its behavior. Trait-based designs would add boilerplate without improving expressiveness. Raw-reflection designs would force libraries to reconstruct typed meaning from `std::meta::info`.
 
-## `operator()` as the hook ## {#shape-operator}
+## Why `operator()` ## {#shape-operator}
 
 <xmp class=language-cpp>
 consteval void operator()(std::meta::annotation_context) const;
 </xmp>
 
-Several things recommend `operator()` over a differently-named member, ADL, traits or a registration mechanism:
+The case for `operator()` over a differently named member, ADL, traits, or a registration mechanism:
 
-* It is honest about generality. The mechanism is a compile-time hook, and a purpose-specific name such as `on_attach` would be simpler to explain but would narrow the perceived scope without restricting the capability.
-* It is the standard callable interface. An annotation that acts on its declaration context is a callable that takes a context argument.
-* One hook suffices. Separately-named hooks for separate purposes add nothing that a single mechanism, together with the reflection facilities as they grow, does not cover.
+* The mechanism is a general compile-time invocation and a purpose-specific name such as `on_attach` would be simpler to explain but would narrow the perceived scope without restricting the capability.
+* An annotation that acts on its declaration context is a callable that takes a context argument. `operator()` is the standard spelling for one.
+* One operator suffices. Separately named members for separate purposes would cover no more than a single mechanism does, now or as the reflection facilities grow.
 * It avoids reserving a new magic member name.
 
-ADL widens the discovery surface and makes behavior depend on associated namespaces. Traits move behavior away from the type that owns the metadata. A registration mechanism moves it further still, into a compiler-facing plugin rather than the annotation type ([[#prior-art-java]]). None is appropriate here: the hook is part of the annotation type's own semantics, not an external adaptation point.
+ADL widens the discovery surface and makes behavior depend on associated namespaces. Traits move behavior away from the type that owns the metadata. A registration mechanism moves it further still, out of the annotation type and into a compiler-facing plugin ([[#prior-art-java]]). None is appropriate here: the operator is part of the annotation type's own semantics, not an external adaptation point.
 
-Detection is by overload resolution ([[#semantics-detection]]), so an `operator()` a type already has opts in only if it can be called with an `annotation_context`, is `consteval` and returns `void`. That rules out ordinary function objects, whose call operator takes something else. It does not rule out a generic `operator()(auto)`, which will match. That case is deliberate: pinning detection to one exact parameter type would also reject the `const annotation_context&` spelling, and a type whose call operator accepts anything has already said it accepts anything.
+Detection is by overload resolution ([[#semantics-detection]]) so an `operator()` a type already has opts in only if it can be called with an `annotation_context`, is `consteval`, and returns `void`. That rules out ordinary function objects, whose call operator takes something else. It does not rule out a generic `operator()(auto)`, which will match. That case is deliberate: pinning detection to one exact parameter type would also reject the `const annotation_context&` spelling and a type whose call operator accepts anything has already said it accepts anything.
 
 ## Signature: `consteval void operator()(...) const` ## {#shape-signature}
 
 ### `consteval` ### {#shape-signature-consteval}
 
-The hook runs during translation. `constexpr` would leave a runtime-callable operator on the annotation type and would remove the discriminator hook detection relies on ([[#semantics-detection]]). `consteval` makes compile-time evaluation mandatory, prevents the operator from appearing to be a reusable runtime API and aligns with the hard-error annotation model.
+The operator runs during translation. `constexpr` would leave a runtime-callable operator on the annotation type and would remove the discriminator detection relies on ([[#semantics-detection]]). `consteval` makes compile-time evaluation mandatory, prevents the operator from appearing to be a reusable runtime API, and aligns with the hard-error annotation model.
 
 ### `void` ### {#shape-signature-void}
 
-The hook either completes or fails. `void` expresses that directly. A `bool` return would need a separate channel to carry the reason. A string-returning form would duplicate the diagnostics mechanism that already exists. A status object would add weight for no gain. If a library needs a reusable predicate, it can provide one as a separate helper or concept.
+The operator either completes or fails. `void` expresses that directly. A `bool` return would need a separate channel to carry the reason. A string-returning form would duplicate the diagnostics mechanism that already exists. A status object would add weight for no gain. If a library needs a reusable predicate, it can provide one as a separate helper or concept.
 
 ### `const` ### {#shape-signature-const}
 
-`const` is a consequence of the invocation model rather than a condition the implementation tests. The hook is called on a `const T` ([[#semantics]]), and detection never mentions `const` at all ([[#semantics-detection]]). Writing it is how an author spells that call for an implicit object parameter. An explicit object parameter says the same thing in its own type, and a by-value one is accepted, since copy-initializing it from a `const T` needs nothing more than the copy constructor.
+`const` is a consequence of the invocation model. The operator is called on a `const T` ([[#semantics]]) and detection never mentions `const` at all ([[#semantics-detection]]). Writing it is how an author spells that call for an implicit object parameter. An explicit object parameter says the same thing in its own type and a by-value one is accepted, since copy-initializing it from a `const T` needs nothing more than the copy constructor.
 
-It is also the honest signature. `extract<T>` returns by value, so whatever a hook does to its object parameter it does to a copy or through a reference to `const`, and nothing it writes reaches the annotation value. Post-attachment state initialization is the use that wants the model changed, and a paper proposing it has to answer where the mutated value goes, which is a design question and not a missing qualifier.
+`extract<T>` returns by value so whatever the operator does to its object parameter it does to a copy or through a reference to `const` and nothing it writes reaches the annotation value. Post-attachment state initialization is the use that wants the model changed and a paper proposing it has to answer where the mutated value goes, which is a design question and not a missing qualifier.
+
+### `noexcept` ### {#shape-signature-noexcept}
+
+The signature names no exception specification and detection does not look for one, since an exception specification does not participate in overload resolution ([[#semantics-detection]]). A `noexcept` operator is detected and invoked like any other. What it gives up is the reporting path. An operator reports a violation by throwing ([[#diagnostics]]) and [except.terminate] paragraph 1.3 calls `std::terminate` when the search for a handler exits the body of a function with a non-throwing exception specification. The throw therefore never leaves the operator. The message, the annotation type, and the source location never reach the diagnostic. The program remains ill-formed, since the evaluation cannot complete as a constant expression either way, but the diagnostic no longer names the rule that was violated. An operator that only inspects may be `noexcept` with no observable difference. One that rejects anything should not be, which makes `noexcept` wrong as a default without being wrong in itself. This paper does not make it ill-formed, because the mistake already diagnoses itself and a rule forbidding it would buy nothing.
 
 ## Context object ## {#shape-context}
 
-`annotation_context` is intentionally small. Each member answers a question the hook cannot answer without declaration context:
+`annotation_context` is intentionally small. Each member answers a question the operator cannot answer without declaration context:
 
 * `target()` - the annotated declaration-like construct.
 * `annotation_location()` - the source location of the annotation.
 * `declaration_location()` - the source location of the annotated declaration.
-* `is_definition()` - whether the hook is running at a defining occurrence.
+* `is_definition()` - whether the invocation is at a defining occurrence.
 * `is_exported()` - whether the annotated declaration is exported.
 * `access()` - the reflective access context at the annotation site.
 
 `is_definition()` is needed for rules that depend on completeness. `access()` is needed because reflective queries can be access-sensitive and should follow the ordinary access model.
 
-The context describes the annotation site. It does not provide mutation or synthesis operations. Those are accessed through their own APIs. Omitted queries include `enclosing_scope()` (derivable from `target()`), template-argument accessors (duplicated by the reflected target), annotation enumeration (better served by the existing reflection API) and mutation methods (better served by standalone reflection APIs).
+The context describes the annotation site. It does not provide mutation or synthesis operations. Those are accessed through their own APIs. Omitted members include `enclosing_scope()` (derivable from `target()`), template-argument accessors (duplicated by the reflected target), annotation enumeration (better served by the existing reflection API), and mutation methods (better served by standalone reflection APIs).
 
 ## Per-occurrence invocation ## {#shape-occurrence}
 
-Each annotation occurrence is invoked independently, which is the granularity annotations already accumulate at. Redeclarations and cross-TU ordering already require care without a hook in play. Merging occurrences would broaden the design into ordering and ODR. Libraries that need multiplicity rules can enforce them within the hook using `annotations_of`.
+Each annotation occurrence is invoked independently, which is the granularity annotations already accumulate at. Redeclarations and cross-TU ordering already require care without an active annotation in play. Merging occurrences would broaden the design into ordering and ODR. Libraries that need multiplicity rules can enforce them within the operator using `annotations_of`.
 
 ## Manual helpers are insufficient ## {#shape-manual}
 
-`static_assert` and manual helper calls cannot provide automatic invocation tied to the annotation occurrence, a standard semantic point for declaration-relative behavior or principled diagnostics at the annotation site. The implementation already owns appertainment, formation and the point at which the annotated construct becomes semantically meaningful. This paper adds one invocation step to that existing machinery.
-
-## Rejected alternatives ## {#shape-rejected}
-
-Larger-scope alternatives left out of this paper include new metadata surface syntax, runtime discovery tables, compile-time-to-runtime transport and a separate metadata query API. Those are addressed in [[#alternatives]]. Within the chosen scope, the following narrower design alternatives were considered and rejected:
-
-<table>
-<thead>
-<tr>
-    <th>Design choice</th>
-    <th>Alternative</th>
-    <th>Reason for rejection</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-    <td>Typed annotation values</td>
-    <td>traits, free functions, raw reflection payloads</td>
-    <td>Splits the payload from its behavior or requires reconstructing typed meaning outside the annotation value.</td>
-</tr>
-<tr>
-    <td><code>operator()</code></td>
-    <td>named member, ADL, traits, registration</td>
-    <td>A named member narrows the perceived scope. ADL broadens the discovery surface. Traits and registration move behavior off the type that owns the metadata.</td>
-</tr>
-<tr>
-    <td><code>consteval void ... const</code></td>
-    <td><code>constexpr</code>, <code>bool</code>, string-returning, non-<code>const</code></td>
-    <td>Weakens the hard-error model, requires a second diagnostics channel or promises a mutation that is discarded with the copy the hook ran on.</td>
-</tr>
-<tr>
-    <td>Small <code>annotation_context</code></td>
-    <td>richer callback object</td>
-    <td>Duplicates functionality better provided by standalone reflection APIs.</td>
-</tr>
-<tr>
-    <td>Per-occurrence invocation</td>
-    <td>merged annotation semantics</td>
-    <td>Broadens the paper into ordering and ODR design.</td>
-</tr>
-<tr>
-    <td>One reflection query path</td>
-    <td>new metadata-specific API</td>
-    <td>Creates two parallel metadata systems.</td>
-</tr>
-</tbody>
-</table>
+`static_assert` and manual helper calls cannot provide a standard semantic point for declaration-relative behavior, automatic invocation tied to the annotation occurrence, or principled diagnostics at the annotation site. The implementation already owns appertainment, formation, and the point at which the annotated construct becomes semantically meaningful. This paper adds one invocation step to that existing machinery.
 
 # Scope # {#scope}
 
@@ -164,7 +126,7 @@ Larger-scope alternatives left out of this paper include new metadata surface sy
 
 * Build on adopted annotations.
 * Keep annotations as the sole metadata representation.
-* Add a declaration-aware hook with a small API surface.
+* Add declaration-aware invocation with a small API surface.
 * Define precise invocation timing.
 * Preserve standard reflection as the query path.
 * Reuse compile-time diagnostics.
@@ -178,21 +140,21 @@ Larger-scope alternatives left out of this paper include new metadata surface sy
 * A separate library-publication mechanism for named metadata.
 * Runtime registries or discovery tables.
 * Compile-time-to-runtime metadata transport.
-* New declaration injection, token generation or source rewriting facilities.
+* New declaration injection, token generation, or source rewriting facilities.
 * Replacement of existing standard or vendor attributes.
 * A second metadata query API.
 
-Those are facilities this paper does not add. What it does ask for is that a hook be allowed to call the generation facilities the reflection library already provides, which as the draft stands only a `consteval` block may call ([[#semantics-contract]]). Annotation attachment then becomes a trigger for such work without this paper standardizing the work itself ([[#example-synthesis]]).
+Those are facilities this paper does not add. What it does ask for is that an active annotation be allowed to call the generation facilities the reflection library already provides, which as the draft stands only a `consteval` block may call ([[#semantics-contract]]). Annotation attachment then becomes a trigger for such work without this paper standardizing the work itself ([[#example-synthesis]]).
 
 # Relationship to the Existing Design # {#overview}
 
 ## Non-ignorability ## {#overview-non-ignorable}
 
-Annotations are non-ignorable under the existing standard ([[P3394R4]]): their underlying constants are formed through `reflect_constant` and are observable through `annotations_of`. This proposal inherits that property. If a hook is present, the implementation must invoke it.
+Annotations are non-ignorable under the existing standard ([[P3394R4]]): their underlying constants are formed through `reflect_constant` and are observable through `annotations_of`. This proposal inherits that property. If the operator is present, the implementation must invoke it.
 
 ## Invariant taxonomy ## {#overview-invariants}
 
-Constructors handle value invariants. The hook handles declaration-relative behavior. Program-global behavior (cross-TU or registry-wide) is outside scope.
+Constructors handle value invariants. The operator handles declaration-relative behavior. Program-global behavior (cross-TU or registry-wide) is outside scope.
 
 Because annotation values must be structural types, the proposal does not claim that every value-level invariant can be enforced through encapsulation.
 
@@ -240,9 +202,9 @@ struct User
 };
 </xmp>
 
-The annotation carries a field key. The hook rejects empty keys and non-member attachment.
+The annotation carries a field key. The operator rejects empty keys and non-member attachment.
 
-The key is stored as `const char*` because an annotation value must be a structural type, and a pointer into a string literal is not a valid constant template argument. The constructor copies the characters into static storage with `define_static_string` ([[P3491R3]]), which yields a pointer that is. Every string-carrying example below uses the same idiom.
+The key is stored as `const char*` because an annotation value must be a structural type and a pointer into a string literal is not a valid constant template argument. The constructor copies the characters into static storage with `define_static_string` ([[P3491R3]]), which yields a pointer that is. Every string-carrying example below uses the same idiom.
 
 ## Command signatures ## {#example-command}
 
@@ -299,7 +261,7 @@ struct Version
 void api_function();
 </xmp>
 
-No hook is invoked. The annotation is attached and observable through `annotations_of`.
+No invocation happens. The annotation is attached and observable through `annotations_of`.
 
 ## Multi-entity annotation ## {#example-multi}
 
@@ -320,7 +282,7 @@ struct Deprecated
             !std::meta::is_nonstatic_data_member(t) &&
             !std::meta::is_type(t))
             throw std::meta::exception(
-                u8"Deprecated may annotate functions, data members, or types",
+                u8"Deprecated may annotate functions, data members or types",
                 ^^Deprecated,
                 ctx.annotation_location());
     }
@@ -337,7 +299,7 @@ struct Widget
 struct [[=Deprecated("prefer NewWidget")]] OldWidget {};
 </xmp>
 
-The hook dispatches on entity kind. The two hooks inside `Widget` run at its closing brace and the hook on `OldWidget` runs after `OldWidget` is complete ([[#timing]]).
+The operator accepts several entity kinds. The two active annotations inside `Widget` are invoked at its closing brace and the one on `OldWidget` after `OldWidget` is complete ([[#timing]]).
 
 ## Class-definition annotation ## {#example-class}
 
@@ -367,7 +329,7 @@ struct [[=RequireDefaultConstructible{}]] Config
 };
 </xmp>
 
-The annotation appertains to the class definition, so the hook runs after `Config` is complete ([[#timing]]) and can query properties that require the full definition.
+The annotation appertains to the class definition so the operator runs after `Config` is complete ([[#timing]]) and can query properties that require the full definition.
 
 ## Reflection-driven synthesis ## {#example-synthesis}
 
@@ -417,7 +379,7 @@ int main()
 }
 </xmp>
 
-The hook reads the members of the declaration it is attached to and mirrors them into a second type. `define_aggregate` ([meta.reflection.define.aggregate]) does the generating. What this paper contributes is the trigger and the declaration context ([[#non-goals]]). The example works because a class-definition hook runs after the definition is complete ([[#timing]]), so `User` already has its members when the hook asks for them. It also depends on a change this paper asks for and does not get from the draft as it stands: [expr.const.core] paragraph 2.32 currently lets only a `consteval` block produce an injected declaration ([[#semantics-contract]]).
+The operator reads the members of the declaration it is attached to and mirrors them into a second type. `define_aggregate` ([meta.reflection.define.aggregate]) does the generating. What this paper contributes is the trigger and the declaration context ([[#non-goals]]). The example works because an annotation on a class definition is invoked after the definition is complete ([[#timing]]) so `User` already has its members when the operator asks for them. It also depends on a change this paper asks for and does not get from the draft as it stands: [expr.const.core] paragraph 2.32 currently lets only a `consteval` block produce an injected declaration ([[#semantics-contract]]).
 
 ## Multiplicity check ## {#example-multiplicity}
 
@@ -458,7 +420,7 @@ struct BadRecord
 };
 </xmp>
 
-The hook runs after its class is complete and sees the annotation set that any other query sees there, including its own occurrence ([[#reflection]]), so a rule about the whole class is expressible rather than only a rule about one member. Both hooks in `BadRecord` would count two, so either of them failing makes the program ill-formed. Whether an implementation runs the second after the first has failed, and so whether the author sees one diagnostic or two, is left to the implementation.
+The operator runs after the enclosing class is complete and sees the annotation set that any other query sees there, including its own occurrence ([[#reflection]]) so a rule about the whole class is expressible. Each annotation in `BadRecord` would count two so either of them failing makes the program ill-formed. Whether an implementation runs the second after the first has failed and so whether the author sees one diagnostic or two is left to the implementation.
 
 ## Thread-safety annotation ## {#example-thread}
 
@@ -503,7 +465,7 @@ class Connection
 };
 </xmp>
 
-The hook checks the attachment kind and then that the named mutex really is a member of the same class. Because member hooks run after the enclosing class is complete ([[#timing]]), that second check does not depend on whether `mu_` happens to be declared before or after the members that name it. The `mutex_name` field still carries data past the check: a static analysis tool reads it through `annotations_of` to decide which lock protects which field.
+The operator checks the attachment kind and then checks that the named mutex really is a member of the same class. Because member annotations are invoked after the enclosing class is complete ([[#timing]]), that second check does not depend on whether `mu_` happens to be declared before or after the members that name it. The `mutex_name` field still carries data past the check: a static analysis tool can read it through `annotations_of` to decide which lock protects which field.
 
 ## Export-aware annotation ## {#example-export}
 
@@ -563,7 +525,7 @@ class Document : [[=Interface{}]] public Serializable,
 };
 </xmp>
 
-The annotation appertains to each base-specifier. Both hooks run after `Document` is complete, in base-specifier-list order ([[#timing-order]]). `ctx.target()` returns the reflection of the direct base-class relationship, not the base class type itself.
+The annotation appertains to each base-specifier. Both annotations are invoked after `Document` is complete, in base-specifier-list order ([[#timing-order]]). `ctx.target()` returns the reflection of the direct base-class relationship, not the base class type itself.
 
 ## Function-parameter annotation ## {#example-param}
 
@@ -590,7 +552,7 @@ void process([[=NonNull{}]] const char* input,
              [[=NonNull{}]] char* output);
 </xmp>
 
-Each parameter annotation is invoked independently, after the whole declarator and in parameter-declaration order ([[#timing]]), so a rule relating one parameter to another can be written on either of them. The hook here confirms the parameter has pointer type, and downstream tools can use the annotation to drive null-check analysis.
+Each parameter annotation is invoked independently, after the whole declarator, and in parameter-declaration order ([[#timing]]) so a rule relating one parameter to another can be written on either of them. The operator here confirms the parameter has pointer type and downstream tools can use the annotation to drive null-check analysis.
 
 # Proposed Library Interface # {#interface}
 
@@ -610,47 +572,47 @@ namespace std::meta
 } // namespace std::meta
 </xmp>
 
-`annotation_context` is not a structural type ([temp.param]) and its values are consteval-only values, stated the way [meta.reflection.define.aggregate] paragraph 1 states it for `data_member_options`. That is what keeps a hook from storing the context somewhere that outlives translation, and it is why the class needs no wording of its own to say the context does not persist beyond the invocation. It is never an annotation value and never a template argument. Implementations may represent it as an opaque handle. All accessors return by value.
+`annotation_context` is not a structural type ([temp.param]) and its values are consteval-only values, as [meta.reflection.define.aggregate] paragraph 1 says of `data_member_options`. That is what keeps an operator from storing the context somewhere that outlives translation and it is why the class needs no wording of its own to say the context does not persist beyond the invocation. It is never an annotation value and never a template argument. Implementations may represent it as an opaque handle. All accessors return by value.
 
 ## `target()` ## {#interface-target}
 
-Returns the reflection of the annotated entity or declaration-like construct. For base-specifiers, function parameters and non-static data members, the return value reflects the specific construct. For other entity kinds permitted by [dcl.attr.annotation], including namespaces and enumerators, it reflects that entity.
+Returns the reflection of the annotated entity or declaration-like construct. For base-specifiers, function parameters, and non-static data members, the return value reflects the specific construct. For other entity kinds permitted by [dcl.attr.annotation], including namespaces and enumerators, it reflects that entity.
 
 If an annotation on a function parameter in a function definition also corresponds to the parameter variable, `target()` denotes the parameter reflection. The variable can be obtained through `variable_of(target())` where applicable.
 
 ## Locations ## {#interface-locations}
 
-`annotation_location()` returns the source location of the annotation occurrence. `declaration_location()` returns the source location of the annotated declaration. `annotation_location()` provides information not obtainable from `source_location_of(target())`, which identifies the declaration rather than the annotation site. An annotation on a member injected by `define_aggregate` has no annotation site, and both accessors report the locus of the injected declaration ([[#timing-injected]]).
+`annotation_location()` returns the source location of the annotation occurrence. `declaration_location()` returns the source location of the annotated declaration. `annotation_location()` provides information not obtainable from `source_location_of(target())`, which identifies the declaration, never the annotation site. An annotation on a member injected by `define_aggregate` has no annotation site and both accessors report the locus of the injected declaration ([[#timing-injected]]).
 
 ## Definition and export state ## {#interface-state}
 
-`is_definition()` reports whether the hook is running at a defining occurrence. `is_exported()` reports the export status of the annotated declaration at the point of the annotation occurrence. It does not predict whether the declaration may later become observable through other means such as `export using` or public inheritance.
+`is_definition()` reports whether the invocation is at a defining occurrence. `is_exported()` reports the export status of the annotated declaration at the point of the annotation occurrence. It does not predict whether the declaration may later become observable through other means such as `export using` or public inheritance.
 
 ## Access context ## {#interface-access}
 
-`access()` returns the reflective access context anchored at the lexical program point of the annotation occurrence, as if by `std::meta::access_context::current()` evaluated there. The hook uses the ordinary reflective access model, and no privileged access is introduced. This is the one query anchored at the occurrence rather than at the point of invocation, and the split is deliberate: a hook should have the access its author wrote for, which for an annotation inside a class body includes that class's private members, and the invocation point sits outside the class ([[#semantics]]).
+`access()` returns the reflective access context anchored at the lexical program point of the annotation occurrence, as if by `std::meta::access_context::current()` evaluated there. The operator uses the ordinary reflective access model and no privileged access is introduced. This query is anchored at the occurrence and the split from the point of invocation is deliberate: an operator should have the access its author wrote for, which for an annotation inside a class body includes that class's private members and the invocation point sits outside the class ([[#semantics]]).
 
-An annotation on a member injected by `define_aggregate` has no occurrence to anchor to. There `access()` returns the context at the locus of the injected declaration ([[#timing-injected]]), which [meta.reflection.define.aggregate] paragraph 9.2 puts immediately after the core constant expression under evaluation. That point is where the injecting code sits, outside the class being built rather than inside it. [expr.const.reflect] paragraph 3 forbids an injection whose target scope is separated from the point of evaluation by a class scope or a function parameter scope, so in any legal case the two share the same enclosing class scopes and the hook is not looking at its target from outside a class that encloses it. A hook that needs more than that should be given what it needs as a value in the annotation rather than reaching for it through `access()`.
+An annotation on a member injected by `define_aggregate` has no occurrence to anchor to. There `access()` returns the context at the locus of the injected declaration ([[#timing-injected]]), which [meta.reflection.define.aggregate] paragraph 9.2 puts immediately after the core constant expression under evaluation. That point is where the injecting code sits, outside the class being built. [expr.const.reflect] paragraph 3 forbids an injection whose target scope is separated from the point of evaluation by a class scope or a function parameter scope so in any legal case the two share the same enclosing class scopes and the operator is not looking at its target from outside a class that encloses it. An operator that needs more than that should be given what it needs as a value in the annotation instead of reaching for it through `access()`.
 
 # Semantic Model # {#semantics}
 
-After annotation formation, the implementation determines the type `T` of the underlying constant. If `T` is a class type and overload resolution for the call expression `v(ctx)` - where `v` is a value of type `const T` and `ctx` is a value of type `std::meta::annotation_context` - selects a unique `consteval` function returning `void`, the implementation invokes it once at the required semantic point ([[#semantics-detection]]).
+After annotation formation, the implementation determines the type `T` of the underlying constant. If `T` is a class type and overload resolution for the call expression `v(ctx)` (where `v` is a value of type `const T` and `ctx` is a value of type `std::meta::annotation_context`) selects a unique `consteval` function returning `void`, the implementation invokes it once at the required semantic point ([[#semantics-detection]]).
 
-The implementation acts as if a value of type `T` is obtained by `extract<T>(r)`, where `r` is the annotation reflection, and used as `const T` for the call. This specifies the invocation semantics, not a required operational step. `T` is the type formed by `reflect_constant` under [dcl.attr.annotation] paragraph 2.
+The implementation acts as if a value of type `T` is obtained by `extract<T>(r)`, where `r` is the annotation reflection and used as `const T` for the call. This specifies the invocation semantics, not a required operational step. `T` is the type formed by `reflect_constant` under [dcl.attr.annotation] paragraph 2.
 
-The invocation needs an entry of its own in [expr.const.defns] paragraph 1. Being an invocation of an immediate function was not enough for a `consteval` block: [dcl.pre] paragraph 15 already defines its corresponding expression as a call to an immediate function, and it was still given its own entry at paragraph 1.3 rather than left to paragraph 1.4. A hook invocation is a synthesized call in the same position, and wording for this paper should add an entry in the same shape.
+The invocation needs an entry of its own in [expr.const.defns] paragraph 1. Being an invocation of an immediate function was not enough for a `consteval` block: [dcl.pre] paragraph 15 already defines its corresponding expression as a call to an immediate function and it was still given its own entry at paragraph 1.3 instead of being left to paragraph 1.4. An annotation invocation is a synthesized call in the same position and wording for this paper should add an entry in the same shape.
 
-It also needs a point of evaluation, and the draft gives it none. [expr.const.reflect] paragraph 5 determines the point P for an evaluation of an expression E, and its final clause is that "P is the point at which E appears". A hook invocation appears nowhere. It is synthesized by the implementation and has no lexical position in the source, so every rule that reads P is undefined for it: reachability under [meta.reflection.annotation] paragraph 2, the injection restrictions of [expr.const.reflect] paragraph 3 ([[#semantics-contract]]), and the locus an injected declaration would be given.
+It also needs a point of evaluation and the draft gives it none. [expr.const.reflect] paragraph 5 determines the point P for an evaluation of an expression E and its final clause is that "P is the point at which E appears". An annotation invocation appears nowhere. It is synthesized by the implementation and has no lexical position in the source. Every rule that reads P is therefore undefined for it: reachability under [meta.reflection.annotation] paragraph 2, the injection restrictions of [expr.const.reflect] paragraph 3 ([[#semantics-contract]]), and the locus an injected declaration would be given.
 
-Wording for this paper has to define P for a hook invocation, and the two candidates behave differently. Setting P to the invocation point from the table ([[#timing]]) is what the rest of this paper assumes: it is what puts the hook outside the annotated class, which is what makes the paragraph 3 analysis come out as described. Setting P to the lexical position of the annotation occurrence would put it inside the class and reverse that outcome. This paper proposes the first. The one query that deliberately uses the second is `access()`, which is anchored at the annotation occurrence so that a hook has the access its author wrote for rather than the access of a point outside the class ([[#interface-access]]), and that split should be stated in the wording rather than left to be inferred.
+Wording for this paper has to define P for an annotation invocation and the two candidates behave differently. Setting P to the invocation point from the table ([[#timing]]) is what the rest of this paper assumes. That choice puts the invocation outside the annotated class so the paragraph 3 analysis comes out as described. Setting P to the lexical position of the annotation occurrence would put it inside the class and reverse that outcome. This paper proposes the first. The one query that deliberately uses the second is `access()`, which is anchored at the annotation occurrence so that the operator has the access its author wrote for ([[#interface-access]]) and the wording should state that split outright.
 
-## Hook detection ## {#semantics-detection}
+## Detecting an active annotation ## {#semantics-detection}
 
 Let `T` be the type of the underlying constant. `T` is necessarily a complete structural type at the point of detection.
 
-If `T` is not a class type, it has no `operator()` and the annotation has no hook.
+If `T` is not a class type, it has no `operator()` and the annotation is passive.
 
-If `T` is a class type, the hook is present if and only if:
+If `T` is a class type, the annotation is active if and only if:
 
 * overload resolution for the call expression `v(ctx)`, with `v` of type `const T` and `ctx` of type `std::meta::annotation_context`, succeeds and selects a unique best viable function;
 * the selected function is `consteval`;
@@ -658,25 +620,25 @@ If `T` is a class type, the hook is present if and only if:
 
 The parameter type need not be `annotation_context` by value. `const annotation_context&` or any type to which `annotation_context` converts is acceptable. Detection is by overload resolution, not signature matching.
 
-Nothing in that list mentions `const`, and nothing asks for an implicit object parameter. It does not need to. The call is on a `const T`, so an implicit object parameter has to be `const` to bind, and an explicit object parameter states its own qualification in its type. A by-value explicit object parameter is accepted: it is copy-initialized from the `const T`, so a hook that writes to it writes to a copy ([[#shape-signature-const]]). `static operator()` is accepted as well, and overload resolution selects it like any other candidate. A static hook sees `ctx` and not the annotation value, which is what the hooks in this paper that read no field of their own are already doing, and rejecting it would mean adding a rule that overload resolution does not need.
+Nothing in that list mentions `const` and nothing asks for an implicit object parameter. It does not need to. The call is on a `const T`. An implicit object parameter therefore has to be `const` to bind and an explicit object parameter states its own qualification in its type. A by-value explicit object parameter is accepted: it is copy-initialized from the `const T` so an operator that writes to it writes to a copy ([[#shape-signature-const]]). `static operator()` is accepted as well and overload resolution selects it like any other candidate. A static operator sees `ctx` and not the annotation value, which is what the operators in this paper that read no field of their own are already doing. Rejecting it would mean adding a rule that overload resolution does not need.
 
-A conversion function to a pointer to function is the one case where the first bullet succeeds and there is still no hook. [over.call.object] paragraph 2 adds a surrogate call function to the candidate set for such a conversion, and a surrogate call function is not `consteval`, so the second bullet rejects it and the annotation carries no hook. The second bullet reads the candidate overload resolution selected, which is the surrogate, so a `consteval` function at the far end of the pointer does not make the annotation a hook either.
+A conversion function to a pointer to function is the one case where the first bullet succeeds and the annotation is still passive. [over.call.object] paragraph 2 adds a surrogate call function to the candidate set for such a conversion and a surrogate call function is not `consteval` so the second bullet rejects it and the annotation stays passive. The second bullet reads the candidate overload resolution selected, which is the surrogate so a `consteval` function at the far end of the pointer does not make the annotation active either.
 
-Selecting a deleted function counts as finding a hook, and the program is then ill-formed. A deleted `consteval void operator()(annotation_context) const` is how a type says it must not be used as a hooked annotation, and quietly treating it as passive metadata would defeat that.
+Selecting a deleted function counts as finding the operator and the program is then ill-formed. A deleted `consteval void operator()(annotation_context) const` is how a type says it must not be used as an active annotation and quietly treating it as passive metadata would defeat that.
 
-An inaccessible one behaves the same way, and for the same reason. [class.access.general] paragraph 4 applies access control "only to the function selected by overload resolution", so a private or protected call operator is selected by the bullets above and the access check comes afterward. The annotation therefore has a hook, and the call is ill-formed unless the access context reaches it. That context is the annotation occurrence, not the invocation point ([[#interface-access]]), so an annotation written inside the class that declares the private operator can call it and the same annotation written elsewhere cannot. Treating inaccessibility as no-hook-found instead would make an annotation's meaning depend on where it is written in a way the author did not ask for, and would hide a spelling mistake in an access specifier as silently passive metadata.
+An inaccessible one behaves the same way and for the same reason. [class.access.general] paragraph 4 applies access control "only to the function selected by overload resolution" so a private or protected call operator is selected by the bullets above and the access check comes afterward. The annotation is therefore active and the call is ill-formed unless the access context reaches it. That context is the annotation occurrence, not the invocation point ([[#interface-access]]) so an annotation written inside the class that declares the private operator can call it and the same annotation written elsewhere cannot. Treating inaccessibility as no operator found instead would make an annotation's meaning depend on where it is written in a way the author did not ask for and would hide a spelling mistake in an access specifier as silently passive metadata.
 
-A signature that is nearly right is the failure mode this invites: the hook is simply absent and the annotation goes through as passive metadata. *Recommended practice:* implementations should warn when lookup finds a `consteval` `operator()` on the annotation type that detection does not select, or selects one that does not return `void`. Restricting the recommendation to `consteval` candidates keeps it off the ordinary case of an annotation type that is also a runtime callable.
+A signature that is nearly right is the failure mode this invites: the operator is simply absent and the annotation goes through as passive metadata. *Recommended practice:* implementations should warn when lookup finds a `consteval` `operator()` on the annotation type that detection does not select or selects one that does not return `void`. Restricting the recommendation to `consteval` candidates keeps it off the ordinary case of an annotation type that is also a runtime callable.
 
 ## Appertainment prerequisite ## {#semantics-appertain}
 
-The hook is considered only for annotations that successfully appertain under [dcl.attr.annotation] and only after the annotated construct has been successfully formed.
+The operator is considered only for annotations that successfully appertain under [dcl.attr.annotation] and only after the annotated construct has been successfully formed.
 
-## Types without the hook ## {#semantics-no-hook}
+## Types without the operator ## {#semantics-passive}
 
 If the underlying constant's type does not provide a matching `operator()`, the annotation behaves as under the existing design.
 
-Compatibility is not total, and the exception follows from the design rather than from an oversight. A type that already carries a `consteval` call operator viable for an `annotation_context` argument becomes a hook when this paper is adopted, and starts being invoked at every site where it is used as an annotation. A generic `consteval void operator()(auto) const` is enough to qualify. Such a type is legal C++26 today and the change in its behavior is silent, since nothing at the annotation site has to be edited for the hook to start running. The alternative is an opt-in marker on the annotation type, a base class or a trait specialization that a hook author would have to write in addition to the operator. That moves the declaration of intent off the operator and onto a second thing that can be forgotten or mismatched, which is the objection [[#shape-rejected]] already makes to traits and registration, so this paper accepts the break and states it instead. The population at risk is annotation types with a `consteval` call operator, which are rare because C++26 annotations have only just arrived, and the break is loudest at the moment of adoption rather than accumulating later.
+Compatibility is not total and the exception follows from the design. A type that already carries a `consteval` call operator viable for an `annotation_context` argument becomes active when this paper is adopted and starts being invoked at every site where it is used as an annotation. A generic `consteval void operator()(auto) const` is enough to qualify. Such a type is legal C++26 today and the change in its behavior is silent, since nothing at the annotation site has to be edited for the operator to start running. The alternative is an opt-in marker on the annotation type, a base class, or a trait specialization that an annotation author would have to write in addition to the operator. That moves the declaration of intent off the operator and onto a second thing that can be forgotten or mismatched, which is the objection [[#shape-operator]] already makes to traits and registration. This paper accepts the break and states it instead. The population at risk is annotation types with a `consteval` call operator, which are rare because C++26 annotations have only just arrived and the break is loudest at the moment of adoption and does not accumulate later.
 
 ## Structural-type restriction ## {#semantics-structural}
 
@@ -684,41 +646,41 @@ The proposal does not alter annotation formation rules. The underlying value rem
 
 ## Invocation contract ## {#semantics-contract}
 
-The hook is invoked by the implementation, not by user code. Construction of an annotation value in ordinary `consteval` code does not trigger invocation.
+The operator is invoked by the implementation, not by user code. Construction of an annotation value in ordinary `consteval` code does not trigger invocation.
 
-The hook may return normally (annotation retained) or fail during constant evaluation (program ill-formed). The preferred failure mechanism is throwing `std::meta::exception` ([[P3560R2]]). The proposal relies on the same exception-in-consteval model used by the reflection library.
+The operator may return normally (annotation retained) or fail during constant evaluation (program ill-formed). The preferred failure mechanism is throwing `std::meta::exception` ([[P3560R2]]). The proposal relies on the same exception-in-consteval model used by the reflection library.
 
 `static_assert` is usable for context-independent checks. For context-dependent diagnostics, `std::meta::exception` provides source locations and reflective provenance.
 
-The hook runs in an ordinary constant-evaluation context and may call any available facility. This proposal introduces no new side-effecting facilities and does not prevent use of ones that exist or that future proposals may add. Side effects are the hook author's responsibility, as with any `consteval` code.
+The operator runs in an ordinary constant-evaluation context and may call any available facility. This proposal introduces no new side-effecting facilities and does not prevent use of ones that exist or that future proposals may add. Side effects are the annotation author's responsibility, as with any `consteval` code.
 
-Injection is the exception, and it is a request rather than a consequence. [expr.const.core] paragraph 2.32 makes an expression that would produce an injected declaration a non-core-constant expression unless it is the corresponding expression of a consteval-block-declaration, so under the draft as it stands a hook that calls `define_aggregate` fails, and [[#example-synthesis]] does not work. This paper asks for that exception to name a hook invocation as well. Committee direction against the ask leaves the validation half of the facility intact and removes the synthesis half.
+Injection is the exception. Everything else in this section follows from the design and this is a request. [expr.const.core] paragraph 2.32 makes an expression that would produce an injected declaration a non-core-constant expression unless it is the corresponding expression of a consteval-block-declaration so under the draft as it stands an active annotation that calls `define_aggregate` fails and [[#example-synthesis]] does not work. This paper asks for that exception to name an annotation invocation as well. Committee direction against the ask leaves the validation half of the facility intact and removes the synthesis half.
 
-With the exception widened, the restriction on what may be injected should carry over too. [expr.const.reflect] paragraph 3 states its rule in terms of a consteval-block-declaration, so it does not reach a hook as written, and wording for this paper should extend it so that the point of invocation ([[#timing]]) plays the part of the block. Where that point sits is what decides the outcome. It is outside the annotated class ([[#timing]]), so `Outer`'s class scope encloses the scope a class nested in `Outer` would belong to but not the hook, and paragraph 3.2 makes defining that nested class ill-formed. A class at namespace scope is enclosed by neither, which is the case [[#example-synthesis]] needs. This is the mirror of the paragraph 3 example in which a `consteval` block inside a class may not define a class outside it.
+With the exception widened, the restriction on what may be injected should carry over too. [expr.const.reflect] paragraph 3 states its rule in terms of a consteval-block-declaration so it does not reach an annotation invocation as written and wording for this paper should extend it so that the point of invocation ([[#timing]]) plays the part of the block. Where that point sits is what decides the outcome. It is outside the annotated class ([[#timing]]) so `Outer`'s class scope encloses the scope a class nested in `Outer` would belong to but not the invocation and paragraph 3.2 makes defining that nested class ill-formed. A class at namespace scope is enclosed by neither that class scope nor a function parameter scope, which is the case [[#example-synthesis]] needs. This is the mirror of the paragraph 3 example in which a `consteval` block inside a class may not define a class outside it.
 
-One further restriction is proposed, and unlike the rest of this section it is a choice rather than a consequence. The hook shall not define the entity reflected by `ctx.target()`. [meta.reflection.define.aggregate] paragraph 8.2 already rules the case out wherever the annotated class is complete, since `define_aggregate` requires a target incomplete from every point in the evaluation context. What is left is the annotation on a class declaration that is not a definition ([[#timing-incomplete]]), and there the restriction bites.
+One further restriction is proposed and unlike the rest of this section it is a choice. The operator shall not define the entity reflected by `ctx.target()`. [meta.reflection.define.aggregate] paragraph 8.2 already rules the case out wherever the annotated class is complete, since `define_aggregate` requires a target incomplete from every point in the evaluation context. What is left is the annotation on a class declaration that is not a definition ([[#timing-incomplete]]) and there the restriction bites.
 
-The reason is not that the declaration is still being processed. By the table the hook runs after semantic analysis of that declaration ([[#timing]]), and a `consteval` block written after `struct S;` may complete `S` today, since neither clause of [expr.const.reflect] paragraph 3 fires when the block and the class both sit at namespace scope. The reason is that `ctx` describes one fixed declaration for the length of one invocation. A hook that completes its own target makes two queries in the same hook body disagree about `is_complete_type(ctx.target())`, and every later hook on the same class inherits an ordering question ([[#timing-order]]) about a definition the annotation itself produced. The cost is that a hook is denied the one thing a `consteval` block in the same position can do, and an author who wants it can write that block instead. EWG may prefer to drop the restriction and accept the change of state mid-invocation.
+The reason is not that the declaration is still being processed. By the table the operator runs after semantic analysis of that declaration ([[#timing]]) and a `consteval` block written after `struct S;` may complete `S` today, since neither clause of [expr.const.reflect] paragraph 3 fires when the block and the class both sit at namespace scope. The reason is that `ctx` describes one fixed declaration for the length of one invocation. An operator that completes its own target makes two queries in the same body disagree about `is_complete_type(ctx.target())` and every later annotation on the same class inherits an ordering question ([[#timing-order]]) about a definition the annotation itself produced. The cost is that the operator is denied the one thing a `consteval` block in the same position can do and an author who wants it can write that block instead. EWG may prefer to drop the restriction and accept the change of state mid-invocation.
 
-A hook body is hard to test on its own, because a meaningful `annotation_context` describes a real annotation site and only the implementation produces one. The testable unit is the check: a library that wants coverage should write it as a `consteval` function over `info` and have the hook call that, which also hands users a `static_assert`-able form of the same rule ([[#shape-signature-void]]).
+An operator body is hard to test on its own, because a meaningful `annotation_context` describes a real annotation site and only the implementation produces one. The testable unit is the check: a library that wants coverage should write it as a `consteval` function over `info` and have the operator call that, which also hands users a `static_assert`-able form of the same rule ([[#shape-signature-void]]).
 
 # Timing Model # {#timing}
 
-This paper defines a new program point for each annotated construct, and the table below is that definition. [meta.reflection.annotation] paragraph 2 does not already name that point, although it reads at first as though it does. That paragraph makes a declaration's annotations those reachable from a point in the evaluation context, or from a point immediately following the class-specifier of the outermost class for which **such a point** is in a complete-class context, where "such a point" is the point in the evaluation context. The second alternative therefore fires only when the query itself runs from a complete-class context, and [class.mem.general] paragraph 10 limits those to a function body, default argument, default template argument, noexcept-specifier, function-contract-specifier or default member initializer. An ordinary member annotation sits in none of them, so the paragraph names no point for it and the wording this paper needs is its own.
+This paper defines a new program point for each annotated construct and the table below is that definition. [meta.reflection.annotation] paragraph 2 does not already name that point, although it reads at first as though it does. That paragraph makes a declaration's annotations those reachable from a point in the evaluation context or from a point immediately following the class-specifier of the outermost class for which **such a point** is in a complete-class context, where "such a point" is the point in the evaluation context. The second alternative therefore fires only when the query itself runs from a complete-class context and [class.mem.general] paragraph 10 limits those to a function body, default argument, default template argument, noexcept-specifier, function-contract-specifier, or default member initializer. An ordinary member annotation sits in none of them so the paragraph names no point for it and the wording this paper needs is its own.
 
-What the paragraph does give is the standard the choice is held to. A query made from outside a class reaches every declaration in its member-specification, so running a class's hooks immediately after its class-specifier makes them see exactly what any outside query sees, and no view of a class exists that only hooks can reach. Code inside the class body reaches an earlier member's declaration from its own evaluation context and so can see an annotation before its hook has run, which is the cost of choosing this point rather than an earlier one ([[#timing-members-alt]]).
+What the paragraph does give is the standard the choice is held to. A query made from outside a class reaches every declaration in its member-specification so invoking a class's annotations immediately after its class-specifier makes them see exactly what any outside query sees and no view of a class exists that only an active annotation can reach. Code inside the class body reaches an earlier member's declaration from its own evaluation context and so can see an annotation before its operator has run, which is the cost of choosing this point over an earlier one ([[#timing-members-alt]]).
 
 <table>
 <thead>
 <tr>
     <th>Annotation written on</th>
-    <th>Hook runs</th>
+    <th>Invoked</th>
     <th>Complete there</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-    <td>anything in a class member-specification, and any base-specifier</td>
+    <td>anything in a class member-specification and any base-specifier</td>
     <td>immediately after the outermost class-specifier that lexically encloses the annotation, searching outward no further than an enclosing function body</td>
     <td>the bases and members of the annotated construct's class and of every class enclosing it</td>
 </tr>
@@ -755,65 +717,65 @@ What the paragraph does give is the standard the choice is held to. A query made
 </tbody>
 </table>
 
-The first row wins wherever it overlaps a later one. `struct Outer { enum E { a [[=X]] }; };` is both an enumerator and something in a class member-specification, and its hook runs after `Outer` rather than after `E`. The search is over class-specifiers rather than member-specifications because a class-specifier is the class-head and the member-specification together, which is what brings a base-specifier written in the base-clause under the same rule as a member. The outward search stops at a function body, so a class defined inside a member function body starts the search again, and its own hooks run after its own class-specifier rather than after the enclosing class. The same holds for a lambda's closure type. Every other statement about timing in this paper points here instead of restating the table.
+The first row wins wherever it overlaps a later one. In `struct Outer { enum E { a [[=X]] }; };` the annotation is written on an enumerator that is also something in a class member-specification and the first row puts its invocation after `Outer`, not after `E`. The search is over class-specifiers because a class-specifier is the class-head and the member-specification together, which is what brings a base-specifier written in the base-clause under the same rule as a member. The outward search stops at a function body so a class defined inside a member function body starts the search again and its own annotations are invoked after its own class-specifier. The same holds for a lambda's closure type. Every other statement about timing in this paper points here instead of restating the table.
 
-An annotation on a class, union or enum definition belongs in the class-head, after the class-key. `struct [[=X]] C { };` annotates `C`, and so does `struct Outer { struct [[=X]] Inner { }; };` for `Inner`. The leading form `[[=X]] struct C { };` is ill-formed in both positions, for different reasons. At namespace scope the grammar refuses it: of the simple-declaration alternatives in [dcl.pre] paragraph 1, the one that begins with an attribute-specifier-seq requires an init-declarator-list, and a class definition has none. Inside a class it is [class.mem.general] paragraph 18 that refuses it, saying the attribute-specifier-seq in a member-declaration "shall not appear if the optional member-declarator-list is omitted". Every class example in this paper uses the class-head spelling.
+An annotation on a class or union definition belongs in the class-head, after the class-key. On an enum definition it belongs in the enum-head, after the enum-key. `struct [[=X]] C { };` annotates `C` and so does `struct Outer { struct [[=X]] Inner { }; };` for `Inner`. The leading form `[[=X]] struct C { };` is ill-formed in both positions, for different reasons. At namespace scope the grammar refuses it: of the simple-declaration alternatives in [dcl.pre] paragraph 1, the one that begins with an attribute-specifier-seq requires an init-declarator-list and a class definition has none. Inside a class it is [class.mem.general] paragraph 18 that refuses it, saying the attribute-specifier-seq in a member-declaration "shall not appear if the optional member-declarator-list is omitted". Every class example in this paper uses the class-head spelling.
 
-The annotation type is a complete structural type at invocation time (`reflect_constant` requires this), so hook detection does not depend on the annotated class at all.
+The annotation type is a complete structural type at invocation time (`reflect_constant` requires this) so detection does not depend on the annotated class at all.
 
 ## Incomplete targets ## {#timing-incomplete}
 
-A declaration that is not a definition usually leaves `ctx.target()` incomplete at the hook's point, so only queries well-defined for incomplete types are available and `members_of(ctx.target(), ctx.access())` fails. Two cases are not incomplete. An enumeration declared with a fixed underlying type is complete immediately after its enum-base, since [dcl.enum] paragraph 6 says so. A redeclaration that follows the definition, as in `struct S { }; struct [[=X]] S;`, has a complete target although it defines nothing. `ctx.is_definition()` therefore reports what this declaration is rather than whether the target can be queried, and a hook that wants completeness should ask `is_complete_type(ctx.target())`.
+A declaration that is not a definition usually leaves `ctx.target()` incomplete at the point of invocation so only queries well-defined for incomplete types are available and `members_of(ctx.target(), ctx.access())` fails. Two cases are not incomplete. An enumeration declared with a fixed underlying type is complete immediately after its enum-base, since [dcl.enum] paragraph 6 says so. A redeclaration that follows the definition, as in `struct S { }; struct [[=X]] S;`, has a complete target although it defines nothing. `ctx.is_definition()` therefore reports what this declaration is. Whether the target can be queried is a separate question and an operator that wants completeness should ask `is_complete_type(ctx.target())`.
 
 ## Namespaces and later declarations ## {#timing-reopen}
 
-A namespace has no completion point. `namespace N { }` can be reopened any number of times, in this translation unit and in others, so the hook runs at the closing brace of the namespace-definition the annotation is written on and sees what that definition contains. A later reopening adds declarations the hook already ran without.
+A namespace has no completion point. `namespace N { }` can be reopened any number of times, in this translation unit and in others. The operator runs at the closing brace of the namespace-definition the annotation is written on and sees what that definition contains. A later reopening adds declarations the operator already ran without.
 
-The same gap is open for any entity declared more than once. [meta.reflection.annotation] paragraph 2 gathers only the declarations reachable at the query point, so a hook on the first declaration of a namespace-scope function runs before a later redeclaration contributes its own annotations, and `annotations_of` inside that hook returns the set visible then rather than the set the entity finishes with. A rule that needs the full set cannot be written this way, and the alternative is worse: waiting for the end of the translation unit would move every diagnostic to the bottom of the file and would still miss the declarations in other translation units. Class members escape this because a class has exactly one definition, which is why the first row of the table is the useful case and this one is the residue.
+The same gap is open for any entity declared more than once. [meta.reflection.annotation] paragraph 2 gathers only the declarations reachable at the query point so an annotation on the first declaration of a namespace-scope function is invoked before a later redeclaration contributes its own annotations. `annotations_of` inside that operator returns only the set visible at that point. A rule that needs the full set cannot be written this way and the alternative is worse: waiting for the end of the translation unit would move every diagnostic to the bottom of the file and would still miss the declarations in other translation units. Class members escape this because a class has exactly one definition, which is why the first row of the table is the useful case and this one is the residue.
 
 ## Injected members ## {#timing-injected}
 
-Writing an annotation in the source is not the only way to form one. [meta.reflection.define.aggregate] paragraph 9.5.6 gives each member injected by `define_aggregate` the annotations named in its `data_member_options`, and those annotations have no annotation site anywhere in the program. Their hooks run, and the point falls out of the wording that injects them. Paragraph 9.2 puts the locus of the injected declaration immediately after the core constant expression under evaluation, and that declaration defines the class. The first row of the table is worded in terms of a class-specifier, which an injected declaration does not have, so wording for this paper has to say that its locus stands in for the point immediately after one.
+Writing an annotation in the source is not the only way to form one. [meta.reflection.define.aggregate] paragraph 9.5.6 gives each member injected by `define_aggregate` the annotations named in its `data_member_options` and those annotations have no annotation site anywhere in the program. They are invoked too and the point falls out of the wording that injects them. Paragraph 9.2 puts the locus of the injected declaration immediately after the core constant expression under evaluation and that declaration defines the class. The first row of the table is worded in terms of a class-specifier, which an injected declaration does not have so wording for this paper has to say that its locus stands in for the point immediately after one.
 
-The hooks therefore run after the `define_aggregate` call has returned and after the evaluation containing it has finished. Whatever made the call, a `consteval` block or another hook, cannot catch a failure coming from the annotations it injected, and is not reentered by them.
+The invocations therefore happen after the `define_aggregate` call has returned and after the evaluation containing it has finished. Whatever made the call, a `consteval` block or another annotation, cannot catch a failure coming from the annotations it injected and is not reentered by them.
 
-That leaves a failure mode this paper has to name rather than wave at. Because each hook is a fresh top-level evaluation rather than a nested one, a chain of injections is not bounded by the implementation's limit on recursive constant evaluation, which only counts depth within a single evaluation. A hook that injects a class whose member carries the same annotation type produces an unbounded sequence of evaluations and a translation that does not terminate. Nothing in the current design stops it. The honest options are an implementation limit on the length of such a chain, defined the way [implimits] handles other open-ended constructs, or a rule that an annotation on an injected member does not itself run a hook, which gives up checking injected annotations and is the trade [[#timing-injected]] otherwise argues against. This paper does not pick one, and EWG should.
+That leaves a failure mode this paper has to name. Because each invocation is a fresh top-level evaluation and never a nested one, a chain of injections is not bounded by the implementation's limit on recursive constant evaluation, which only counts depth within a single evaluation. An annotation that injects a class whose member carries the same annotation type produces an unbounded sequence of evaluations and a translation that does not terminate. Nothing in the current design stops it. One option is an implementation limit on the length of such a chain, defined the way [implimits] handles other open-ended constructs. The other is a rule that an annotation on an injected member does not itself run its operator, which gives up checking injected annotations and is the trade this section otherwise argues against. This paper does not pick one and EWG should.
 
-The cost is that `ctx.annotation_location()` has no annotation site to report and can only give the locus of the injected declaration, so a diagnostic points at the class that was built rather than at the code that asked for the annotation. Exempting injected annotations instead would leave `define_aggregate` as a way to attach an annotation to a member without running the rule its type defines, and an annotation that reaches a declaration should be checked however it got there.
+The cost is that `ctx.annotation_location()` has no annotation site to report and can only give the locus of the injected declaration so a diagnostic points at the class that was built, away from the code that asked for the annotation. Exempting injected annotations instead would leave `define_aggregate` as a way to attach an annotation to a member without running the rule its type defines and an annotation that reaches a declaration should be checked however it got there.
 
 ## Order of invocation ## {#timing-order}
 
-The hooks on one class run in a fixed order, stated recursively over its class-specifier: base-specifier annotations in base-specifier-list order, then every annotation in the member-specification in lexical order, then the annotation on that class's own definition. A nested class-specifier takes its lexical place among the members and is ordered internally by the same rule, so a nested class's own definition annotation runs after its members and before whatever follows it in the enclosing class. For `struct [[=Z]] Outer { struct [[=X]] Inner { [[=Y]] int m; }; };` the order is `Y`, then `X`, then `Z`. Stating the rule recursively rather than flattening the member-specification is what keeps a class's internal order independent of where that class is written, since `Inner` on its own at namespace scope gives `Y` then `X` as well.
+The active annotations on one class are invoked in a fixed order, stated recursively over its class-specifier: base-specifier annotations in base-specifier-list order, then every annotation in the member-specification in lexical order, then the annotation on that class's own definition. A nested class-specifier takes its lexical place among the members and is ordered internally by the same rule. A nested class's own definition annotation therefore runs after its members and before whatever follows it in the enclosing class. For `struct [[=Z]] Outer { struct [[=X]] Inner { [[=Y]] int m; }; };` the order is `Y`, then `X`, then `Z`. Stating the rule recursively is what keeps a class's internal order independent of where that class is written, since `Inner` on its own at namespace scope gives `Y` then `X` as well.
 
-They do not all run at the same program point, and injection is what makes the difference observable. [meta.reflection.define.aggregate] paragraph 9.2 puts the locus of an injected declaration "immediately after the core constant expression currently under evaluation", so if one hook injects a class and a later hook on the same class asks `is_complete_type` about it, the answer depends on whether that locus precedes the later hook's point. A single shared point leaves that undefined, and [expr.const.reflect] paragraph 5 does not settle it either, since its clause for injected declarations reaches only evaluations sequenced before the query within one evaluation and these are separate evaluations. The wording therefore needs a sequence of points, one per hook, in the order above, the way consecutive `consteval` blocks each get their own.
+They do not all run at the same program point. Injection is what makes the difference observable. [meta.reflection.define.aggregate] paragraph 9.2 puts the locus of an injected declaration "immediately after the core constant expression currently under evaluation". If one annotation injects a class and a later one on the same class asks `is_complete_type` about the injected class, the answer depends on whether that locus precedes the later annotation's point. A single shared point leaves that undefined and [expr.const.reflect] paragraph 5 does not settle it either, since its clause for injected declarations reaches only evaluations sequenced before the query within one evaluation and these are separate evaluations. The wording therefore needs a sequence of points, one per invocation, in the order above, the way consecutive `consteval` blocks each get their own.
 
-Order still does not change the annotation set a hook sees. The annotations on a class are fixed by its class-specifier and no hook adds one to the class it is running on, so two hooks on the same class agree about that set whatever order the implementation picks. What the order decides is the side effects, and for a hook that injects a declaration it decides both where that declaration lands and which later hooks can see it.
+Order still does not change the annotation set an operator sees. The annotations on a class are fixed by its class-specifier and no operator adds one to the class it is running on so two invocations on the same class agree about that set whatever the order. What the order decides is the side effects and for an annotation that injects a declaration it decides both where that declaration lands and which later ones can see it.
 
 ## Alternative: mid-class invocation ## {#timing-members-alt}
 
-An alternative would invoke each member and base-specifier hook as soon as that construct is semantically meaningful. The violation would then be diagnosed at the member rather than at the closing brace, and a `consteval` block or `static_assert` written later in the same class body could not read an annotation whose hook had not run yet. Under the rule this paper proposes it can: everything inside the class body precedes the invocation point, so in-class code sees annotations that have not been validated.
+An alternative would invoke each member and base-specifier annotation as soon as that construct is semantically meaningful. The violation would then be diagnosed at the member and not at the closing brace. A `consteval` block or `static_assert` written later in the same class body could not read an annotation whose operator had not run yet. Under the rule this paper proposes it can: everything inside the class body precedes the invocation point so in-class code sees annotations that have not been validated.
 
-The cost is that a hook could then observe only the part of the class already processed. `GuardedBy` naming a mutex declared later in the same class would fail ([[#example-thread]]), and a base-specifier hook would see only the bases to its left. A hook would also see less of the class than any query made after it, so two readers of the same annotation would disagree about the class it is attached to, and the rule a library expresses would depend on where in the member-specification its users happened to write the annotation.
+The cost is that an operator could then observe only the part of the class already processed. `GuardedBy` naming a mutex declared later in the same class would fail ([[#example-thread]]) and a base-specifier annotation would see only the bases to its left. An operator would also see less of the class than any query made after it so two readers of the same annotation would disagree about the class it is attached to and the rule a library expresses would depend on where in the member-specification its users happened to write the annotation.
 
-Neither point is settled by the existing wording. Both models need a new program point defined for them, since [meta.reflection.annotation] paragraph 2 names one only for queries made from a complete-class context ([[#timing]]). The choice is therefore on the merits, and this paper proposes post-completion invocation for the reasons above. Committee feedback on it is welcome.
+Neither point is settled by the existing wording. Both models need a new program point defined for them, since [meta.reflection.annotation] paragraph 2 names one only for queries made from a complete-class context ([[#timing]]). The choice is therefore on the merits and this paper proposes post-completion invocation for the reasons above. Committee feedback on it is welcome.
 
 ## Templates ## {#timing-templates}
 
-An annotation on a templated entity, or on an entity declared within one, is invoked once per specialization rather than once on the template, whether or not the annotation expression itself is dependent. The template itself is included deliberately, because [dcl.attr.annotation] paragraph 1 permits the annotation there and P3394R4 spells one out, `template <class T> struct [[=42]] D { }`, with `annotations_of(^^D<int>)[0] != annotations_of(^^D<char>)[0]` and their underlying constants equal. A class template is never complete, only its specializations are, so there is no point at which the table's rule could fire on the template itself. Deferring every case also avoids asking `ctx.target()` to denote a templated entity independently of a specialization, which reflection does not offer.
+An annotation on a templated entity or on an entity declared within one is invoked once per specialization and not once on the template, whether or not the annotation expression itself is dependent. The template itself is included deliberately, because [dcl.attr.annotation] paragraph 1 permits the annotation there and P3394R4 spells one out, `template <class T> struct [[=42]] D { }`, with `annotations_of(^^D<int>)[0] != annotations_of(^^D<char>)[0]` and their underlying constants equal. A class template is never complete. Only its specializations are so there is no point at which the table's rule could fire on the template itself. Deferring every case also avoids asking `ctx.target()` to denote a templated entity independently of a specialization, which reflection does not offer.
 
-The consequence P3394R4's example makes concrete is that an identical non-dependent annotation runs its hook once per specialization, on an equal value each time, differing only in `ctx.target()`. That is what validation wants, since each specialization is a distinct class to check, and it is a compile-time cost the paper accepts. Memoizing across specializations is not available to an implementation, because paragraph 3 makes the annotations distinct by construction.
+The consequence P3394R4's example makes concrete is that an identical non-dependent annotation runs its operator once per specialization, on an equal value each time, with only `ctx.target()` differing. That is what validation wants, since each specialization is a distinct class to check and it is a compile-time cost the paper accepts. Memoizing across specializations is not available to an implementation, because paragraph 3 makes the annotations distinct by construction.
 
-The consequence is that an annotation on a template that is never instantiated is never checked. That is how every other dependent construct already behaves, and the paper accepts it rather than inventing a separate test for which annotations could have been checked early.
+An annotation on a template that is never instantiated is never checked. That is how every other dependent construct already behaves and the paper accepts it without inventing a separate test for which annotations could have been checked early.
 
-If the same annotation is instantiated in multiple translation units, a well-formed program shall produce identical results, no diagnostic required. Invocation is grounded in the lexical context of the annotation occurrence, so a hook that reads only its target and the annotations on it already satisfies this. One that reads a macro or an `#include` order differing between translation units does not, and no implementation can be asked to catch that. This is the requirement [basic.def.odr] places on every inline definition rather than a new kind of obligation. A `consteval` member function defined inside its class is implicitly inline, so the common spelling of a hook is already covered.
+If the same annotation is instantiated in multiple translation units, a well-formed program shall produce identical results, no diagnostic required. Invocation is grounded in the lexical context of the annotation occurrence so an operator that reads only its target and the annotations on it already satisfies this. One that reads a macro or an `#include` order differing between translation units does not and no implementation can be asked to catch that. This is the requirement [basic.def.odr] places on every inline definition. A `consteval` member function defined inside its class is implicitly inline so the common spelling of an operator is already covered.
 
-A class template specialization's hooks run at a point from which the specialization's definition is reachable, so `ctx.target()` is complete there in the sense of [class.mem.general] paragraph 11. They do not wait for member function definitions to be instantiated.
+A class template specialization's annotations are invoked at a point from which the specialization's definition is reachable so `ctx.target()` is complete there in the sense of [class.mem.general] paragraph 11. They do not wait for member function definitions to be instantiated.
 
-Which point that is needs saying, and the draft offers more than one. [temp.point] paragraph 4 puts a class template specialization's point of instantiation immediately before the namespace scope declaration or definition that refers to the specialization, paragraph 1 puts a function template specialization's immediately after, and paragraph 7 allows a specialization points of instantiation in several translation units. The difference is observable rather than editorial, because a hook that injects a declaration lands it relative to whichever point hosts the invocation. This paper proposes the point immediately after the instantiated definition is complete, which is the specialization's counterpart of the table's first row and is later than either [temp.point] point. Using [temp.point]'s point for a class template specialization would place an injected declaration before the code that triggered the instantiation. Wording has to choose, and [[#wording-impact]] lists it.
+Which point that is needs saying and the draft offers more than one. [temp.point] paragraph 4 puts a class template specialization's point of instantiation immediately before the namespace scope declaration or definition that refers to the specialization. Paragraph 1 puts a function template specialization's immediately after. Paragraph 7 allows a specialization to have points of instantiation in several translation units. The difference is observable, because an annotation that injects a declaration lands it relative to whichever point hosts the invocation. This paper proposes the point immediately after the instantiated definition is complete, which is the specialization's counterpart of the table's first row and is later than either [temp.point] point. Using [temp.point]'s point for a class template specialization would place an injected declaration before the code that triggered the instantiation. Wording has to choose and [[#wording-impact]] lists it.
 
-Hook failure is a hard error, not substitution failure. This is not a new footing but the one annotations already stand on: [dcl.attr.annotation] paragraph 4 says "Substituting into an annotation is not in the immediate context", and wording for this paper should put hook invocation alongside it.
+Invocation failure is a hard error, not substitution failure. Annotations already have that footing: [dcl.attr.annotation] paragraph 4 says "Substituting into an annotation is not in the immediate context" and wording for this paper should put annotation invocation alongside it.
 
-The cost is smaller than it looks, and the draft's own example shows why. For
+The draft's own example shows how far a hard error reaches. For
 
 <xmp class=language-cpp>
 template<class T> [[=T::type()]] void f(T t);
@@ -824,7 +786,7 @@ void g() {
 }
 </xmp>
 
-`f(0)` is well-formed even though `int::type()` is not a valid expression, because an annotation is not substituted into while candidates are being formed. Substitution happens once a specialization has been selected. So an annotation on a function template does not remove the overload from consideration, and it does not make every call that could have named the template ill-formed. It makes ill-formed the call for which the template is chosen. Hook failure inherits that shape. The reason to prefer it to substitution-failure semantics is that an annotation whose rule the argument violates would otherwise silently deselect the overload, and the caller would get a diagnostic naming some other candidate, or none at all.
+`f(0)` is well-formed even though `int::type()` is not a valid expression, because an annotation is not substituted into while candidates are being formed. Substitution happens once a specialization has been selected. So an annotation on a function template does not remove the overload from consideration and it does not make every call that could have named the template ill-formed. It makes ill-formed the call for which the template is chosen. Invocation failure inherits that shape. The reason to prefer it to substitution-failure semantics is that an annotation whose rule the argument violates would otherwise silently deselect the overload and the caller would get a diagnostic naming some other candidate or none at all.
 
 ## Per-occurrence model ## {#timing-occurrence}
 
@@ -834,16 +796,16 @@ If equivalent annotations appear on multiple declarations of the same entity, ea
 
 ## Pack expansions ## {#timing-pack}
 
-Under [dcl.attr.grammar] paragraph 6, an annotation followed by an ellipsis is a pack expansion. Each expanded element produces a unique annotation and is invoked independently.
+Under [dcl.attr.grammar] paragraph 6, an annotation followed by an ellipsis is a pack expansion. Each expanded element produces a unique annotation and each of those is invoked independently.
 
 # Diagnostics # {#diagnostics}
 
-When the hook fails, the program is ill-formed and a diagnostic is required.
+When an invocation fails, the program is ill-formed and a diagnostic is required.
 
 Quality-of-implementation guidance:
 
 * The diagnostic should identify the annotation site.
-* It should include the hook's message when available.
+* It should include the operator's message when available.
 * It should note the annotated declaration when useful.
 
 <xmp>
@@ -861,47 +823,47 @@ This paper adds nothing to the metadata query surface:
 * `type_of(info)`
 * `constant_of(info)`
 
-Hook failure makes the program ill-formed before any code outside the enclosing declaration can observe the annotation.
+Invocation failure makes the program ill-formed before any code outside the enclosing declaration can observe the annotation.
 
-`annotations_of` inside a hook returns whatever [meta.reflection.annotation] paragraph 2 makes visible at the point of invocation, which is the reason the timing rule picks that point ([[#timing]]) rather than a new rule this paper would have to write. For an annotation in a class that is every annotation on every base and member of the class, including the occurrence that triggered the hook. For an entity declared more than once it is the annotations on the declarations reachable there, which need not be all the entity ends up with ([[#timing-reopen]]). Under [dcl.attr.annotation] paragraph 3 each annotation is unique, so repeated annotations appear as distinct reflections and multiplicity rules are expressible ([[#example-multiplicity]]).
+`annotations_of` inside an operator returns whatever [meta.reflection.annotation] paragraph 2 makes visible at the point of invocation, which is the reason the timing rule picks that point ([[#timing]]) and needs no new rule of its own. For an annotation in a class it is every annotation on every base and member of the class, including the occurrence that triggered the invocation. For an entity declared more than once it is the annotations on the declarations reachable there, which need not be all the entity ends up with ([[#timing-reopen]]). Under [dcl.attr.annotation] paragraph 3 each annotation is unique so repeated annotations appear as distinct reflections and multiplicity rules are expressible ([[#example-multiplicity]]).
 
 # Modules and Access Control # {#modules}
 
-Two different program points govern a hook, and saying which does what avoids a contradiction. The invocation happens at the point the table fixes ([[#timing]]), and that point supplies reachability and the position an injected declaration is placed relative to ([[#semantics]]). Access is anchored at the annotation occurrence instead ([[#interface-access]]), not at the module where the annotation type was defined and not at a later importing context. The hook therefore has exactly the access its author granted by writing the annotation where they wrote it: an annotation inside a class body runs with that class's access and can reach private members, and the same annotation type written outside that class cannot. No access is created that the annotation site did not already have.
+Two different program points govern an invocation and saying which does what avoids a contradiction. The invocation happens at the point the table fixes ([[#timing]]) and that point supplies reachability and the position an injected declaration is placed relative to ([[#semantics]]). Access is anchored at the annotation occurrence instead ([[#interface-access]]), not at the module where the annotation type was defined and not at a later importing context. The operator therefore has exactly the access its author granted by writing the annotation where they wrote it: an annotation inside a class body runs with that class's access and can reach private members and the same annotation type written outside that class cannot. No access is created that the annotation site did not already have.
 
 This paper adds no reachability requirement on the annotation type.
 
 ## Annotation reflections are TU-local ## {#modules-tu-local}
 
-[dcl.attr.annotation] paragraph 3 makes each annotation, and each instantiation of one, a unique annotation, unique across every declaration in every translation unit. CWG3118 found that this leaves a reflection of an annotation with no feasible mangling, since the same annotation written in a header is a different annotation in each translation unit that includes it, and a captured reflection used as a template argument would need a name that is the same in all of them. Modules sharpen it by letting such a reflection cross the boundary directly. [basic.link] paragraph 16 resolves it by making a value TU-local when it "is a reflection value that represents an entity, value, or object that is TU-local, an annotation, a direct base class relationship for which either D or B is TU-local, or a data member description for which T is TU-local".
+[dcl.attr.annotation] paragraph 3 makes each annotation and each instantiation of one a unique annotation, unique across every declaration in every translation unit. CWG3118 found that this leaves a reflection of an annotation with no feasible mangling, since the same annotation written in a header is a different annotation in each translation unit that includes it and a captured reflection used as a template argument would need a name that is the same in all of them. Modules sharpen it by letting such a reflection cross the boundary directly. [basic.link] paragraph 16 resolves it by making a value TU-local when it "is a reflection value that represents an entity, value, or object that is TU-local, an annotation, a direct base class relationship for which either D or B is TU-local, or a data member description for which T is TU-local".
 
-That rule belongs to annotations rather than to this paper, and this paper neither restates nor amends it. What matters here is that a hook opens no way around it. The hook returns `void`, so nothing it computes leaves by return. `annotation_context` is not a structural type and its values are consteval-only values ([[#interface]]), so the context cannot become a template argument or outlive the invocation. The reflections a hook obtains from `annotations_of` are TU-local exactly where they would be TU-local outside one.
+That rule belongs to annotations and this paper neither restates nor amends it. What matters here is that an active annotation opens no way around it. The operator returns `void` so nothing it computes leaves by return. `annotation_context` is not a structural type and its values are consteval-only values ([[#interface]]) so the context cannot become a template argument or outlive the invocation. The reflections an operator obtains from `annotations_of` are TU-local exactly where they would be TU-local outside one.
 
-Injection is the case worth naming, because it is the one place a hook hands a reflection to something that persists. `data_member_options::annotations` is a `vector<info>` whose elements must each satisfy `has-type`, so it takes reflections of constants rather than of annotations, and [meta.reflection.define.aggregate] gives the injected member an annotation whose underlying constant is that reflection. A hook therefore cannot move an annotation reflection onto an injected member. It supplies a value, and the injected annotation is a new annotation, unique and TU-local on the same terms as one written in the source. If the committee revisits the TU-local rule, a hook inherits whatever replaces it, and this paper asks for no exception to it.
+Injection is the case worth naming, because it is the one place an operator hands a reflection to something that persists. `data_member_options::annotations` is a `vector<info>` whose elements must each satisfy `has-type` so it takes reflections of constants only and [meta.reflection.define.aggregate] gives the injected member an annotation whose underlying constant is that reflection. An operator therefore cannot move an annotation reflection onto an injected member. It supplies a value and the injected annotation is a new annotation, unique and TU-local on the same terms as one written in the source. If the committee revisits the TU-local rule, an active annotation inherits whatever replaces it and this paper asks for no exception to it.
 
 # Alternatives Considered # {#alternatives}
 
 ## Not a broader metadata system ## {#alternatives-attributes}
 
-A broader system would require surface syntax, ignorability rules, lookup machinery, runtime queries and emission semantics, none necessary for this facility.
+A broader system would require surface syntax, ignorability rules ([[P2552R3]]), lookup machinery, runtime queries, and emission semantics, none necessary for this facility ([[#motivation-annotations-first]]).
 
 ## Not runtime discovery or transport ## {#alternatives-runtime}
 
-Runtime tables raise ABI, linker, freestanding/hosted and cross-TU ordering questions disproportionate to the problem addressed here.
+Runtime tables raise ABI, linker, freestanding/hosted, and cross-TU ordering questions. This facility introduces no such table. The operator returns `void` and `annotation_context` is a consteval-only value ([[#modules-tu-local]]).
 
 ## Not a `consteval` block ## {#alternatives-consteval-block}
 
-A `consteval` block ([[P3289R1]]) already runs arbitrary compile-time code at a point in a class body or at namespace scope, and a codebase that owns its own declarations can get much of this paper's effect by writing one that sweeps `annotations_of` over the members it cares about. Where that works it works today and needs nothing new, which is the strongest argument against this paper.
+A `consteval` block ([[P3289R1]]) already runs arbitrary compile-time code at a point in a class body or at namespace scope and a codebase that owns its own declarations can get much of this paper's effect by writing one that sweeps `annotations_of` over the members it cares about. Where that works it works today and needs nothing new, which is the strongest argument against this paper.
 
-What it does not do is carry the trigger with the metadata. Whoever defines `serial::Field` cannot make its rule apply to a class they do not own, so the class author has to remember to write the block, and a class that forgets is silently unchecked. The hook reverses that: the rule ships with the annotation type, and attaching the annotation is what runs it.
+What it does not do is carry the trigger with the metadata. Whoever defines `serial::Field` cannot make its rule apply to a class they do not own so the class author has to remember to write the block and a class that forgets is silently unchecked. An active annotation reverses that: the rule ships with the annotation type and attaching the annotation is what runs it.
 
-Reach is not the difference. `parameters_of`, `bases_of` and `enumerators_of` give a block written at namespace scope the same access to a function parameter, a base-specifier or an enumerator that it has to a data member. Ownership is the difference, and it is the whole of it.
+A block reaches everything an active annotation reaches. `parameters_of`, `bases_of`, and `enumerators_of` give a block written at namespace scope the same access to a function parameter, a base-specifier, or an enumerator that it has to a data member. Ownership is the only difference.
 
 # Prior Art # {#prior-art}
 
 ## Python decorators ## {#prior-art-python}
 
-A Python decorator is a callable applied to a function or class at definition time. The decorator receives the decorated object and may inspect, wrap or replace it:
+A Python decorator is a callable applied to a function or class at definition time. The decorator receives the decorated object and may inspect, wrap, or replace it:
 
 ```python
 def require_one_param(fn):
@@ -935,11 +897,11 @@ struct RequireOneParam
 void build(command_context&);
 </xmp>
 
-This proposal shares the core shape: a callable receives the declaration context at the attachment site. The differences are significant. Python decorators operate on runtime objects and can replace the decorated entity entirely. The hook proposed here operates on compile-time reflections, is `const` and cannot replace the annotated declaration.
+This proposal shares the core shape: a callable receives the declaration context at the attachment site. The differences are significant. Python decorators operate on runtime objects and can replace the decorated entity entirely. The operator this paper proposes runs on compile-time reflections, is `const`, and cannot replace the annotated declaration.
 
 ## TypeScript decorators (TC39 Stage 3) ## {#prior-art-typescript}
 
-TC39 Stage 3 decorators receive the decorated value together with a context object carrying `kind`, `name`, `access` and other declaration properties:
+TC39 Stage 3 decorators receive the decorated value together with a context object carrying `kind`, `name`, `access`, and other declaration properties:
 
 ```typescript
 function mustBeMethod(_target: any, context: ClassMethodDecoratorContext) {
@@ -953,7 +915,7 @@ class Widget {
 }
 ```
 
-The context object is structurally similar to `annotation_context`: both describe the attachment site so the hook can dispatch on declaration properties. Where TypeScript reads named fields off that object, the hook here reaches the declaration through `target()` and asks the ordinary reflection queries:
+The context object is structurally similar to `annotation_context`: both describe the attachment site so the receiver can dispatch on declaration properties. Where TypeScript reads named fields off that object, the operator here reaches the declaration through `target()` and asks the ordinary reflection queries:
 
 <xmp class=language-cpp>
 struct MustBeMethod
@@ -971,7 +933,7 @@ struct MustBeMethod
 };
 </xmp>
 
-The differences are in scope. TypeScript decorators can return a replacement value and participate in a runtime initialization protocol. This proposal's hook is a compile-time-only facility that cannot replace or modify the annotated declaration.
+The differences are in scope. TypeScript decorators can return a replacement value and participate in a runtime initialization protocol. An active annotation is a compile-time-only facility that cannot replace or modify the annotated declaration.
 
 ## Rust procedural macros ## {#prior-art-rust}
 
@@ -1033,7 +995,7 @@ struct [[=MustHaveId{}]] Record
 };
 </xmp>
 
-Rust proc macros are more powerful, since they operate on tokens and can generate arbitrary code. The hook proposed here works from a typed reflection of the declaration instead of its tokens. The resemblance in timing is narrower than it looks. A derive macro receives the whole item, so it is not reading a half-built declaration, but it receives it as tokens at expansion time rather than at a point where the type has a meaning to query. The point this paper defines is a semantic one ([[#timing]]), and the comparison should not be read as more than that.
+Rust proc macros are more powerful, since they operate on tokens and can generate arbitrary code. The operator proposed here works from a typed reflection of the declaration instead of its tokens. Timing also differs. A derive macro receives the whole item so it is not reading a half-built declaration, but it receives it as tokens at expansion time, before the type has a meaning to query. The point this paper defines is a semantic one ([[#timing]]).
 
 ## Java annotation processors ## {#prior-art-java}
 
@@ -1085,68 +1047,67 @@ void process();  // ok
 int compute();   // ill-formed
 </xmp>
 
-Java processors are external plugins registered with the compiler. The annotation type itself is passive. This proposal places the hook on the annotation type, keeping behavior local to the metadata value.
+Java processors are external plugins registered with the compiler. The annotation type itself is passive. This proposal places the operator on the annotation type.
 
 ## Summary ## {#prior-art-summary}
 
-Metadata-triggered compile-time execution at the declaration site is established practice. The systems above differ mainly in how much the triggered code is allowed to do, and this proposal sits at a conservative point in that range. The hook can inspect the declaration it appertains to and reject it, and through the reflection library it can generate declarations elsewhere. What it cannot do is replace or complete the declaration it is attached to ([[#semantics-contract]]). A later proposal can widen that if experience calls for it.
+Metadata-triggered compile-time execution at the declaration site is established practice. The systems above differ mainly in how much the triggered code is allowed to do and this proposal sits at a conservative point in that range. An active annotation can inspect the declaration it appertains to and reject it. Through the reflection library it can also generate declarations elsewhere. What it cannot do is replace or complete the declaration it is attached to ([[#semantics-contract]]). A later proposal can widen that if experience calls for it.
 
 # Wording Impact # {#wording-impact}
 
-* **[dcl.attr.annotation]**: specify hook detection and invocation, define a new program point of invocation for each annotated entity kind ([[#timing]]), give a sequence of such points rather than one shared point where a class has several hooks ([[#timing-order]]), defer to the specialization within a templated entity and say which point hosts it ([[#timing-templates]]), require ill-formedness on failure with a diagnostic, place that failure outside the immediate context of any deduction alongside the existing paragraph 4, and state that a hook shall not define the entity its annotation appertains to.
-* **[expr.const.core]**: extend the paragraph 2.32 exception, which today admits only the corresponding expression of a consteval-block-declaration, to a hook invocation ([[#semantics-contract]]).
-* **[expr.const.defns]**: add an entry to the manifestly-constant-evaluated list for the expression corresponding to a hook invocation, alongside the one paragraph 1.3 gives a consteval-block-declaration ([[#semantics]]).
-* **[expr.const.reflect]**: extend the paragraph 3 restrictions on what an injected declaration may define to cover a hook invocation, and give paragraph 5 a clause fixing the point of evaluation of a hook invocation, which its existing clauses leave undefined because a synthesized call appears nowhere ([[#semantics]]).
-* **[temp.point]** or an equivalent statement in [dcl.attr.annotation]: say which point hosts a hook on an annotation in a template specialization, since paragraph 4 places a class template specialization's point of instantiation before the declaration that refers to it and paragraph 1 places a function template specialization's after ([[#timing-templates]]).
-* **[meta.reflection.define.aggregate]**: state that a hook on an annotation of an injected member is invoked at the locus of the injected declaration ([[#timing-injected]]), and bound a chain of such injections or say that injected annotations run no hook ([[#timing-injected]]).
-* **[meta.syn]** and a new subclause: add `std::meta::annotation_context` and specify its members, including that its values are consteval-only values.
+* In [dcl.attr.annotation], specify detection and invocation, define a new program point of invocation for each annotated entity kind ([[#timing]]), give a sequence of such points where a class has several active annotations ([[#timing-order]]), defer to the specialization within a templated entity and say which point hosts it ([[#timing-templates]]), require ill-formedness on failure with a diagnostic, place that failure outside the immediate context of any deduction alongside the existing paragraph 4, and state that an operator shall not define the entity its annotation appertains to.
+* In [expr.const.core], extend the paragraph 2.32 exception, which today admits only the corresponding expression of a consteval-block-declaration, to an annotation invocation ([[#semantics-contract]]).
+* In [expr.const.defns], add an entry to the manifestly constant-evaluated list for the expression corresponding to an annotation invocation, alongside the one paragraph 1.3 gives a consteval-block-declaration ([[#semantics]]).
+* In [expr.const.reflect], extend the paragraph 3 restrictions on what an injected declaration may define to cover an annotation invocation, then give paragraph 5 a clause fixing the point of evaluation of an annotation invocation, which its existing clauses leave undefined because a synthesized call appears nowhere ([[#semantics]]).
+* In [temp.point] or in an equivalent statement in [dcl.attr.annotation], say which point hosts the invocation of an annotation in a template specialization, since paragraph 4 places a class template specialization's point of instantiation before the declaration that refers to it while paragraph 1 places a function template specialization's after ([[#timing-templates]]).
+* In [meta.reflection.define.aggregate], state that an annotation on an injected member is invoked at the locus of the injected declaration ([[#timing-injected]]) and bound a chain of such injections or say that injected annotations are never invoked ([[#timing-injected]]).
+* In [meta.syn] and a new subclause, add `std::meta::annotation_context` and specify its members, including that its values are consteval-only values.
 
 No new grammar production or declaration form is required.
 
-This paper proposes no wording, and there is no implementation. The open questions below decide what the wording would say, so drafting before EWG gives a direction would be drafting to the wrong design. The argument rests on the adopted annotation and reflection wording rather than on implementation experience. The list above is the honest size of the ask, and none of it is borrowed: the point of invocation, the point of evaluation, and the instantiation point are all things this paper has to define, because no existing rule fixes them.
+This paper proposes no wording and there is no implementation. The open questions below decide what the wording would say so drafting before EWG gives a direction would be drafting to the wrong design. The argument rests on the adopted annotation and reflection wording. The list above is the full size of the ask: the point of invocation, the point of evaluation and the instantiation point are all things this paper has to define, because no existing rule fixes them.
 
 # Implementability # {#implementability}
 
-Implementations already have machinery for annotation formation, appertainment tracking, reflection and constant evaluation. The additional work is:
+Annotation formation and appertainment are specified in [dcl.attr.annotation], the queries that recover annotations in [meta.reflection.annotation] and constant evaluation in [expr.const]. A conforming C++26 implementation already carries that machinery. [[P3394R4]] reports that the core language feature and the basic query functions are implemented in the EDG front end and in Bloomberg's P2996 Clang fork. The additional work is:
 
 * detecting `operator()(annotation_context)` on the annotation type;
 * constructing the opaque `annotation_context`;
-* materializing a program point per hook at the places [[#timing]] names, and invoking the hook there;
+* materializing a program point per invocation at the places [[#timing]] names and invoking the operator there;
 * diagnosing failure.
 
-The third is the one to try first, and it is where an implementer will find out whether the design is right. The others reuse machinery that exists. This is still substantially smaller than new syntax, a runtime subsystem or a linker-backed transport model. Because the design stays within standard annotations, tooling sees no macro-only surface and no vendor syntax. A hook that calls `define_aggregate`, which needs the [expr.const.core] change this paper asks for ([[#semantics-contract]]), does generate a declaration, but it does so through standard reflection at a trigger written in the source, and [meta.reflection.define.aggregate] already gives that declaration a locus, so nothing about it is hidden from a tool that reads reflection.
+The third is the one to try first and it is where an implementer will find out whether the design is right. The others reuse machinery that exists. None of that work adds a grammar production, a runtime subsystem or a linker protocol. Because the design stays within standard annotations, tooling sees no macro-only surface and no vendor syntax. An annotation that calls `define_aggregate`, which needs the [expr.const.core] change this paper asks for ([[#semantics-contract]]), does generate a declaration, but it does so through standard reflection at a trigger written in the source and [meta.reflection.define.aggregate] already gives that declaration a locus so nothing about it is hidden from a tool that reads reflection.
 
 # Future Directions # {#future}
 
-Each of the following is a separate paper, and the hook stands on its own if none of them is standardized:
+Each of the following is a separate paper and this one stands on its own if none of them is standardized:
 
 * schema declarations or markers;
 * named surface syntax for library-defined metadata;
-* changing the by-value invocation model so post-attachment state initialization has somewhere to write ([[#shape-signature-const]]);
+* a change to the by-value invocation model so post-attachment state initialization has somewhere to write ([[#shape-signature-const]]);
 * declaration-side constraints on accepted annotation types;
 * emission-record or runtime-transport reflection facilities;
 * relaxation of the structural-type restriction.
 
-Follow-on work on reification or compile-time code generation ([[P3294R2]]) should consider the interaction with annotation hooks, since hooks run during constant evaluation and can call such facilities if they exist. This paper provides the invocation mechanism and leaves the available operations to those proposals.
+Follow-on work on reification or compile-time code generation ([[P3294R2]]) should consider the interaction with active annotations, since their operators run during constant evaluation and can call such facilities if they exist. This paper provides the invocation mechanism and leaves the available operations to those proposals.
 
 # Open Questions # {#open-questions}
 
-* **Member timing:** This paper defers member and base-specifier hooks to class completion. Is the earlier diagnostic from mid-class invocation worth the narrower view it gives the hook? See [[#timing-members-alt]].
-* **Injected annotations:** This paper runs hooks on the annotations `define_aggregate` attaches, at the cost of a diagnostic with no annotation site to point at. Is exempting them the better trade? See [[#timing-injected]].
-* **Unbounded injection:** Each hook is a separate top-level evaluation, so a chain of injections that keep carrying annotated members is not bounded by the recursion limit and can fail to terminate. Should this be an implementation limit or should injected annotations run no hook? See [[#timing-injected]].
-* **Instantiation point:** [temp.point] puts a class template specialization's point of instantiation before the declaration that refers to it and a function template specialization's after. This paper proposes a later point of its own. Should it instead use one of the existing ones? See [[#timing-templates]].
-* **Silent adoption break:** A C++26 annotation type that already has a `consteval` call operator viable for an `annotation_context` becomes a hook on adoption, with no edit at the annotation site. Is that acceptable, or is an opt-in marker worth its cost after all? See [[#semantics-no-hook]].
-* **Self-definition:** This paper forbids a hook from defining its own target, which a `consteval` block in the same position may do. Is the asymmetry worth it? See [[#semantics-contract]].
-* **Context surface:** Should `annotation_context` expose additional queries?
+* Member timing. This paper defers member and base-specifier annotations to class completion. Is the earlier diagnostic from mid-class invocation worth the narrower view it gives the operator? See [[#timing-members-alt]].
+* Injected annotations. This paper invokes the annotations `define_aggregate` attaches, at the cost of a diagnostic with no annotation site to point at. Is exempting them the better trade? See [[#timing-injected]].
+* Unbounded injection. Each invocation is a separate top-level evaluation so a chain of injections that keep carrying annotated members is not bounded by the recursion limit and can fail to terminate. Should this be an implementation limit or should injected annotations never be invoked? See [[#timing-injected]].
+* Instantiation point. [temp.point] puts a class template specialization's point of instantiation before the declaration that refers to it and a function template specialization's after. This paper proposes a later point of its own. Should it instead use one of the existing ones? See [[#timing-templates]].
+* Silent adoption break. A C++26 annotation type that already has a `consteval` call operator viable for an `annotation_context` becomes active on adoption, with no edit at the annotation site. Is that acceptable or is an opt-in marker worth its cost after all? See [[#semantics-passive]].
+* Self-definition. This paper forbids an operator from defining its own target, which a `consteval` block in the same position may do. Is the asymmetry worth it? See [[#semantics-contract]].
+* Context surface. Should `annotation_context` expose additional queries?
 
 # Summary # {#summary}
 
-* Annotations remain the sole metadata representation.
-* Reflection remains the sole query path.
-* Some annotations gain the ability to run compile-time code on attachment.
-* The only library addition is `annotation_context`. No runtime tables, no linker protocol, no second query API.
+* Annotations remain the sole metadata representation and reflection the sole query path.
+* Some annotations become active and run compile-time code at the declaration they are attached to.
+* The only library addition is `annotation_context`.
 
-One hook, plus reflection facilities as they arrive, covers declaration-relative behavior generally rather than validation alone, including reflection-driven synthesis.
+One operator, plus reflection facilities as they arrive, covers declaration-relative behavior generally, including reflection-driven synthesis.
 
 <pre class=biblio>
 {
