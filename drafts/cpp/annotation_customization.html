@@ -1563,7 +1563,7 @@ Possible extra rowspan handling
   </style>
   <meta content="Bikeshed version ac92c2f0d, updated Fri Aug 21 16:01:29 2026 -0700" name="generator">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="32acacb0a67594d14922269e78cca787e168fa8b" name="revision">
+  <meta content="29f269eedcd5221264686be99cd9bd07b09b00ea" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>/* Boilerplate: style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
@@ -2802,12 +2802,13 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <h2 class="heading settled" data-level="9" id="timing"><span class="secno">9. </span><span class="content">Timing Model</span><a class="self-link" href="#timing"></a></h2>
    <p>This paper defines a new program point for each annotated construct and the table below is that definition. [meta.reflection.annotation] paragraph 2 does not already name that point, although it reads at first as though it does. That paragraph makes a declaration’s annotations those reachable from a point in the evaluation context or from a point immediately following the class-specifier of the outermost class for which <strong>such a point</strong> is in a complete-class context, where "such a point" is the point in the evaluation context. The second alternative therefore fires only when the query itself runs from a complete-class context and [class.mem.general] paragraph 10 limits those to a function body, default argument, default template argument, noexcept-specifier, function-contract-specifier, or default member initializer. An ordinary member annotation sits in none of them so the paragraph names no point for it and the wording this paper needs is its own.</p>
    <p>What the paragraph does give is the standard the choice is held to. A query made from outside a class reaches every declaration in its member-specification so invoking a class’s annotations immediately after its class-specifier makes them see exactly what any outside query sees and no view of a class exists that only an active annotation can reach. Code inside the class body reaches an earlier member’s declaration from its own evaluation context and so can see an annotation before its operator has run, which is the cost of choosing this point over an earlier one (<a href="#timing-members-alt">§ 9.5 Alternative: mid-class invocation</a>).</p>
-   <table>
+   <table class="data">
+    <caption>The point of invocation for each annotated construct, and what is complete when the annotation runs.</caption>
     <thead>
      <tr>
       <th>Annotation written on
       <th>Invoked
-      <th>Complete there
+      <th>Complete at that point
     <tbody>
      <tr>
       <td>anything in a class member-specification and any base-specifier
