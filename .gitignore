@@ -6,4 +6,3 @@ cpp/*.html
 out/
 .bikeshed/
 .DS_Store
-compiler_dataset.json
