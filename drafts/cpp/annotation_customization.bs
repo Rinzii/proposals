@@ -4,8 +4,10 @@ Shortname: Pnnnn
 Level: 0
 Status: D
 Group: WG21
-Audience: SG7, EWG
+Date: 2026-09-14
+Audience: SG7, EWG, LEWG
 Editor: Ian Pike, ianpike98cs@gmail.com
+Editor Term: Reply-to, Reply-to
 Abstract: We propose that if the type of an annotation's underlying constant provides `consteval void operator()(std::meta::annotation_context) const`, the implementation invokes that operator after annotation formation. We call such an annotation active. The operator receives the declaration context and may perform compile-time work over it, but cannot alter the annotation or the declaration. Failure makes the program ill-formed. No new syntax, ABI surface or linker protocol is introduced. Several core-language changes are needed and [[#wording-impact]] lists them. One of them is separable from the rest: [expr.const.core] paragraph 2.32 has to admit an annotation invocation, without which an operator cannot inject a declaration. Refusing that leaves the validation half of the facility intact ([[#semantics-contract]]).
 Boilerplate: omit conformance, omit feedback-header
 Markup Shorthands: markdown yes
@@ -15,7 +17,7 @@ Markup Shorthands: markdown yes
 
 The working draft provides typed annotations ([[P3394R4]]), reflection queries that recover those annotations ([[P2996R13]]), and a compile-time metadata model based on `std::meta::info`.
 
-What it does not provide is a way for an annotation to observe the declaration to which it appertains and act on that information during translation.
+What it does not provide is a way for an annotation to observe the declaration to which it appertains and act on that information during translation. [[P3394R4]] anticipated that gap and left the shape of the facility open ([[#overview-callback]]).
 
 We propose the following rule: if the type of an annotation's underlying constant provides
 
@@ -28,6 +30,8 @@ the implementation invokes that operator after formation, at a defined semantic 
 An annotation whose type provides that operator is an active annotation. One whose type does not is passive and behaves exactly as it does today ([[#semantics-passive]]).
 
 The most common application is attachment-site validation, but the mechanism is intentionally general.
+
+The target is C++29. Everything the facility builds on shipped in C++26 and nothing else has to land first. Stable names and paragraph numbers cited throughout are those of [[N5054]].
 
 # Motivation # {#motivation}
 
@@ -45,6 +49,8 @@ Standard C++ has no way to perform any of these checks where the annotation is w
 Annotations ([[P3394R4]]) already supply typed values, declaration-local syntax, and standard reflection visibility ([[P2996R13]]). They require nothing at run time.
 
 A broader declaration-metadata proposal would need new syntax, ignorability rules ([[P2552R3]]), lookup machinery, runtime exposure, linker interaction, and new query APIs. The facility proposed here needs none of that, because the representation it acts on already exists.
+
+Attributes are the other place this could have gone and they are further from it than they look. Reflecting an attribute at all is a separate C++29 proposal ([[P3385R8]]). In Sofia EWG preferred it without the metafunction that made an attribute appertain to an entity and the revision after dropped it. An annotation already reflects and already appertains. That is all the operator here needs of it.
 
 ## Existing practice ## {#motivation-practice}
 
@@ -159,6 +165,12 @@ Those are facilities this paper does not add. What it does ask for is that an ac
 ## Non-ignorability ## {#overview-non-ignorable}
 
 Annotations are non-ignorable under the existing standard ([[P3394R4]]): their underlying constants are formed through `reflect_constant` and are observable through `annotations_of`. This proposal inherits that property and adds to it. Observability means an annotation cannot be discarded. It does not by itself oblige an implementation to run anything. The rule that the operator must be invoked when present is new wording this paper asks for ([[#wording-impact]]).
+
+## The callback P3394R4 anticipated ## {#overview-callback}
+
+Section 4.5 of [[P3394R4]], Other Directions We Are Exploring, sketches this facility. It says there is clear value in having an annotation be invoked by the declaration itself and it leaves the shape open. It asks whether the callback runs before the class is complete or after, whether an annotation that is called back needs different syntax from one that is not, whether it may mutate the entity it is attached to, what to name it, and whether it is registered implicitly through a member of the annotation type or explicitly through a registration call. This paper answers each of those. Invocation is after completion for the reasons [[#timing-members-alt]] gives. There is no new syntax, because the operator is detected from the annotation type ([[#semantics-detection]]) and an active annotation is written exactly as a passive one is. The operator cannot mutate its target or its own value ([[#shape-signature-const]], [[#semantics-contract]]). It is named `operator()` ([[#shape-operator]]). Registration is implicit. That is the member-based option that section describes and [[#shape-operator]] gives the case against a registration call.
+
+The two uses that section reaches for first are not served here and that is deliberate. Adding an annotation to only some specializations of a template and composing one annotation out of several both need the callback to add annotations to the declaration it runs on. The context offers no mutation ([[#shape-context]]) and no operator changes the annotation set it is running on ([[#timing-order]]) so neither is expressible. The third use is injecting a specialization of `std::formatter` when the annotated class completes. That needs the callback half and an injection facility beyond `define_aggregate`. This paper supplies the first and the second stays with [[P3294R2]].
 
 ## Invariant taxonomy ## {#overview-invariants}
 
@@ -584,6 +596,8 @@ namespace std::meta
 
 Consteval-only is the separate property. A consteval-only value makes any object holding it an immediate object. [expr.const.const] paragraph 3 confines an immediate object to a constexpr variable, a template parameter object, or an object whose lifetime begins and ends inside one core constant expression. An operator therefore cannot store the context anywhere that outlives translation and the type needs no lifetime wording of its own.
 
+A class with member accessors is the odd shape for `<meta>`, where nearly everything is a free `consteval` function over `info`. `access_context` is the precedent and it reads the same way: [meta.reflection.access.context] paragraph 3 takes `ac.scope()` and `ac.designating_class()` off the object. A free `target_of(ctx)` family does not fit, because every free function in [meta.syn] takes `info` and one taking `annotation_context` would be the only one that does not. LEWG may still prefer the free-function spelling and the accessors transpose to it without changing anything else in this paper.
+
 Following `access_context` ([meta.reflection.access.context]) its default constructor is deleted and it declares no constructor of its own. The implicit copy and move constructors remain so an operator can hand its context to a helper. Nothing in the type builds one from scratch and an operator only ever receives one. Implementations may represent it as an opaque handle. All accessors return by value.
 
 ## `annotation()` ## {#interface-annotation}
@@ -592,7 +606,7 @@ Returns the reflection of the annotation occurrence being invoked, which is the 
 
 ## `target()` ## {#interface-target}
 
-Returns the reflection of the annotated entity or declaration-like construct. For base-specifiers, function parameters, and non-static data members, the return value reflects the specific construct. For other entity kinds permitted by [dcl.attr.annotation], including namespaces and enumerators, it reflects that entity.
+Returns the reflection of the annotated entity or declaration-like construct. A base-specifier is not a declaration. [[CWG3092]] settled that by rewording [dcl.attr.annotation] paragraph 1 and it is why `target()` is described as a construct. For base-specifiers, function parameters, and non-static data members, the return value reflects the specific construct. For other entity kinds permitted by [dcl.attr.annotation], including namespaces and enumerators, it reflects that entity.
 
 If an annotation on a function parameter in a function definition also corresponds to the parameter variable, `target()` denotes the parameter reflection and the operator is invoked once rather than twice ([[#shape-occurrence]]). `variable_of(target())` does not recover the variable. [meta.reflection.queries] paragraph 65.2 makes it throw unless some point in the evaluation context has that function parameter scope as its innermost non-block scope and the point of invocation sits outside the scope ([[#timing]]).
 
@@ -684,7 +698,7 @@ The proposal does not alter annotation formation rules. The underlying value rem
 
 The operator is invoked by the implementation, not by user code. Construction of an annotation value in ordinary `consteval` code does not trigger invocation.
 
-The operator has to be defined before the first point that invokes it. [expr.const.core] paragraph 2.4 makes an invocation of an undefined `constexpr` function a non-core-constant expression. An operator declared in class and defined out of line after an annotated declaration therefore makes that invocation ill-formed. The common spelling, defined in class beside the data the annotation carries, is never affected.
+A definition of the operator has to be reachable from the point of invocation. [expr.const.core] paragraph 2.4 makes an invocation of an undefined `constexpr` function a non-core-constant expression and [module.reach] paragraph 3 says what reaches a given point: a declaration earlier in the same translation unit or one in a translation unit imported before that point. Inside one translation unit that is lexical order. An operator declared in class and defined out of line after an annotated declaration therefore makes that invocation ill-formed. Across a module boundary the import supplies the reachability and nothing further is needed. The common spelling, defined in class beside the data the annotation carries, is unaffected either way. Paragraph 2.4 does not itself say what "undefined" means and CWG should confirm that it reads through reachability.
 
 The operator may return normally (annotation retained) or fail during constant evaluation (program ill-formed). The preferred failure mechanism is throwing `std::meta::exception` ([[P3560R2]]). The proposal relies on the same exception-in-consteval model used by the reflection library.
 
@@ -783,13 +797,15 @@ A declaration that is not a definition usually leaves `ctx.target()` incomplete 
 
 A namespace has no completion point. `namespace N { }` can be reopened any number of times, in this translation unit and in others. The operator runs at the closing brace of the namespace-definition the annotation is written on and sees what that definition contains. A later reopening adds declarations the operator already ran without.
 
-[dcl.attr.annotation] paragraph 1 bounds this further than it first looks. An annotation may not be applied where the host scope of the declaration differs from its target scope or to a non-defining friend declaration. An out-of-class member definition and a qualified redeclaration therefore carry none at all. The redeclarations that can contribute one are those written in the same scope.
+[dcl.attr.annotation] paragraph 1 bounds this further than it first looks. An annotation may not be applied where the host scope of the declaration differs from its target scope or to a non-defining friend declaration. That restriction is the resolution of [[CWG3124]] and it also rules out a block-scope extern, whose host scope is the block and whose target scope is not. An out-of-class member definition and a qualified redeclaration therefore carry none at all. The redeclarations that can contribute one are those written in the same scope.
 
 The same gap is open for any entity declared more than once. [meta.reflection.annotation] paragraph 2 gathers only the declarations reachable at the query point so an annotation on the first declaration of a namespace-scope function is invoked before a later redeclaration contributes its own annotations. `annotations_of` inside that operator returns only the set visible at that point. A rule that needs the full set cannot be written this way and the alternative is worse: waiting for the end of the translation unit would move every diagnostic to the bottom of the file and would still miss the declarations in other translation units. Class members escape this because a class has exactly one definition, which is why the first row of the table is the useful case and this one is the residue.
 
 ## Injected members ## {#timing-injected}
 
 Writing an annotation in the source is not the only way to form one. [meta.reflection.define.aggregate] paragraph 9.5.6 gives each member injected by `define_aggregate` the annotations named in its `data_member_options` and those annotations have no annotation site anywhere in the program. They are invoked too and the point falls out of the wording that injects them. Paragraph 9.2 puts the locus of the injected declaration immediately after the core constant expression under evaluation and that declaration defines the class. The first row of the table is worded in terms of a class-specifier, which an injected declaration does not have so wording for this paper has to say that its locus stands in for the point immediately after one.
+
+`define_aggregate` is the only facility in the draft that injects a declaration and this section is written for it. [[P4033R1]] proposes `define_enum` with an `enumerator_options` that carries annotations the same way so an injected enumerator would take the same rule, with the locus of the injected enumeration standing in for the point immediately after an enum-specifier.
 
 The invocations therefore happen after the `define_aggregate` call has returned and after the evaluation containing it has finished. Whatever made the call, a `consteval` block or another annotation, cannot catch a failure coming from the annotations it injected and is not reentered by them.
 
@@ -821,7 +837,7 @@ Neither point is settled by the existing wording. Both models need a new program
 
 An annotation on a templated entity or on an entity declared within one is invoked once per specialization and not once on the template, whether or not the annotation expression itself is dependent. The template itself is included deliberately, because the draft's own examples put an annotation there. [meta.reflection.annotation] paragraph 4 spells out `template <class T> struct [[=42]] D { }`, with `annotations_of(^^D<int>)[0] != annotations_of(^^D<char>)[0]` and their underlying constants equal. A class template is never complete. Only its specializations are so there is no point at which the table's rule could fire on the template itself. Deferring every case also avoids asking `ctx.target()` to denote a templated entity independently of a specialization, which reflection does not offer.
 
-The consequence P3394R4's example makes concrete is that an identical non-dependent annotation runs its operator once per specialization, on an equal value each time, with only `ctx.target()` differing. That is what validation wants, since each specialization is a distinct class to check and it is a compile-time cost the paper accepts. Memoizing across specializations is not available to an implementation, because [dcl.attr.annotation] paragraph 3 makes the annotations distinct by construction.
+The consequence P3394R4's example makes concrete is that an identical non-dependent annotation runs its operator once per specialization, on an equal value each time, with only `ctx.target()` differing. That is what validation wants, since each specialization is a distinct class to check and it is a compile-time cost the paper accepts. Memoizing across specializations is not available to an implementation, because [dcl.attr.annotation] paragraph 3 makes the annotations distinct by construction. The words "or instantiation thereof" in that paragraph came from [[CWG3145]] and were added for exactly this case.
 
 An annotation on a template that is never instantiated is never checked. That is how every other dependent construct already behaves and the paper accepts it without inventing a separate test for which annotations could have been checked early. An explicit specialization is not instantiated from the template either. The template's annotation does not run for it and only the annotations the specialization writes for itself do. "Once per specialization" means once per specialization generated from the template.
 
@@ -889,6 +905,8 @@ error: serial::Field may annotate only non-static data members
   note: in annotation on member function 'Session::refresh'
 </xmp>
 
+An operator has one outcome besides success and it is a hard error. It cannot warn. A rule that only wants to warn has no standard channel today and neither does one that wants to print while it runs. [[P2758R5]] proposes `std::constexpr_warning_str`, `std::constexpr_error_str`, and `std::constexpr_print_str` for exactly that. It has not been adopted. If it is, an operator can call them like any other `consteval` code and this paper needs nothing further.
+
 # Reflection Integration # {#reflection}
 
 This paper adds nothing to the metadata query surface:
@@ -903,15 +921,17 @@ Invocation failure makes the program ill-formed before any code outside the encl
 
 `annotations_of` inside an operator returns whatever [meta.reflection.annotation] paragraph 2 makes visible at the point of invocation, which is the reason the timing rule picks that point ([[#timing]]) and needs no new rule of its own. For an annotation in a class it is every annotation on every base and member of the class, including the occurrence that triggered the invocation. For an entity declared more than once it is the annotations on the declarations reachable there, which need not be all the entity ends up with ([[#timing-reopen]]). Under [dcl.attr.annotation] paragraph 3 each annotation is unique so repeated annotations appear as distinct reflections and multiplicity rules are expressible ([[#example-multiplicity]]).
 
+`ctx.annotation()` hands back an annotation reflection and not a new kind of thing. `is_annotation` is `true` for it and `constant_of` and `type_of` answer for it exactly as they do for an element of `annotations_of` ([[#interface-annotation]]).
+
 # Modules and Access Control # {#modules}
 
 Two different program points govern an invocation and saying which does what avoids a contradiction. The invocation happens at the point the table fixes ([[#timing]]) and that point supplies reachability and the position an injected declaration is placed relative to ([[#semantics]]). Access is anchored at the annotation occurrence instead ([[#interface-access]]), not at the module where the annotation type was defined and not at a later importing context. The operator therefore has exactly the access its author granted by writing the annotation where they wrote it: an annotation inside a class body runs with that class's access and can reach private members and the same annotation type written outside that class cannot. No access is created that the annotation site did not already have.
 
-This paper adds no reachability requirement on the annotation type.
+This paper adds no reachability requirement beyond the one every `constexpr` call already carries. A definition of the operator has to be reachable from the point of invocation ([[#semantics-contract]]) and across a module boundary the import is what supplies that.
 
 ## Annotation reflections are TU-local ## {#modules-tu-local}
 
-[dcl.attr.annotation] paragraph 3 says that each annotation or instantiation of one produces a unique annotation, with no qualification on where. CWG3118 found that this leaves a reflection of an annotation with no feasible mangling, since the same annotation written in a header is a different annotation in each translation unit that includes it and a captured reflection used as a template argument would need a name that is the same in all of them. Modules sharpen it by letting such a reflection cross the boundary directly. [basic.link] paragraph 16 resolves it by making a value TU-local when it "is a reflection value that represents an entity, value, or object that is TU-local, an annotation, a direct base class relationship for which either D or B is TU-local, or a data member description for which T is TU-local".
+[dcl.attr.annotation] paragraph 3 says that each annotation or instantiation of one produces a unique annotation, with no qualification on where. [[CWG3118]] found that this leaves a reflection of an annotation with no feasible mangling, since the same annotation written in a header is a different annotation in each translation unit that includes it and a captured reflection used as a template argument would need a name that is the same in all of them. Modules sharpen it by letting such a reflection cross the boundary directly. [basic.link] paragraph 16 resolves it by making a value TU-local when it "is a reflection value that represents an entity, value, or object that is TU-local, an annotation, a direct base class relationship for which either D or B is TU-local, or a data member description for which T is TU-local".
 
 That rule belongs to annotations and this paper neither restates nor amends it. What matters here is that an active annotation opens no way around it. The operator returns `void` so nothing it computes leaves by return. `annotation_context` is not a structural type and its values are consteval-only values ([[#interface]]) so the context cannot become a template argument or outlive the invocation. The reflections an operator obtains from `annotations_of` are TU-local exactly where they would be TU-local outside one.
 
@@ -925,7 +945,11 @@ A broader system would require surface syntax, ignorability rules ([[P2552R3]]),
 
 ## Not runtime discovery or transport ## {#alternatives-runtime}
 
-Runtime tables raise ABI, linker, freestanding/hosted, and cross-TU ordering questions. This facility introduces no such table. The operator returns `void` and `annotation_context` is a consteval-only value ([[#modules-tu-local]]).
+Runtime tables raise ABI, linker, freestanding/hosted, and cross-TU ordering questions. This facility introduces no such table. The operator returns `void` and `annotation_context` is a consteval-only value ([[#modules-tu-local]]). `<meta>` is not among the headers a freestanding implementation has to provide ([compliance]) so `annotation_context` raises no freestanding question of its own.
+
+## Not an annotation the language reads ## {#alternatives-language-read}
+
+An annotation can also make the compiler act by having the language itself read it. [[P4167R0]] takes that route for argument-dependent lookup: an annotation of a type added to `<meta>` names further associated entities and [basic.lookup.argdep] is changed to consult it. The meaning of that annotation is fixed by the language and the compiler acts on it during lookup. Nothing in this paper expresses it. An operator runs after its declaration is formed, observes it, and changes neither the declaration nor how names are looked up ([[#semantics-contract]]) so the two are complementary. An annotation the language reads stays passive under this paper unless its type also provides the operator.
 
 ## Not a `consteval` block ## {#alternatives-consteval-block}
 
@@ -975,9 +999,9 @@ void build(command_context&);
 
 This proposal shares the core shape: a callable receives the declaration context at the attachment site. The differences are significant. Python decorators operate on runtime objects and can replace the decorated entity entirely. The operator this paper proposes runs on compile-time reflections, is `const`, and cannot replace the annotated declaration.
 
-## TypeScript decorators (TC39 stage 2.7) ## {#prior-art-typescript}
+## TypeScript decorators ## {#prior-art-typescript}
 
-TC39 decorators, as shipped in TypeScript 5, receive the decorated value together with a context object carrying `kind`, `name`, `access`, and other declaration properties:
+TC39 decorators, at stage 2.7 in the TC39 proposals index ([[TC39-PROPOSALS]]) and shipped in TypeScript 5, receive the decorated value together with a context object carrying `kind`, `name`, `access`, and other declaration properties:
 
 ```typescript
 function mustBeMethod(_target: any, context: ClassMethodDecoratorContext) {
@@ -1143,10 +1167,17 @@ Running code named by metadata at the declaration site is established practice. 
 * In [basic.link], settle whether a closure type introduced by a lambda-expression written as a namespace-scope annotation is TU-local, which paragraph 15.2 leaves open ([[#semantics-detection]]).
 * In [meta.reflection.define.aggregate], state that an annotation on an injected member is invoked at the locus of the injected declaration, say what synthesized points its evaluation context contains ([[#timing-injected]]), and bound a chain of such injections or say that injected annotations are never invoked ([[#timing-injected]]).
 * In [meta.syn] and a new subclause, add `std::meta::annotation_context` and specify its members, including `annotation()` ([[#interface]]), the per-construct results of `is_definition()` and `is_exported()` ([[#interface-state]]), and that its values are consteval-only values.
+* In [cpp.predefined] and [version.syn], revise the feature-test macros ([[#wording-impact-macro]]).
 
 No new grammar production or declaration form is required.
 
 This paper proposes no wording and there is no implementation. The open questions below decide what the wording would say so drafting before EWG gives a direction would be drafting to the wrong design. The argument rests on the adopted annotation and reflection wording. The list above is the full size of the ask: the point of invocation, the point of evaluation, and the point that hosts a specialization's invocation are all things this paper has to define, because no existing rule fixes them.
+
+## Feature-test macro ## {#wording-impact-macro}
+
+[[P3394R4]] minted no macro of its own and [cpp.predefined] carries no `__cpp_annotations`. Annotations shipped under the reflection macros. The conservative reading is that this paper does the same and bumps `__cpp_impl_reflection` in [cpp.predefined] for the invocation rule and `__cpp_lib_reflection` in [version.syn] for `annotation_context`, both to the value of the plenary that adopts it.
+
+The case for minting `__cpp_active_annotations` instead is that an implementation can ship reflection and annotations without this facility. A user testing for it is then asking a question the reflection macro cannot answer. This paper proposes the bump because it follows what annotations already did and [[#open-questions]] carries the choice.
 
 # Implementability # {#implementability}
 
@@ -1157,7 +1188,9 @@ Annotation formation and appertainment are specified in [dcl.attr.annotation], t
 * materializing a program point per invocation at the places [[#timing]] names and invoking the operator there;
 * diagnosing failure.
 
-The third is the one to try first and it is where an implementer will find out whether the design is right. The others reuse machinery that exists. None of that work adds a grammar production, a runtime subsystem or a linker protocol. Because the design stays within standard annotations, tooling sees no macro-only surface and no vendor syntax. An annotation that calls `define_aggregate`, which needs the [expr.const.core] change this paper asks for ([[#semantics-contract]]), does generate a declaration, but it does so through standard reflection at a trigger written in the source and [meta.reflection.define.aggregate] already gives that declaration a locus so nothing about it is hidden from a tool that reads reflection.
+The third is the one to try first and it is where an implementer will find out whether the design is right. It is also where the compile-time cost lands. The cost model follows from the rules above and this paper offers no measurements. One top-level constant evaluation happens for each pair of an annotation and a construct it appertains to ([[#shape-occurrence]]), once per specialization for anything templated ([[#timing-templates]]), and nothing is memoized across specializations because [dcl.attr.annotation] paragraph 3 makes the annotations distinct by construction. An annotation type written in a widely included header therefore pays once per use rather than once per definition. Whether that is acceptable is a question for an implementation and it is the second thing worth measuring.
+
+The others reuse machinery that exists. None of that work adds a grammar production, a runtime subsystem or a linker protocol. Because the design stays within standard annotations, tooling sees no macro-only surface and no vendor syntax. An annotation that calls `define_aggregate`, which needs the [expr.const.core] change this paper asks for ([[#semantics-contract]]), does generate a declaration, but it does so through standard reflection at a trigger written in the source and [meta.reflection.define.aggregate] already gives that declaration a locus so nothing about it is hidden from a tool that reads reflection.
 
 # Future Directions # {#future}
 
@@ -1182,7 +1215,8 @@ Follow-on work on reification or compile-time code generation ([[P3294R2]]) shou
 * Access in a class-head. `access()` is anchored at the annotation occurrence everywhere except a class-head or a base-clause, where the occurrence sits outside the class scope and the anchor moves into the member-specification. Is the exception worth the irregularity? See [[#interface-access]].
 * Silent adoption break. A C++26 annotation type that already has a `consteval` call operator viable for an `annotation_context` becomes active on adoption, with no edit at the annotation site. One returning something other than `void` stops compiling instead ([[#semantics-detection]]). Is either acceptable or is an opt-in marker worth its cost after all? See [[#semantics-passive]].
 * Self-definition. This paper forbids an operator from defining its own target, which a `consteval` block in the same position may do. Is the asymmetry worth it? See [[#semantics-contract]].
-* Context surface. `annotation()` is in because self-identity cannot be expressed without it ([[#interface]]). Should `annotation_context` expose anything further?
+* Feature-test macro. This paper bumps the reflection macros rather than minting `__cpp_active_annotations`, following annotations, which minted none. Is a macro of its own worth it for a facility an implementation can ship separately? See [[#wording-impact-macro]].
+* Context surface. `annotation()` is in because self-identity cannot be expressed without it ([[#interface]]). Should `annotation_context` expose anything further? Should the accessors be free functions instead ([[#interface]])?
 
 # Summary # {#summary}
 
@@ -1191,6 +1225,10 @@ Follow-on work on reification or compile-time code generation ([[P3294R2]]) shou
 * The only library addition is `annotation_context`.
 
 One operator, plus reflection facilities as they arrive, covers declaration-relative behavior generally. Reflection-driven synthesis comes with it only if the [expr.const.core] paragraph 2.32 request is granted ([[#semantics-contract]]). Refusing it leaves validation intact and removes synthesis.
+
+# Acknowledgments # {#acknowledgments}
+
+The author thanks the Together C & C++ Discord community for their feedback and input.
 
 <pre class=biblio>
 {
@@ -1235,6 +1273,61 @@ One operator, plus reflection facilities as they arrive, covers declaration-rela
         "authors": ["Andrei Alexandrescu", "Barry Revzin", "Daveed Vandevoorde"],
         "href": "https://wg21.link/P3294R2",
         "date": "2024-10-15"
+    },
+    "N5054": {
+        "title": "Working Draft, Programming Languages -- C++",
+        "authors": ["Thomas Köppe"],
+        "href": "https://wg21.link/N5054",
+        "date": "2026-07-16"
+    },
+    "P3385R8": {
+        "title": "Attributes reflection",
+        "authors": ["Aurelien Cassagnes"],
+        "href": "https://wg21.link/P3385R8",
+        "date": "2026-06-08"
+    },
+    "P4167R0": {
+        "title": "reflection annotations to control ADL",
+        "authors": ["Hana Dusíková"],
+        "href": "https://wg21.link/P4167R0",
+        "date": "2026-05-12"
+    },
+    "P2758R5": {
+        "title": "Emitting messages at compile time",
+        "authors": ["Barry Revzin"],
+        "href": "https://wg21.link/P2758R5",
+        "date": "2025-02-11"
+    },
+    "P4033R1": {
+        "title": "Synthesizing enum at compile time with define_enum",
+        "authors": ["Aurelien Cassagnes"],
+        "href": "https://wg21.link/P4033R1",
+        "date": "2026-06-08"
+    },
+    "CWG3092": {
+        "title": "CWG3092: base-specifiers are not \"declared\"",
+        "href": "https://wg21.link/cwg3092",
+        "date": "2025-10-01"
+    },
+    "CWG3118": {
+        "title": "CWG3118: Mangling reflections of annotations is infeasible",
+        "href": "https://wg21.link/cwg3118",
+        "date": "2025-11-06"
+    },
+    "CWG3124": {
+        "title": "CWG3124: Disallow annotations on block-scope externs and non-unique friend declarations",
+        "href": "https://wg21.link/cwg3124",
+        "date": "2025-11-15"
+    },
+    "CWG3145": {
+        "title": "CWG3145: Uniqueness of annotations",
+        "href": "https://wg21.link/cwg3145",
+        "date": "2025-12-01"
+    },
+    "TC39-PROPOSALS": {
+        "title": "ECMAScript proposals",
+        "href": "https://github.com/tc39/proposals",
+        "publisher": "TC39"
     }
 }
 </pre>
