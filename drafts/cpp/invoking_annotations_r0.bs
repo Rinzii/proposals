@@ -118,11 +118,11 @@ Annotations are non-ignorable under the existing standard ([[P3394R4]]): their u
 
 The two uses that section names first, an annotation added only for selected specializations and one annotation that applies both `clap::Short` and `clap::Long` to a declaration, need annotations added to a declaration after the fact, which we do not propose. Under this design each is a read-time derivation by an accessor the annotation's library ships, which can answer differently per specialization and can read `clap::Short` and `clap::Long` as one ([[#future|related work]]). The third, injecting a `std::formatter` specialization once a class is complete, needs generation facilities beyond `define_aggregate`, such as those considered by [[P3294R2]]. For a class template it would also need a callback on the template definition, which per-specialization invocation does not provide ([[#timing-templates|specializations]]).
 
-## Constructors check values and invocations check declarations ## {#overview-invariants}
+## Invocations check stored values as well as declarations ## {#overview-invariants}
 
-For class-type metadata, constructors can handle value invariants. An active annotation's invocation handles behavior that depends on the annotated construct. Program-global behavior, across translation units or registry-wide, is outside scope.
+For class-type metadata, constructors can reject invalid initial values. Structural types expose their non-static data members, so a value may be changed after construction and before it is used as an annotation. An active annotation's invocation can validate the final stored value as well as properties of the annotated construct.
 
-Because annotation values must be structural types, we do not claim that every value-level invariant can be enforced through encapsulation.
+Program-global behavior, across translation units or registry-wide, is outside scope.
 
 # The examples show rules that read the annotated construct # {#examples}
 
@@ -154,6 +154,12 @@ namespace serial
 
         consteval void operator()(std::meta::annotation_context ctx) const
         {
+            if (key == nullptr || std::string_view(key).empty())
+                throw std::meta::exception(
+                    u8"serial::Field requires a non-empty key",
+                    std::meta::current_function(),
+                    ctx.annotation_location());
+
             if (!std::meta::is_nonstatic_data_member(ctx.target()))
                 throw std::meta::exception(
                     u8"serial::Field may annotate only non-static data members",
@@ -170,15 +176,15 @@ struct User
 };
 </xmp>
 
-The constructor rejects an empty key, which is wrong wherever a `Field` is written. The operator rejects a `Field` applied to anything but a non-static data member, which is visible only once there is a declaration to look at. That is the split between value and declaration [[#overview-invariants|invariants]].
+The constructor rejects an empty key at construction. Because `key` is public, a value can still be changed before it is used as an annotation. The operator checks the stored key again, rejecting null and empty keys, and requires a non-static data member. The consumer's guarantee comes from these [[#overview-invariants|invocation checks]].
 
 The key is stored as `const char*` because an annotation value must be a structural type and a pointer into a string literal is not a valid constant template argument. The constructor copies the characters into static storage with `define_static_string` ([[P3491R3]]), which yields a pointer that is. Every string-carrying example below uses the same idiom.
 
-A consumer that serializes `User` needs only adopted facilities: `nonstatic_data_members_of` ([[P2996R13]]), `annotations_of_with_type` ([[P3394R4]]), a splice, and an expansion statement ([[P1306R5]]). It can assume every `Field` it finds sits on a data member and carries a non-empty key. Without the check, the first report would come from inside the consumer's own template instantiation.
+A consumer that serializes `User` needs only adopted facilities: `nonstatic_data_members_of` ([[P2996R13]]), `annotations_of_with_type` ([[P3394R4]]), a splice, and an expansion statement ([[P1306R5]]). Once the invocations have succeeded, it can assume every `Field` it finds sits on a non-static data member and carries a non-null, non-empty key. Without the checks, the first report would come from inside the consumer's own template instantiation.
 
-## A command checks its function's signature ## {#example-command}
+## A command checks its function's parameter shape ## {#example-command}
 
-The rule here is about the annotated function's signature, which the annotation's own constructor cannot reach because there is no signature to look at when the value is formed.
+The rule here requires one declared parameter of type `command_context&`. The annotation's own constructor cannot check that parameter list because there is no declaration to look at when the value is formed.
 
 <xmp class=language-cpp>
 struct command_context
@@ -224,10 +230,10 @@ void build(command_context&);
 void clean(command_context&);
 
 // [[=cli::Command("version")]]
-// void version();   // ill-formed: the dispatcher has nothing to pass it
+// void version();   // ill-formed: missing command_context& parameter
 </xmp>
 
-The dispatcher that runs these commands finds them through `annotations_of` and calls each one through the same pointer type. A command the dispatcher could not call is reported at its own declaration.
+The annotation validates the declared parameter count and type. It does not establish a common function-pointer type or guarantee that a dispatcher can call every accepted function.
 
 ## An annotation on a class definition sees the whole class ## {#example-class}
 
@@ -238,9 +244,11 @@ struct RequireDefaultConstructible
 {
     consteval void operator()(std::meta::annotation_context ctx) const
     {
-        if (!ctx.is_definition())
+        if (!std::meta::is_type(ctx.target())
+            || !std::meta::is_class_type(ctx.target())
+            || !ctx.is_definition())
             throw std::meta::exception(
-                u8"RequireDefaultConstructible requires a class definition",
+                u8"RequireDefaultConstructible requires a non-union class definition",
                 std::meta::current_function(),
                 ctx.annotation_location());
 
@@ -259,11 +267,11 @@ struct [[=RequireDefaultConstructible{}]] Config
 };
 </xmp>
 
-The operator runs after the definition of `Config` and can query properties that require the full definition.
+The operator first requires a non-union class definition. It runs after the definition of `Config` and can then query default constructibility, which requires the full definition.
 
 ## Granted injection lets an annotation generate a type ## {#example-synthesis}
 
-The annotation mirrors the members of the class it applies to into a second type, such as a flat row type for a query result or a C-API boundary.
+The annotation copies the names, types, and order of the class's direct non-static data members into a second aggregate. Matching object layout and C compatibility are not guaranteed.
 
 <xmp class=language-cpp>
 #include <meta>
@@ -315,7 +323,7 @@ int main()
 
 The example also depends on our proposed change to [expr.const.core] paragraph 2.32, which currently lets only a `consteval` block produce an injected declaration. Because the annotation sits in the class-head, which lies outside the class scope of `Order` ([basic.scope.class] paragraph 1), the scope rule keyed on the annotation's position permits the namespace-scope definition of `OrderRow` ([[#semantics-contract|the invocation contract]]).
 
-## The occurrence/target pair lets the rule report once ## {#example-multiplicity}
+## The occurrence/target pair selects which invocation rejects duplicate keys ## {#example-multiplicity}
 
 This rule is about the class as a whole. It is expressible because the operator sees the same annotation set an outside query sees, including its own occurrence ([[#timing|processing points]]), and knows which pair it is invoked for.
 
@@ -364,11 +372,11 @@ struct Batch
 };
 </xmp>
 
-Both invocations in `LedgerEntry` find two primary keys. Without a way to tell them apart both would fail and the number of diagnostics would be up to the implementation. `ctx.annotation()` alone does not tell them apart in every case. In `Batch` one annotation occurrence applies to both declarators, so `annotations_of(^^Batch::batch_id)[0]` and `annotations_of(^^Batch::sequence)[0]` are the same reflection ([[#shape-occurrence|occurrence/target pairs]]) and both invocations receive equal `ctx.annotation()` values. The operator therefore compares the member together with the annotation, which is the occurrence/target pair being invoked, and reports only when its own pair is the class's second key. The author gets one diagnostic in each class, at `batch_id` in `LedgerEntry` and at the shared annotation in `Batch` ([[#interface-annotation|the annotation accessor]]).
+Both invocations in `LedgerEntry` find two primary keys. If each threw upon finding duplicate keys, both would fail. `ctx.annotation()` alone does not tell them apart in every case. In `Batch` one annotation occurrence applies to both declarators, so `annotations_of(^^Batch::batch_id)[0]` and `annotations_of(^^Batch::sequence)[0]` are the same reflection ([[#shape-occurrence|occurrence/target pairs]]) and both invocations receive equal `ctx.annotation()` values. The operator therefore compares the member together with the annotation, which is the occurrence/target pair being invoked, and throws only when its own pair is the class's second key. The exception identifies the annotation on `batch_id` in `LedgerEntry` and the shared annotation in `Batch` ([[#interface-annotation|the annotation accessor]]). This selects one failing invocation per class without prescribing the number of compiler diagnostics.
 
-## A guard annotation finds its mutex anywhere in the class ## {#example-thread}
+## A guard annotation finds its named member anywhere in the class ## {#example-thread}
 
-The Clang facility from [[#motivation-practice|existing practice]] is written here as a portable annotation. Whether the rule works at all depends on the processing point.
+This is declaration-level metadata validation inspired by the Clang facility in [[#motivation-practice|existing practice]]. It checks the annotation's target and whether the named member exists.
 
 <xmp class=language-cpp>
 struct GuardedBy
@@ -405,13 +413,13 @@ struct GuardedBy
 
 class Connection
 {
-    std::mutex mu_;
     [[=GuardedBy("mu_")]] int refcount_ = 0;
     [[=GuardedBy("mu_")]] bool connected_ = false;
+    std::mutex mu_;
 };
 </xmp>
 
-The operator checks that the named mutex is a member of the same class. Because member annotations are invoked after the enclosing class is complete ([[#timing|processing points]]), the check does not depend on whether `mu_` is declared before or after the members that name it.
+The operator checks that the name denotes a non-static data member of the same class. It does not check that member's type or analyze locking in function bodies. Here `mu_` is declared after the members that name it. The check can find it because member annotations are invoked after the enclosing class is complete ([[#timing|processing points]]).
 
 ## An annotation can require an exported declaration ## {#example-export}
 
@@ -483,7 +491,7 @@ Here `ctx.target()` returns a reflection representing the direct base class rela
 
 ## Each parameter annotation checks its own parameter ## {#example-param}
 
-The target here is a function parameter, whose type the operator checks.
+`NonNull` checks that it is attached to a function parameter of pointer type. It does not test argument values or enforce non-nullness at calls.
 
 <xmp class=language-cpp>
 struct NonNull
@@ -1188,7 +1196,7 @@ SG7 may take the polls first. The library surface (`annotation_context`) goes to
 
 The rule an annotation enforces is written once, in the annotation's type. Applying the annotation is enough to invoke it, with [[#alternatives-consteval-block|nothing for the class author to remember]]. The type of the annotation's value decides whether it [[#semantics-detection|opts in]], a decision that reads declarations only and instantiates no function body. Each occurrence/target pair not processed nested has its own processing point, in an order stated for each class and declaration. That is what makes a declaration injected by one annotation visible at a later annotation's point ([[#timing-order|lexical order]]).
 
-C++ gains a checked annotation site. `serial::Field` rejects a member function at the member function ([[#example-serial|the field example]]). `GuardedBy` confirms that the mutex it names is a member of the same class wherever that mutex is declared ([[#example-thread|the guard example]]). `PrimaryKey` reports one diagnostic, at the second key ([[#example-multiplicity|the primary-key example]]). Without the facility the violation is reported away from the construct that caused it ([[#motivation-practice|existing practice]]).
+C++ gains a checked annotation site. `serial::Field` rejects a member function at the member function ([[#example-serial|the field example]]). `GuardedBy` confirms that the named non-static data member exists in the same class wherever it is declared ([[#example-thread|the guard example]]). `PrimaryKey` rejects duplicate keys in the second key's invocation ([[#example-multiplicity|the primary-key example]]). Without the facility the violation is reported away from the construct that caused it ([[#motivation-practice|existing practice]]).
 
 No implementation is reported here and scheduling is the principal risk ([[#implementability|implementability]]). No wording is provided and the processing points and their order need [[#wording-impact|Core review]] ([[#open-questions|open questions]]). An injected member's annotation runs inside the injecting evaluation as a required constant expression of its own ([[#timing-injected|injected members]]). An infinite chain through [[#timing-templates|specializations]] has an undefined result, like any infinite template recursion. Where a codebase owns its declarations, a `consteval` block [[#alternatives-consteval-block|already runs the same checks]]. Every C++26 annotation keeps its behavior ([[#semantics-passive|compatibility]]).
 
