@@ -38,7 +38,7 @@ make update     # Update Bikeshed data files (needs network)
 Build a single paper from either tree:
 
 ```sh
-make build SPEC=drafts/cpp/annotation_customization.bs
+make build SPEC=drafts/cpp/invoking_annotations_r0.bs
 make build SPEC=cpp/P1234.bs
 ```
 

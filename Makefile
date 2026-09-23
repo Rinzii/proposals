@@ -3,7 +3,7 @@ SHELL := /usr/bin/env bash
 
 SPEC_DIRS := cpp drafts/cpp
 OUT_DIR := out
-DEFAULT_SPEC := drafts/cpp/annotation_customization.bs
+DEFAULT_SPEC := drafts/cpp/invoking_annotations_r0.bs
 SPEC ?= $(DEFAULT_SPEC)
 OUT ?= $(OUT_DIR)/$(SPEC:.bs=.html)
 SPECS := $(sort $(foreach dir,$(SPEC_DIRS),$(wildcard $(dir)/*.bs)))

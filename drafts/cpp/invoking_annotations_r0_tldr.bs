@@ -1,0 +1,254 @@
+<pre class=metadata>
+Title: Invoking Annotations in Brief
+Shortname: Pnnnn
+Level: 0
+Status: D
+Group: WG21
+Date: 2026-09-23
+Audience: SG7, EWG, LEWG
+Editor: Ian Pike, ianpike98cs@gmail.com
+Editor Term: Reply-to, Reply-to
+Abstract: This paper summarizes the Invoking Annotations proposal: an annotation is invoked at compile time for each declaration or base-specifier it applies to whenever the type of its value declares a callee with a `std::meta::annotation_context` parameter. The invocation is a mandatory constant evaluation that can reject the construct but changes neither it nor the annotation.
+Boilerplate: omit conformance, omit feedback-header
+Markup Shorthands: markdown yes
+</pre>
+
+# Revision History # {#revisions}
+
+R0: initial revision.
+
+# Introduction # {#intro}
+
+We propose that an implementation invoke an annotation once for each declaration or base-specifier it applies to, when the type of the annotation's value declares a callee with a `std::meta::annotation_context` parameter. That invocation is a mandatory constant evaluation whose result is discarded ([[#semantics|semantics]]). A call operator is one spelling of such a callee:
+
+<xmp class=language-cpp>
+consteval void operator()(std::meta::annotation_context) const;
+</xmp>
+
+A C++26 annotation cannot observe what it applies to. A rule about where it may be written therefore sits in library code, vendor extensions, macros, or external tooling. Each of those reports a violation away from the declaration. A `consteval` block ([[P3289R1]]) can run such a check, but only in code whose author remembers to write one.
+
+The target is C++29. Stable names and paragraph numbers refer to [[N5054]]. We extend the annotations of [[P3394R4]] without changing them and build on the reflection facilities of [[P2996R13]]. We assume both as adopted for C++26, including the structural-type restriction on annotation values. We also assume the value-based rules that [[P4101R1]] brought into [[N5054]], under which a pointer to an immediate function is a consteval-only value. [[INVOKING-ANNOTATIONS]] states each rule with its citations and covers the cases, alternatives, and objections left out here.
+
+# The annotation's own type carries the rule # {#example-serial}
+
+A `Field` carries a serialization key and checks the declaration it applies to.
+
+<xmp class=language-cpp>
+#include <meta>
+#include <string>
+#include <string_view>
+
+namespace serial
+{
+    struct Field
+    {
+        const char* key;
+
+        consteval Field(std::string_view k)
+            : key(std::define_static_string(k))
+        {
+            if (k.empty())
+                throw std::meta::exception(
+                    u8"serial::Field requires a non-empty key",
+                    std::meta::current_function());
+        }
+
+        consteval void operator()(std::meta::annotation_context ctx) const
+        {
+            if (!std::meta::is_nonstatic_data_member(ctx.target()))
+                throw std::meta::exception(
+                    u8"serial::Field may annotate only non-static data members",
+                    std::meta::current_function(),
+                    ctx.annotation_location());
+        }
+    };
+} // namespace serial
+
+struct User
+{
+    [[=serial::Field("user_id")]] int id;
+    [[=serial::Field("display_name")]] std::string name;
+};
+</xmp>
+
+The constructor rejects an empty key, which is wrong wherever a `Field` is written. The operator rejects a `Field` applied to anything but a non-static data member, which is visible only once there is a declaration to look at. The key is stored as `const char*` because an annotation value must be a structural type and a pointer into a string literal is not a valid constant template argument. `define_static_string` ([[P3491R3]]) copies the characters into static storage and yields a pointer that is.
+
+Applied to a member function, `serial::Field` is rejected at that member function. A consumer that serializes `User` can assume every `Field` it finds sits on a data member and carries a non-empty key.
+
+# Declaring the context parameter opts in and a near miss is an error # {#semantics-detection}
+
+An annotation *opts in* when the type of its value declares a callee with a parameter whose declared type is `std::meta::annotation_context`, possibly cv-qualified or a reference to it. An annotation that opts in is active. One that does not is passive.
+
+Pointers to functions, static and non-static call operators, explicit object member functions, captureless lambdas, and surrogate call functions all opt in when the callee declares the parameter. An annotation stays passive when its value is a `std::meta::info` or a pointer to member. It also stays passive when its callee's parameter is declared `auto`.
+
+No C++26 annotation opts in, because `std::meta::annotation_context` does not occur in [[N5054]]. A C++26 generic predicate whose call operator takes `const V&` therefore stays passive.
+
+Once an annotation opts in, each of these is an error:
+
+* a deleted, inaccessible, or ambiguous call
+* a non-`const` call operator on the `const` object
+* an `explicit` or non-`const` conversion function
+* an `annotation_context&` parameter that cannot bind the prvalue
+* a generic overload that wins overload resolution
+* an evaluation that is not a core constant expression
+
+There is no fallback to passive once an annotation opts in. [[#polls|Poll 1]] asks about the alternative, which makes an annotation active whenever the direct call is valid. Under it a C++26 generic predicate accepts the context through its template parameter and becomes active. Its body is then instantiated with the context as its argument. A body written for payload values makes the program ill-formed. A near miss makes the call invalid and leaves the annotation passive without a diagnostic.
+
+The declared parameter keeps every C++26 annotation passive and makes each near miss an error.
+
+# An invocation can reject the construct it applies to but cannot change it # {#semantics}
+
+For each occurrence of an active annotation and each construct it applies to, the implementation evaluates `static_cast<void>(A(C))` once in the abstract semantics. `A` is a splice of the annotation's underlying constant and `C` is an implementation-provided prvalue of type `std::meta::annotation_context` describing this occurrence and this target. The expression is manifestly constant-evaluated and shall be a core constant expression. Its result is discarded.
+
+A failed invocation is an error. The preferred report is a thrown `std::meta::exception` ([[P3560R2]]), as in the example.
+
+The context's accessors are `annotation()`, `target()`, `annotation_location()`, `declaration_location()`, `is_definition()`, `is_exported()`, and `access()`. The choice between these member accessors and free functions stays open to LEWG. `access()` returns an access context anchored at the annotation site. For an annotation in a class-head or a base-clause, `access()` is anchored instead at a point in the member-specification of the class being defined. An annotation on a class, on one of its base-specifiers, or on one of its members can therefore enumerate that class's private members through it.
+
+An invocation changes neither the annotation's value nor the construct it applies to. Rejecting the construct is the only effect an invocation can have on it.
+
+# Each active annotation runs after the construct it applies to # {#timing}
+
+An annotation written in a class's member-specification or on a base-specifier is processed immediately after the outermost class-specifier that encloses it. The search for that class-specifier stops at an enclosing function body. The annotation therefore sees every member and base of that class, wherever they are declared in the class body. Outside a class, an annotation on a class definition, an enumeration definition, or an enumerator is processed after the closing brace of that class or enumeration. One on a function or one of its parameters is processed after the declaration, which for a function-definition is after the body. One on a namespace-definition is processed at its closing brace. Any other annotation is processed immediately after its declaration.
+
+Within one class the base-specifier annotations run first, then the member annotations in lexical order, then the annotations on the class itself. Enumerators come before their enumeration and parameters before their function.
+
+An annotation in a template is processed once per specialization and never for an uninstantiated template. The annotations of a specialization first required during a constant evaluation are processed nested inside that evaluation. Annotations on a member injected by `define_aggregate` are processed the same way, inside the injecting evaluation. A failed invocation is a hard error and never a substitution failure for the enclosing template.
+
+An invocation on a member sees the same class that a query from outside the class sees. [[INVOKING-ANNOTATIONS]] gives the full table of processing points. It leaves to Core the placement of annotations on a lambda's parameters and call operator. It also leaves to Core the order for specializations referenced from the dependent contexts of [temp.point].
+
+# Injection is requested separately # {#semantics-contract}
+
+[expr.const.core] paragraph 2.32 lets an evaluation produce an injected declaration only as part of a `consteval` block. We ask, in a poll of its own, that an active annotation's invocation may do so too through the existing `define_aggregate`, where a `consteval` block written at the annotation's position could. An annotation on a class-head can then mirror the class's members into a second type, as the synthesis example in [[INVOKING-ANNOTATIONS]] does. A member annotation cannot inject at namespace scope.
+
+An invocation also may not define the entity its context's `target()` represents. An annotation on a class that is declared but not yet defined therefore cannot complete that class.
+
+Declining the request removes reflection-driven synthesis and nothing else.
+
+# A `consteval` block runs the same check only where it is written # {#alternatives-consteval-block}
+
+A `consteval` block ([[P3289R1]]) already runs compile-time code in a class body, at namespace scope, or in a block. A codebase that owns its declarations can write one that sweeps `annotations_of` over the members it cares about and get the same checks today. That is the strongest argument against the proposal.
+
+A block does not carry the trigger with the metadata. Whoever defines `serial::Field` cannot make its rule apply to a class they do not own. A class whose author forgets the block is silently unchecked. An active annotation's rule ships with its type and applying the annotation schedules its invocation. The annotation side keeps a narrower silent case: a value whose type declares no callee with an `annotation_context` parameter stays passive without a diagnostic.
+
+The block has to be written correctly by every class that needs the rule, while the annotation type has to be written correctly once, by the author who owns the rule.
+
+# No implementation is reported and scheduling is the principal risk # {#implementability}
+
+No implementation of active annotations is reported and no wording is provided. Deciding the opt-in reads only the type of the annotation's value. The invocation reuses expression semantics every implementation already has. Scheduling is the principal risk through its interaction with complete-class contexts, templates, declaration reachability, and the ordering of injected declarations. Those interactions need a prototype and Core review. There are no compile-time performance measurements. [[INVOKING-ANNOTATIONS]] also takes up the objections on termination and on injection as a supply-chain hazard. It accepts the termination objection in part and calls the injection hazard real but bounded.
+
+A direction poll taken before a prototype is a poll on the model rather than on its cost.
+
+# The polls ask about the opt-in, the protocol, and injection # {#polls}
+
+Poll 1 is a preference. Poll 2 reads as the declared-parameter opt-in unless poll 1 carries. Poll 3 assumes poll 2.
+
+1. EWG prefers that an annotation opt in by the validity of a direct call alone over requiring a callee that declares a `std::meta::annotation_context` parameter ([[#semantics-detection|the opt-in rule]]).
+2. EWG encourages further work on an annotation invocation protocol in which an annotation that opts in, through a callee that declares a `std::meta::annotation_context` parameter or through the validity of a direct call if poll 1 carries, is invoked for each declaration or base-specifier it applies to with a `std::meta::annotation_context` describing that construct, in a mandatory constant evaluation whose failure is an error ([[#semantics|semantics]]).
+3. EWG encourages further work on admitting the invocation of an active annotation under [expr.const.core] paragraph 2.32 so that it may produce an injected declaration where a `consteval` block at the annotation's position could ([[#semantics-contract|the invocation contract]]).
+
+SG7 may take the polls first. The library surface (`annotation_context`) goes to LEWG once poll 2 has set the direction.
+
+# Conclusion # {#conclusion}
+
+We propose that the rule an annotation enforces be written once, in its type. Applying the annotation then invokes the rule for each declaration or base-specifier it applies to, after that construct has been formed, in a mandatory constant evaluation that can reject the construct and cannot change it. Declaring the `std::meta::annotation_context` parameter is the opt-in. Every C++26 annotation keeps its behavior and a near miss is an error.
+
+If the polls carry, C++ gains an annotation that checks where it is written: `serial::Field` rejects a member function at that member function. If they do not, the check stays in a `consteval` block that each class author has to remember or in tooling that reports away from the declaration. Poll 1 chooses between the declared parameter and direct-call validity, poll 2 asks for direction on the invocation protocol, and poll 3 asks separately for injection, whose refusal costs only reflection-driven synthesis.
+
+The next steps are a prototype of the scheduling, Core review of the processing points, and LEWG review of `annotation_context`.
+
+# Disclosure # {#disclosure}
+
+This is an individual contribution with no institutional affiliation. The author maintains no library that would consume this facility and has no current stake in its adoption, but anticipates using it in future work.
+
+This paper summarizes [[INVOKING-ANNOTATIONS]] and asks for the same polls. The author is an author of none of the other papers it cites.
+
+A summary leaves out conditions and cases that [[INVOKING-ANNOTATIONS]] states. Where the two differ, that paper governs.
+
+The statements about the proposal, the code, and the polls all come from [[INVOKING-ANNOTATIONS]] as it stood on 2026-09-23. The code and the poll text are copied from it unchanged. Its disclosure records how its citations were checked against [[N5054]].
+
+<pre class=biblio>
+{
+    "INVOKING-ANNOTATIONS": {
+        "title": "Invoking Annotations: A Compile-Time Callback on Annotated Declarations",
+        "authors": [
+            "Ian Pike"
+        ],
+        "date": "2026-09-23"
+    },
+    "P2996R13": {
+        "title": "Reflection for C++26",
+        "authors": [
+            "Wyatt Childers",
+            "Peter Dimov",
+            "Dan Katz",
+            "Barry Revzin",
+            "Andrew Sutton",
+            "Faisal Vali",
+            "Daveed Vandevoorde"
+        ],
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p2996r13.html",
+        "date": "2025-06-20"
+    },
+    "P3394R4": {
+        "title": "Annotations for Reflection",
+        "authors": [
+            "Wyatt Childers",
+            "Dan Katz",
+            "Barry Revzin",
+            "Daveed Vandevoorde"
+        ],
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3394r4.html",
+        "date": "2025-06-19"
+    },
+    "P3491R3": {
+        "title": "define_static_{string,object,array}",
+        "authors": [
+            "Wyatt Childers",
+            "Peter Dimov",
+            "Barry Revzin",
+            "Daveed Vandevoorde"
+        ],
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3491r3.html",
+        "date": "2025-06-20"
+    },
+    "P3560R2": {
+        "title": "Error Handling in Reflection",
+        "authors": [
+            "Peter Dimov",
+            "Barry Revzin"
+        ],
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3560r2.html",
+        "date": "2025-06-17"
+    },
+    "P4101R1": {
+        "title": "Consteval-only Values for C++26",
+        "authors": [
+            "Barry Revzin",
+            "Peter Dimov",
+            "Daveed Vandevoorde",
+            "Dan Katz"
+        ],
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/p4101r1.html",
+        "date": "2026-06-12"
+    },
+    "N5054": {
+        "title": "Working Draft, Programming Languages \u2014 C++",
+        "authors": [
+            "Thomas K\u00f6ppe"
+        ],
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/n5054.pdf",
+        "date": "2026-07-16"
+    },
+    "P3289R1": {
+        "title": "consteval blocks",
+        "authors": [
+            "Wyatt Childers",
+            "Dan Katz",
+            "Barry Revzin",
+            "Daveed Vandevoorde"
+        ],
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3289r1.html",
+        "date": "2025-01-12"
+    }
+}
+</pre>

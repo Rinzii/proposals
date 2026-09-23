@@ -14,7 +14,7 @@ Usage:
 
 Examples:
     ./scripts/build.sh
-    ./scripts/build.sh drafts/cpp/annotation_customization.bs
+    ./scripts/build.sh drafts/cpp/invoking_annotations_r0.bs
     ./scripts/build.sh cpp/P1234.bs out/cpp/P1234.html
     ./scripts/build.sh --all
 EOF
@@ -110,7 +110,7 @@ if [[ $# -ge 1 ]]; then
     SPEC_FILE="$(normalize_path "$1")"
 else
     for candidate in \
-        "${ROOT_DIR}/drafts/cpp/annotation_customization.bs"
+        "${ROOT_DIR}/drafts/cpp/invoking_annotations_r0.bs"
     do
         if [[ -f "${candidate}" ]]; then
             SPEC_FILE="${candidate}"
