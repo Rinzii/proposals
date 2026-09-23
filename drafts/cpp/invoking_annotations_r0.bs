@@ -8,9 +8,9 @@ Date: 2026-09-23
 Audience: SG7, EWG, LEWG
 Editor: Ian Pike, ianpike98cs@gmail.com
 Editor Term: Reply-to, Reply-to
-Abstract: This paper proposes that an annotation be invoked at compile time for each construct it applies to, a declaration or a base-specifier, whenever the type of its value declares a callee with a `std::meta::annotation_context` parameter.
+Abstract: Applying an active annotation schedules its library-defined callback without requiring the declaration's author to arrange a separate invocation. This paper proposes a compile-time invocation for each construct the annotation applies to, a declaration or a base-specifier, whenever the type of its value declares a callee with a `std::meta::annotation_context` parameter.
 Abstract:
-Abstract: A C++26 annotation cannot observe the construct it applies to. A check on where it may be applied is therefore written outside the annotation and reports a violation somewhere other than at that construct. A `consteval` block can run such a check, but only in code whose author remembers to write one. Declaring the parameter is the opt-in, which EWG is asked to weigh against the validity of a direct call. Because the parameter type is new, every C++26 annotation keeps its behavior. An annotation that opts in cannot fall back to passive metadata, since a call that cannot be formed is an error. The invocation is a mandatory constant evaluation that can reject the construct but changes neither it nor the annotation. A separately polled request, needed only for reflection-driven synthesis, would also let an invocation inject declarations where a `consteval` block at the annotation's position could.
+Abstract: Validation is the primary motivation. The invocation is a mandatory constant evaluation that can reject the construct but changes neither it nor the annotation. An annotation may be observable before its callback runs. Consumers may rely on its checks only after successful completion. The time of validation does not determine the source location a diagnostic identifies. Existing checks can also identify the offending declaration, but C++26 supplies no annotation-triggered callback protocol. Declaring the context parameter is the opt-in, which EWG is asked to weigh against the validity of a direct call. Because the parameter type is new, every C++26 annotation keeps its behavior. An annotation that opts in cannot fall back to passive metadata. A separately polled request would also let an invocation inject declarations where a `consteval` block at the annotation's position could, supporting reflection-driven synthesis.
 Boilerplate: omit conformance, omit feedback-header
 Markup Shorthands: markdown yes
 </pre>
@@ -21,7 +21,7 @@ R0: initial revision.
 
 # Introduction # {#intro}
 
-We propose that an implementation invoke an annotation once for each construct it applies to, a declaration or a base-specifier, when the type of the annotation's value declares a callee with a `std::meta::annotation_context` parameter. That invocation is a mandatory constant evaluation whose result is discarded ([[#semantics|semantics]]). A call operator is one spelling of such a callee:
+Applying an active annotation schedules its library-defined callback without requiring the declaration's author to arrange a separate invocation. We propose that an implementation invoke an annotation once for each construct it applies to, a declaration or a base-specifier, when the type of the annotation's value declares a callee with a `std::meta::annotation_context` parameter. That invocation is a mandatory constant evaluation whose result is discarded ([[#semantics|semantics]]). A call operator is one spelling of such a callee:
 
 <xmp class=language-cpp>
 consteval void operator()(std::meta::annotation_context) const;
@@ -44,16 +44,18 @@ We contribute the following.
 
 We assume the C++26 annotation and reflection facilities as adopted, including the structural-type restriction on annotation values. Under the [[N5054]] value rules, which we also assume, a pointer to an immediate function is a consteval-only value. The declared-parameter opt-in is [[#shape-operator|a policy choice]] rather than a derivation. Poll 1 asks about the alternative.
 
-# Annotation rules are checked away from the annotation # {#motivation}
+# Applying an annotation schedules its library-defined callback # {#motivation}
 
-Each of these uses of an annotation needs compile-time behavior that depends on the annotated construct:
+The annotation's library supplies the callback and applying the annotation schedules it at a defined processing point. The declaration's author does not have to arrange a separate call or `consteval` block ([[#alternatives-consteval-block|the block alternative]]). Validation is the primary motivation, since each of these uses needs compile-time behavior that depends on the annotated construct:
 
 * A serialization-field annotation must reject being applied to anything other than a non-static data member with a non-empty key.
 * A thread-safety annotation must reject a declaration that is not a non-static data member.
 * A command annotation must require a function with a specific signature.
 * A language-binding annotation, marking a declaration for exposure to another language's runtime, must require an exported declaration or a complete type.
 
-Standard C++ has no way to perform any of these checks where the annotation is written. They move instead into ad hoc library code, vendor extensions, macros, or external tooling. Each of those placements separates the check from the construct it constrains. An author then learns about a violation somewhere other than where they made it.
+Reflection and a `consteval` block can already express these checks. Library code, vendor extensions, macros, and external tooling can also arrange checks whose diagnostics identify the offending declaration. What C++26 lacks is a standard protocol by which applying an annotation schedules the callback its library supplies. A separately arranged check can be omitted even when the annotation is present.
+
+Scheduling the callback does not make every observation of the annotation follow validation. Consumers may rely on its checks only after the relevant invocation has completed successfully ([[#overview-invariants|consumer guarantees]]). The callback's processing point determines when it runs and what it can observe. Its diagnostic can still identify the annotation site through the supplied source location ([[#diagnostics|diagnostics]]). The same trigger also supports the separately considered [[#example-synthesis|synthesis use]].
 
 ## Annotations already supply what an invocation needs ## {#motivation-annotations-first}
 
@@ -63,9 +65,9 @@ Attributes are the other candidate. Reflecting one at all is a separate C++29 pr
 
 ## Current tools separate the rule from the metadata ## {#motivation-practice}
 
-Systems in current use put declaration-relative checking somewhere other than the declaration. Clang's thread safety analysis takes annotations such as `GUARDED_BY(mu)` on a data member and diagnoses violations under `-Wthread-safety`. Its `mutex.h` example notes in a comment that the attributes are enabled only with Clang ([[CLANG-TSA]]). Microsoft's source-code annotation language (SAL) covers similar ground: `_In_` and `_Out_`, defined in `<sal.h>`, are read by Visual Studio code analysis for C++ ([[MS-SAL]]). Qt's meta-object compiler (moc) reads a C++ header file. Where it finds class declarations containing the `Q_OBJECT` macro it produces a C++ source file that must be compiled and linked with the implementation of the class ([[QT-MOC]]). Boost.Describe stays in the source: `BOOST_DESCRIBE_STRUCT(Name, Bases, Members)` takes a parentheses-enclosed list of base classes and one of public members by hand, beside the type ([[BOOST-DESCRIBE]]). Adopted reflection already removes that hand-written listing, since `nonstatic_data_members_of` enumerates the members without a macro.
+Systems in current use interpret declaration metadata through compiler analysis, external tools, or library code. Clang's thread safety analysis takes annotations such as `GUARDED_BY(mu)` on a data member and diagnoses violations under `-Wthread-safety`. Its `mutex.h` example notes in a comment that the attributes are enabled only with Clang ([[CLANG-TSA]]). Microsoft's source-code annotation language (SAL) covers similar ground: `_In_` and `_Out_`, defined in `<sal.h>`, are read by Visual Studio code analysis for C++ ([[MS-SAL]]). Qt's meta-object compiler (moc) reads a C++ header file. Where it finds class declarations containing the `Q_OBJECT` macro it produces a C++ source file that must be compiled and linked with the implementation of the class ([[QT-MOC]]). Boost.Describe stays in the source: `BOOST_DESCRIBE_STRUCT(Name, Bases, Members)` takes a parentheses-enclosed list of base classes and one of public members by hand, beside the type ([[BOOST-DESCRIBE]]). Adopted reflection already removes that hand-written listing, since `nonstatic_data_members_of` enumerates the members without a macro.
 
-In none of these systems does the metadata's author ship the rule about where it may be applied. That rule sits in one vendor's compiler, in a build step, or with each consumer.
+These approaches do not provide the standard C++ annotation callback protocol proposed here. They do not imply any necessary loss of diagnostic source location. The benefit of this proposal is that a library can supply declaration-relative behavior whose invocation follows from applying its annotation.
 
 # Terms the design introduces # {#terms}
 
@@ -110,7 +112,7 @@ The injection request adds no facility. [expr.const.core] paragraph 2.32 lets an
 
 ## Non-ignorable does not mean invoked ## {#overview-non-ignorable}
 
-Annotations are non-ignorable under the existing standard ([[P3394R4]]): their underlying constants are formed through `reflect_constant` and are observable through `annotations_of`. Observability means an annotation cannot be discarded. It does not by itself oblige an implementation to run anything. The rule that an active annotation must be invoked needs [[#wording-impact|new wording]].
+Annotations are non-ignorable under the existing standard ([[P3394R4]]): their underlying constants are formed through `reflect_constant` and are observable through `annotations_of`. Observability means an annotation cannot be discarded. It does not by itself oblige an implementation to run anything. The rule that an active annotation must be invoked needs [[#wording-impact|new wording]]. Even under that rule, observing an annotation does not establish that its callback has completed ([[#overview-invariants|consumer guarantees]]).
 
 ## The design answers P3394R4's questions about a callback ## {#overview-callback}
 
@@ -121,6 +123,10 @@ The two uses that section names first, an annotation added only for selected spe
 ## Invocations check stored values as well as declarations ## {#overview-invariants}
 
 For class-type metadata, constructors can reject invalid initial values. Structural types expose their non-static data members, so a value may be changed after construction and before it is used as an annotation. An active annotation's invocation can validate the final stored value as well as properties of the annotated construct.
+
+A consumer relying on the callback's checks must be ordered after successful completion of the relevant occurrence/target pair's invocation. Finding the annotation through `annotations_of` establishes its presence, not that validation has completed. Code inside a class can observe an earlier member's annotation before callbacks run after the enclosing class. An earlier callback can also observe annotations whose callbacks come later in the [[#timing-order|invocation order]]. These observations establish no guarantee about the pending callbacks' checks.
+
+The guarantee covers only what the completed invocation checked. It does not validate annotations contributed by later redeclarations ([[#timing-reopen|reachability]]).
 
 Program-global behavior, across translation units or registry-wide, is outside scope.
 
@@ -176,11 +182,11 @@ struct User
 };
 </xmp>
 
-The constructor rejects an empty key at construction. Because `key` is public, a value can still be changed before it is used as an annotation. The operator checks the stored key again, rejecting null and empty keys, and requires a non-static data member. The consumer's guarantee comes from these [[#overview-invariants|invocation checks]].
+The constructor rejects an empty key at construction. Because `key` is public, a value can still be changed before it is used as an annotation. The operator checks the stored key again, rejecting null and empty keys, and requires a non-static data member. A consumer may rely on these [[#overview-invariants|invocation checks]] after the relevant invocation has completed successfully.
 
 The key is stored as `const char*` because an annotation value must be a structural type and a pointer into a string literal is not a valid constant template argument. The constructor copies the characters into static storage with `define_static_string` ([[P3491R3]]), which yields a pointer that is. Every string-carrying example below uses the same idiom.
 
-A consumer that serializes `User` needs only adopted facilities: `nonstatic_data_members_of` ([[P2996R13]]), `annotations_of_with_type` ([[P3394R4]]), a splice, and an expansion statement ([[P1306R5]]). Once the invocations have succeeded, it can assume every `Field` it finds sits on a non-static data member and carries a non-null, non-empty key. Without the checks, the first report would come from inside the consumer's own template instantiation.
+A consumer that serializes `User` needs only adopted facilities: `nonstatic_data_members_of` ([[P2996R13]]), `annotations_of_with_type` ([[P3394R4]]), a splice, and an expansion statement ([[P1306R5]]). When evaluated after the relevant invocations have succeeded, it can assume every `Field` it finds sits on a non-static data member and carries a non-null, non-empty key. A query before those invocations cannot make that assumption from the annotations' presence alone. Applying `Field` schedules these checks even if no serializer is instantiated. A separately invoked validator can perform the same checks and supply source context for its diagnostics.
 
 ## A command checks its function's parameter shape ## {#example-command}
 
@@ -233,7 +239,7 @@ void clean(command_context&);
 // void version();   // ill-formed: missing command_context& parameter
 </xmp>
 
-The annotation validates the declared parameter count and type. It does not establish a common function-pointer type or guarantee that a dispatcher can call every accepted function.
+On successful completion, the invocation has validated the declared parameter count and type. Finding the annotation before that invocation completes establishes neither check. These checks do not establish a common function-pointer type or guarantee that a dispatcher can call every accepted function.
 
 ## An annotation on a class definition sees the whole class ## {#example-class}
 
@@ -325,7 +331,7 @@ The example also depends on our proposed change to [expr.const.core] paragraph 2
 
 ## The occurrence/target pair selects which invocation rejects duplicate keys ## {#example-multiplicity}
 
-This rule is about the class as a whole. It is expressible because the operator sees the same annotation set an outside query sees, including its own occurrence ([[#timing|processing points]]), and knows which pair it is invoked for.
+This rule is about the class as a whole. It is expressible because the operator sees the same annotation set an outside query sees, including its own occurrence ([[#timing|processing points]]), and knows which pair it is invoked for. The first invocation can observe the second key's annotation before that key's invocation runs. Seeing the whole set does not establish that every invocation has succeeded.
 
 <xmp class=language-cpp>
 struct PrimaryKey
@@ -879,7 +885,7 @@ Each point is a position at which a declaration may appear, which an invocation 
 
 By the first row, the enumerator annotation in `struct Outer { enum E { a [[=X]] }; };` is processed after `Outer`. A class-specifier comprises the class-head and the member-specification, which brings a base-specifier under the same rule as a member. The outward search stops at a function body. A `consteval` block counts as one, since [dcl.pre] paragraph 15 makes its corresponding expression an immediately invoked lambda whose body is the compound-statement.
 
-The point after the outermost class is the one the draft already uses for the view a class's own code has of it. For a query from a complete-class context, [meta.reflection.annotation] paragraph 2 gathers the declarations reachable from "a point immediately following the class-specifier of the outermost class for which such a point is in a complete-class context", and [class.mem.general] paragraph 11 makes a complete-class context of a nested class one of every class enclosing it. A member function body of `Inner` therefore sees the completed `Outer`, and an invocation for a member of `Inner` sees the same. By the requirement stated above it sees no more, and by paragraph 2 it sees no less. Processing after the innermost class instead would give the invocation a narrower view than the annotated class's own bodies have, and that view would depend on how deeply the class is nested. A violation on a nested class's member is reported after the outermost class closes, and a later member of `Outer` can use `Inner` before `Inner`'s annotations have run, which is the same concession made above for an earlier member of one class.
+The point after the outermost class is the one the draft already uses for the view a class's own code has of it. For a query from a complete-class context, [meta.reflection.annotation] paragraph 2 gathers the declarations reachable from "a point immediately following the class-specifier of the outermost class for which such a point is in a complete-class context", and [class.mem.general] paragraph 11 makes a complete-class context of a nested class one of every class enclosing it. A member function body of `Inner` therefore sees the completed `Outer`, and an invocation for a member of `Inner` sees the same. By the requirement stated above it sees no more, and by paragraph 2 it sees no less. Processing after the innermost class instead would give the invocation a narrower view than the annotated class's own bodies have, and that view would depend on how deeply the class is nested. A violation on a nested class's member is detected when its invocation runs after the outermost class closes. The diagnostic can still identify the member's annotation site. A later member of `Outer` can use `Inner` before `Inner`'s annotations have run, which is the same concession made above for an earlier member of one class.
 
 An enumeration's completion is not its processing point. [dcl.enum] paragraph 5 fixes the underlying type of every scoped enumeration. Paragraph 6 makes an enumeration whose underlying type is fixed complete immediately after its enum-base, which for `enum class [[=X]] E { a, b };` is before `a` and `b` are declared. The table therefore uses the closing brace of the enum-specifier, which gives the enum-head annotation and the enumerator annotations one point at which they are ordered ([[#timing-order|lexical order]]).
 
@@ -901,7 +907,7 @@ A namespace has no completion point, since it can be reopened in this translatio
 
 [dcl.attr.annotation] paragraph 1 bars an annotation on a declaration whose host scope differs from its target scope and on a non-defining friend declaration, which is the resolution of [[CWG3124]]. That rules out a block-scope extern declaration, whose host scope is the block and whose target scope is not. A qualified redeclaration inhabits a namespace scope ([dcl.meaning.general] paragraph 3.1), which makes its host scope its target scope ([basic.scope.scope] paragraph 2). An out-of-class member definition can therefore carry annotations of its own. They are processed at its own processing point, after the class's invocations have run.
 
-The same limit holds for any entity declared more than once. [meta.reflection.annotation] paragraph 2 gathers only the declarations reachable at the query point. An annotation on the first declaration of a function is therefore invoked before a later redeclaration contributes its own ([[#shape-occurrence|occurrence/target pairs]]). Waiting for the end of the translation unit would move every diagnostic to the end of the file and would still miss other translation units. Non-static data members and base-specifiers are unaffected, because they appear only in the class definition.
+The same limit holds for any entity declared more than once. [meta.reflection.annotation] paragraph 2 gathers only the declarations reachable at the query point. An annotation on the first declaration of a function is therefore invoked before a later redeclaration contributes its own ([[#shape-occurrence|occurrence/target pairs]]). Waiting for the end of the translation unit would delay validation and allow later declarations in that translation unit to contribute. Consumers evaluated earlier could not rely on those checks having completed. A diagnostic could still identify the original annotation site, while the check would still lack a view across all translation units. Non-static data members and base-specifiers are unaffected by later redeclarations, because they appear only in the class definition.
 
 ## Annotations on injected members run inside the injection ## {#timing-injected}
 
@@ -921,7 +927,7 @@ Order never changes which annotations an existing declaration has. It becomes ob
 
 ## Invoking mid-class would miss later members ## {#timing-members-alt}
 
-An alternative would invoke each member and base-specifier annotation as soon as its construct is formed, which would report a violation at the member instead of after the class. A `consteval` block or `static_assert` later in the same class body would then never read an annotation whose operator had not yet run.
+An alternative would invoke each member and base-specifier annotation as soon as its construct is formed. Validation would then complete earlier. A `consteval` block or `static_assert` later in the same class body could rely on the checks for those already processed constructs. Either schedule can support a diagnostic that identifies the annotation site.
 
 An operator would see only the part of the class before it and less than any later query. `GuardedBy` naming a mutex declared later in the class would fail ([[#example-thread|the guard example]]). A base-specifier annotation would see only the bases to its left. Whether a library's rule holds would then depend on where in the member-specification its users wrote the annotation. These losses stand even for a delegate who rejects the standard [[#timing|stated for processing points]].
 
@@ -1021,6 +1027,8 @@ Under [dcl.attr.grammar] paragraph 6, an annotation followed by an ellipsis is a
 
 The preferred way for an operator to report a violation is to throw `std::meta::exception` out of the evaluation. An exception thrown and caught within an otherwise valid constant evaluation is not a failure under the [[N5054]] model. The `from` argument records the reflection that supplies diagnostic provenance ([[P3560R2]]). The examples pass `std::meta::current_function()` for it ([meta.reflection.scope]). A plain throw also fails the evaluation, without that structured context. `static_assert` suits a condition that is a constant expression where the assertion is written. A function parameter does not become one because the function is evaluated at compile time.
 
+The examples also pass `ctx.annotation_location()` as the exception's `where` argument ([meta.reflection.exception]). That location identifies the annotation occurrence regardless of when the invocation runs. A separately invoked validator can likewise pass a source location it has retained or obtained through reflection. Validation timing determines when a failure is detected, not which source location the diagnostic identifies. The presentation of that information remains a quality-of-implementation matter.
+
 Quality-of-implementation guidance:
 
 * The diagnostic should identify the annotation site.
@@ -1066,7 +1074,7 @@ An annotation can also make the compiler act by having the language itself read 
 
 A `consteval` block ([[P3289R1]]) already runs arbitrary compile-time code at a point in a class body, at namespace scope, or in a block. A codebase that owns its declarations can get the same checks by writing one that sweeps `annotations_of` over the members it cares about. Where that works it works today and needs nothing new, which is the strongest argument against this paper.
 
-A block does not carry the trigger with the metadata. Whoever defines `serial::Field` cannot make its rule apply to a class they do not own. The class author has to remember to write the block. A class whose author forgets is silently unchecked. An active annotation reverses that: the rule ships with the annotation's type and applying the annotation schedules its invocation, with an occurrence-specific context and access anchor at a defined processing point.
+A block does not carry the trigger with the metadata. Defining `serial::Field` alone does not arrange for a block to check every class that uses it. The declaration's author has to arrange that invocation, directly or through some other facility. Omitting it can leave the annotation unchecked. With an active annotation, the callback ships with the annotation's type and applying the annotation schedules its invocation, with an occurrence-specific context and access anchor at a defined processing point.
 
 The annotation side has a narrower silent case. A near miss is an error ([[#semantics-detection|the opt-in rule]]). Only a value whose type declares no callee with an `annotation_context` parameter stays passive without a diagnostic. That covers a type whose callee takes `auto`, a `std::meta::info` value, and a pointer to member ([[#semantics-callable-forms|callable forms]]). The block has to be written correctly by every class that needs the rule, while the annotation type has to be written correctly once, by the author who owns the rule.
 
@@ -1194,9 +1202,9 @@ SG7 may take the polls first. The library surface (`annotation_context`) goes to
 
 # Conclusion # {#conclusion}
 
-The rule an annotation enforces is written once, in the annotation's type. Applying the annotation is enough to invoke it, with [[#alternatives-consteval-block|nothing for the class author to remember]]. The type of the annotation's value decides whether it [[#semantics-detection|opts in]], a decision that reads declarations only and instantiates no function body. Each occurrence/target pair not processed nested has its own processing point, in an order stated for each class and declaration. That is what makes a declaration injected by one annotation visible at a later annotation's point ([[#timing-order|lexical order]]).
+Applying an active annotation schedules its library-defined callback without requiring the declaration's author to [[#alternatives-consteval-block|arrange a separate invocation]]. The type of the annotation's value decides whether it [[#semantics-detection|opts in]], a decision that reads declarations only and instantiates no function body. Each occurrence/target pair not processed nested has its own processing point, in an order stated for each class and declaration. That is what makes a declaration injected by one annotation visible at a later annotation's point ([[#timing-order|lexical order]]).
 
-C++ gains a checked annotation site. `serial::Field` rejects a member function at the member function ([[#example-serial|the field example]]). `GuardedBy` confirms that the named non-static data member exists in the same class wherever it is declared ([[#example-thread|the guard example]]). `PrimaryKey` rejects duplicate keys in the second key's invocation ([[#example-multiplicity|the primary-key example]]). Without the facility the violation is reported away from the construct that caused it ([[#motivation-practice|existing practice]]).
+C++ gains annotation-triggered validation. `serial::Field` rejects application to a member function ([[#example-serial|the field example]]). `GuardedBy` checks that the named non-static data member exists in the same class wherever it is declared ([[#example-thread|the guard example]]). `PrimaryKey` rejects duplicate keys in the second key's invocation ([[#example-multiplicity|the primary-key example]]). Consumers may rely on these checks after the relevant invocations complete successfully. Annotation observability alone establishes no such guarantee. A diagnostic can identify the annotation site independently of when validation occurs, as can a check arranged through [[#motivation-practice|existing practice]].
 
 No implementation is reported here and scheduling is the principal risk ([[#implementability|implementability]]). No wording is provided and the processing points and their order need [[#wording-impact|Core review]] ([[#open-questions|open questions]]). An injected member's annotation runs inside the injecting evaluation as a required constant expression of its own ([[#timing-injected|injected members]]). An infinite chain through [[#timing-templates|specializations]] has an undefined result, like any infinite template recursion. Where a codebase owns its declarations, a `consteval` block [[#alternatives-consteval-block|already runs the same checks]]. Every C++26 annotation keeps its behavior ([[#semantics-passive|compatibility]]).
 
