@@ -20,7 +20,7 @@ jobs:
           pipx install bikeshed
       - name: render
         run: |
-          changes=$(git diff --name-only HEAD HEAD~1 | grep -F 'cpp/' | cat)
+          changes=$(git diff --name-only HEAD HEAD~1 -- cpp drafts/cpp)
           for path in cpp drafts/cpp;
           do
             for f in "$path"/*.bs;
@@ -36,6 +36,7 @@ jobs:
         run: |
           message=$(git show -s --format=%s)
           mkdir /tmp/renders
+          cp index.html /tmp/renders/index.html
           for path in cpp drafts/cpp;
           do
             mkdir -p "/tmp/renders/$path"
@@ -44,6 +45,7 @@ jobs:
             fi
           done
           git checkout gh-pages
+          cp /tmp/renders/index.html index.html
           for path in cpp drafts/cpp;
           do
             if compgen -G "/tmp/renders/$path/*" > /dev/null; then

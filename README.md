@@ -41,18 +41,3 @@ Build a single paper from either tree:
 make build SPEC=drafts/cpp/invoking_annotations_r0.bs
 make build SPEC=cpp/P1234.bs
 ```
-
-Output mirrors the source path, so `drafts/cpp/foo.bs` renders to
-`out/drafts/cpp/foo.html` and `cpp/foo.bs` to `out/cpp/foo.html`. A paper keeps
-its own render when it graduates from one tree to the other.
-
-## Publishing
-
-CI renders any paper touched by a push to `main` and commits the result to the
-`gh-pages` branch, preserving the `cpp/` and `drafts/cpp/` split. It renders
-only changed files, so a push that touches neither tree produces no output.
-
-## Optional dev container
-
-Open the folder in VS Code and choose **Reopen in Container**. The container
-installs Bikeshed automatically.
