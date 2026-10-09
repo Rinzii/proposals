@@ -71,7 +71,7 @@ build_one() {
     echo "    ${output_file}"
     echo
 
-    "${BIKESHED_BIN}" spec "${spec_file}" "${output_file}"
+    "${BIKESHED_BIN}" --no-update spec "${spec_file}" "${output_file}"
 }
 
 cd "${ROOT_DIR}"
