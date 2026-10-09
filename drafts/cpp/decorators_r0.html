@@ -1563,7 +1563,7 @@ Possible extra rowspan handling
   </style>
   <meta content="Bikeshed version ea4009a02, updated Thu Sep 17 15:24:44 2026 -0700" name="generator">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="590283aa1f269a28f02db74e864ac16503c5d3d1" name="revision">
+  <meta content="87a433dc76ba099e42ca6a3c31c6a0affa2121fb" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>/* Boilerplate: style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
@@ -2144,14 +2144,14 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>R0: Initial revision.</p>
    <h2 class="heading settled" data-level="2" id="intro"><span class="secno">2. </span><span class="content">Introduction</span><a class="self-link" href="#intro"></a></h2>
    <p>We propose <code class="highlight"><c- p>[[</c->@<c- n>expression</c-><c- p>]]</c-></code> to require a library-defined operation when a class or function is defined. A serialization library can then check field annotations and derive a schema at the definition site.</p>
-   <p>The examples build on the reflection library in the working draft <a data-link-type="biblio" href="#biblio-draft" title="Working Draft, Programming Languages — C++">[DRAFT]</a>. <a data-link-type="biblio" href="#biblio-p3394r4" title="Annotations for Reflection">[P3394R4]</a> supplies stored annotations and explores callbacks in section 4.5. <a data-link-type="biblio" href="#biblio-p0707r4" title="Metaclass functions: Generative C++">[P0707R4]</a> proposes metaclass functions that transform class definitions. This design provides:</p>
+   <p><a data-link-type="biblio" href="#biblio-p3394r4" title="Annotations for Reflection">[P3394R4]</a> supplies stored annotations and explores callbacks in section 4.5. <a data-link-type="biblio" href="#biblio-p0707r5" title="Declarative class authoring using consteval functions + reflection + generation (aka: Metaclasses for generative C++)">[P0707R5]</a> proposes <code class="highlight"><c- k>class</c-><c- p>(</c-><c- n>metafunc</c-><c- p>)</c-></code> syntax for applying compile-time transformations to class definitions. This design provides:</p>
    <ol>
     <li data-md>
      <p>Explicit application, with each decorator receiving the previous decorator’s output.</p>
     <li data-md>
      <p>Computed metadata attached to the returned definition.</p>
    </ol>
-   <p>The examples are design sketches. Definition replacement and the <code class="highlight"><c- n>stdx</c-><c- o>::</c-><c- n>meta</c-></code> interfaces require new language and library support.</p>
+   <p>The examples use the reflection facilities in <a data-link-type="biblio" href="#biblio-p2996r13" title="Reflection for C++26">[P2996R13]</a>. They are design sketches: definition replacement and the <code class="highlight"><c- n>stdx</c-><c- o>::</c-><c- n>meta</c-></code> interfaces require new language and library support.</p>
    <h2 class="heading settled" data-level="3" id="proposal"><span class="secno">3. </span><span class="content">The decorator closest to the definition runs first</span><a class="self-link" href="#proposal"></a></h2>
    <p>A decorator receives a value representing a definition and returns a value representing the next definition. Each call must be a constant expression even if no metadata is queried. <code class="highlight"><c- p>[[</c-><c- o>=</c-><c- n>constant</c-><c- o>-</c-><c- n>expression</c-><c- p>]]</c-></code> supplies passive annotations.</p>
 <pre class="highlight language-cpp"><c- p>[[</c->@<c- n>schema</c-><c- o>::</c-><c- n>derive</c-><c- p>]]</c->
@@ -2193,7 +2193,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 <c- p>}</c->
 </pre>
    <p><code class="highlight"><c- n>FieldInfo</c-></code> records the resolved name and reflected type. A null <code class="highlight"><c- n>Field</c-><c- o>::</c-><c- n>name</c-></code> selects the declared name without changing the input annotation.</p>
-   <p>The omitted library helpers reject misplaced <code class="highlight"><c- n>Field</c-></code> annotations and empty or duplicate names. <code class="highlight"><c- n>describe_fields</c-></code> preserves declaration order and stores names in static storage with <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>define_static_string</c-></code>.</p>
+   <p>The omitted library helpers reject misplaced <code class="highlight"><c- n>Field</c-></code> annotations and empty or duplicate names. <code class="highlight"><c- n>describe_fields</c-></code> preserves declaration order and stores names in static storage with <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>define_static_string</c-></code> <a data-link-type="biblio" href="#biblio-p3491r3" title="define_static_{string,object,array}">[P3491R3]</a>.</p>
 <pre class="highlight language-cpp"><c- k>namespace</c-> <c- nn>schema</c->
 <c- p>{</c->
     <c- k>consteval</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- nf>validate</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- n>definition</c-><c- p>)</c->
@@ -2226,7 +2226,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 </pre>
    <p>The query does not repeat derivation.</p>
    <h2 class="heading settled" data-level="6" id="primary-keys"><span class="secno">6. </span><span class="content">A class validator checks annotations across members</span><a class="self-link" href="#primary-keys"></a></h2>
-   <p>The primary-key validator counts annotations across public non-static data members. <code class="highlight"><c- n>access_context</c-><c- o>::</c-><c- n>current</c-><c- p>()</c-></code> applies the access rules where the helper is defined, without inheriting the caller’s privileges.</p>
+   <p>The primary-key validator counts annotations across public non-static data members and reports errors with <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>exception</c-></code> <a data-link-type="biblio" href="#biblio-p3560r2" title="Error Handling in Reflection">[P3560R2]</a>. <code class="highlight"><c- n>access_context</c-><c- o>::</c-><c- n>current</c-><c- p>()</c-></code> applies the access rules where the helper is defined, without inheriting the caller’s privileges.</p>
 <pre class="highlight language-cpp"><c- k>namespace</c-> <c- nn>schema</c->
 <c- p>{</c->
     <c- k>struct</c-> <c- nc>PrimaryKey</c-> <c- p>{};</c->
@@ -2545,10 +2545,14 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   <h2 class="heading no-num no-ref settled" id="references"><span class="content">References</span><a class="self-link" href="#references"></a></h2>
   <h3 class="heading no-num no-ref settled" id="informative"><span class="content">Non-Normative References</span><a class="self-link" href="#informative"></a></h3>
   <dl>
-   <dt id="biblio-draft">[DRAFT]
-   <dd><a href="https://eel.is/c++draft/"><cite>Working Draft, Programming Languages — C++</cite></a>. URL: <a href="https://eel.is/c++draft/">https://eel.is/c++draft/</a>
-   <dt id="biblio-p0707r4">[P0707R4]
-   <dd>Herb Sutter. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0707r4.pdf"><cite>Metaclass functions: Generative C++</cite></a>. 2019-06-16. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0707r4.pdf">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0707r4.pdf</a>
+   <dt id="biblio-p0707r5">[P0707R5]
+   <dd>Herb Sutter. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p0707r5.pdf"><cite>Declarative class authoring using consteval functions + reflection + generation (aka: Metaclasses for generative C++)</cite></a>. 2024-10-12. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p0707r5.pdf">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p0707r5.pdf</a>
+   <dt id="biblio-p2996r13">[P2996R13]
+   <dd>Wyatt Childers; et al. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p2996r13.html"><cite>Reflection for C++26</cite></a>. 2025-06-20. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p2996r13.html">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p2996r13.html</a>
    <dt id="biblio-p3394r4">[P3394R4]
    <dd>Wyatt Childers; et al. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3394r4.html"><cite>Annotations for Reflection</cite></a>. 2025-06-19. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3394r4.html">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3394r4.html</a>
+   <dt id="biblio-p3491r3">[P3491R3]
+   <dd>Wyatt Childers; et al. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3491r3.html"><cite>define_static_{string,object,array}</cite></a>. 2025-06-20. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3491r3.html">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3491r3.html</a>
+   <dt id="biblio-p3560r2">[P3560R2]
+   <dd>Peter Dimov; Barry Revzin. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3560r2.html"><cite>Error Handling in Reflection</cite></a>. 2025-06-17. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3560r2.html">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3560r2.html</a>
   </dl>
