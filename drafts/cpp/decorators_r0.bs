@@ -347,10 +347,6 @@ Explicit decorators let libraries validate or transform definitions and retain c
 
 We request direction on proceeding with <code>&#91;&#91;@expression]]</code> applications where each decorator returns the definition passed to the next.
 
-# Disclosure # {#disclosure}
-
-The author provides information and serves at the pleasure of the committee. This revision requests design direction and provides no implementation results.
-
 <pre class=biblio>
 {
     "P2996R13": {
