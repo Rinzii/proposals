@@ -15,7 +15,7 @@ Boilerplate: omit conformance, omit feedback-header, omit table-of-contents
 Markup Shorthands: markdown yes
 </pre>
 
-# Revision History # {#revisions}
+# Revision history # {#revisions}
 
 R0: Initial revision.
 
@@ -30,7 +30,9 @@ We propose <code>&#91;&#91;@expression]]</code> to require a library-defined ope
 
 The examples use the reflection facilities in [[P2996R13]]. They are design sketches: definition replacement and the <code>stdx::meta</code> interfaces require new language and library support.
 
-# The decorator closest to the definition runs first # {#proposal}
+We use <code>stdx::</code> only to distinguish proposed library facilities from existing <code>std::</code> facilities. If adopted, <code>stdx::</code> would be replaced with <code>std::</code>.
+
+# Decorator order # {#proposal}
 
 A decorator receives a value representing a definition and returns a value representing the next definition. Each call must be a constant expression even if no metadata is queried. <code>&#91;&#91;=constant-expression]]</code> supplies passive annotations.
 
@@ -46,7 +48,7 @@ struct User
 
 <code>schema::validate</code> runs first. <code>schema::derive</code> receives the validated definition and returns the final definition of <code>User</code>.
 
-# Replacement needs an inspectable definition # {#representation}
+# Definition representation # {#representation}
 
 Decorators need a representation they can inspect through reflection or replace using tokens. The compiler installs the returned definition at the original definition site. The examples use <code>std::meta::info</code> as a placeholder for this representation:
 
@@ -60,7 +62,7 @@ auto body = stdx::meta::body_of(function);
 
 It remains unresolved when replacement occurs and whether reflections before and after replacement identify the same entities. Rules are also needed for queries within the class, references to removed members, template instantiation, and generated definitions.
 
-# Validation retains computed metadata # {#metadata}
+# Computed metadata # {#metadata}
 
 The schema helpers inspect public members using their own access permissions. Each <code>Field</code> remains an input annotation, separate from the computed descriptor:
 
@@ -128,7 +130,7 @@ constexpr auto descriptor =
 
 The query does not repeat derivation.
 
-# A class validator checks annotations across members # {#primary-keys}
+# Primary key validation # {#primary-keys}
 
 The primary-key validator counts annotations across public non-static data members and reports errors with <code>std::meta::exception</code> [[P3560R2]]. <code>access_context::current()</code> applies the access rules where the helper is defined, without inheriting the caller's privileges.
 
@@ -169,7 +171,7 @@ struct Batch
 
 <code>Invoice</code> passes. <code>Batch</code> fails because its annotation applies to both declarators. Repeated annotations on one member also fail.
 
-# Guard validation can find members declared later # {#guarded-members}
+# Guard validation # {#guarded-members}
 
 <code>GuardedBy</code> can name a public non-static data member declared later in the class:
 
@@ -221,7 +223,7 @@ struct Connection
 
 Both <code>GuardedBy</code> annotations name <code>Connection::mutex</code>. Missing or misspelled member names fail validation. The check does not inspect guard types or locking within function bodies.
 
-# Configured decorators check function signatures # {#commands}
+# Command validation # {#commands}
 
 <code>cli::Command</code> accepts a non-member function of type <code>void(command_context&amp;)</code> or <code>void(command_context&amp;) noexcept</code>. Comparing function types also rejects variadic functions.
 
@@ -276,7 +278,7 @@ void status(command_context& context)
 
 The body remains unchanged. <code>CommandInfo</code> stores the configured name <code>"status"</code> and a false <code>is_noexcept</code> value.
 
-# Composition retains intermediate facts # {#composition}
+# Decorator composition # {#composition}
 
 A decorator can call other decorators and pass each returned definition to the next. The omitted schema helpers count fields and remove transient fields before the final schema is derived:
 
@@ -306,7 +308,7 @@ The output retains the final schema and both field counts so consumers need not 
 
 Each transform specifies which annotations it preserves or recomputes. Computing final metadata after changes to the definition keeps that metadata consistent. <code>SchemaChange</code> records intermediate facts separately from the final schema.
 
-# Stored schemas can define companion aggregates # {#companion-type}
+# Companion aggregates # {#companion-type}
 
 A separate namespace-scope <code>consteval</code> block can use the schema to define a companion aggregate:
 
@@ -333,11 +335,11 @@ static_assert(std::is_same_v<decltype(UserRow::id), int>);
 
 # Alternatives # {#alternatives}
 
-## "Call the validator explicitly" ## {#explicit-call}
+## Explicit validation ## {#explicit-call}
 
 A separate <code>consteval</code> block can call the validator. The author must keep that call with the definition. Applying a decorator makes the call part of the definition.
 
-## "Validate when metadata is queried" ## {#query-validation}
+## Validation on query ## {#query-validation}
 
 A library accessor can compute a descriptor on request. If nobody queries the metadata, that check never runs. Mandatory decorator evaluation also diagnoses errors in those unqueried definitions.
 
