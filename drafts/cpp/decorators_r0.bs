@@ -23,12 +23,12 @@ R0: Initial revision.
 
 We propose <code>&#91;&#91;@expression]]</code> to require a library-defined operation when a class or function is defined. A serialization library can then check field annotations and derive a schema at the definition site.
 
-The examples build on the reflection library in the working draft [[DRAFT]]. [[P3394R4]] supplies stored annotations and explores callbacks in section 4.5. [[P0707R4]] proposes metaclass functions that transform class definitions. This design provides:
+[[P3394R4]] supplies stored annotations and explores callbacks in section 4.5. [[P0707R5]] proposes <code>class(metafunc)</code> syntax for applying compile-time transformations to class definitions. This design provides:
 
 1. Explicit application, with each decorator receiving the previous decorator's output.
 2. Computed metadata attached to the returned definition.
 
-The examples are design sketches. Definition replacement and the <code>stdx::meta</code> interfaces require new language and library support.
+The examples use the reflection facilities in [[P2996R13]]. They are design sketches: definition replacement and the <code>stdx::meta</code> interfaces require new language and library support.
 
 # The decorator closest to the definition runs first # {#proposal}
 
@@ -87,7 +87,7 @@ namespace schema
 
 <code>FieldInfo</code> records the resolved name and reflected type. A null <code>Field::name</code> selects the declared name without changing the input annotation.
 
-The omitted library helpers reject misplaced <code>Field</code> annotations and empty or duplicate names. <code>describe_fields</code> preserves declaration order and stores names in static storage with <code>std::define_static_string</code>.
+The omitted library helpers reject misplaced <code>Field</code> annotations and empty or duplicate names. <code>describe_fields</code> preserves declaration order and stores names in static storage with <code>std::define_static_string</code> [[P3491R3]].
 
 <xmp class=language-cpp>
 namespace schema
@@ -130,7 +130,7 @@ The query does not repeat derivation.
 
 # A class validator checks annotations across members # {#primary-keys}
 
-The primary-key validator counts annotations across public non-static data members. <code>access_context::current()</code> applies the access rules where the helper is defined, without inheriting the caller's privileges.
+The primary-key validator counts annotations across public non-static data members and reports errors with <code>std::meta::exception</code> [[P3560R2]]. <code>access_context::current()</code> applies the access rules where the helper is defined, without inheriting the caller's privileges.
 
 <xmp class=language-cpp>
 namespace schema
@@ -353,9 +353,11 @@ The author provides information and serves at the pleasure of the committee. Thi
 
 <pre class=biblio>
 {
-    "DRAFT": {
-        "title": "Working Draft, Programming Languages \u2014 C++",
-        "href": "https://eel.is/c++draft/"
+    "P2996R13": {
+        "title": "Reflection for C++26",
+        "authors": ["Wyatt Childers", "Peter Dimov", "Dan Katz", "Barry Revzin", "Andrew Sutton", "Faisal Vali", "Daveed Vandevoorde"],
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p2996r13.html",
+        "date": "2025-06-20"
     },
     "P3394R4": {
         "title": "Annotations for Reflection",
@@ -363,11 +365,23 @@ The author provides information and serves at the pleasure of the committee. Thi
         "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3394r4.html",
         "date": "2025-06-19"
     },
-    "P0707R4": {
-        "title": "Metaclass functions: Generative C++",
+    "P0707R5": {
+        "title": "Declarative class authoring using consteval functions + reflection + generation (aka: Metaclasses for generative C++)",
         "authors": ["Herb Sutter"],
-        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0707r4.pdf",
-        "date": "2019-06-16"
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p0707r5.pdf",
+        "date": "2024-10-12"
+    },
+    "P3491R3": {
+        "title": "define_static_{string,object,array}",
+        "authors": ["Wyatt Childers", "Peter Dimov", "Barry Revzin", "Daveed Vandevoorde"],
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3491r3.html",
+        "date": "2025-06-20"
+    },
+    "P3560R2": {
+        "title": "Error Handling in Reflection",
+        "authors": ["Peter Dimov", "Barry Revzin"],
+        "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3560r2.html",
+        "date": "2025-06-17"
     }
 }
 </pre>
