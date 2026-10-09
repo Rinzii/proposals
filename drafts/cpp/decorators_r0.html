@@ -1563,7 +1563,7 @@ Possible extra rowspan handling
   </style>
   <meta content="Bikeshed version ea4009a02, updated Thu Sep 17 15:24:44 2026 -0700" name="generator">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="3b0746082ba760ac0565e442e5ccd748f0551144" name="revision">
+  <meta content="08cef12b7ed0cc4e5b98a907268ca71c3fca918e" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>/* Boilerplate: style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
@@ -2140,7 +2140,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>Each decorator call must be a constant expression. Decorators can validate or transform class or function definitions and store computed annotations even if nobody queries them. These annotations can retain facts about intermediate definitions for later reflection. The examples require new language and library support. How definitions are represented, when replacement occurs, and which reflected entities retain their identity remain unresolved. We request direction on this application and composition model.</p>
   </div>
   <main>
-   <h2 class="heading settled" data-level="1" id="revisions"><span class="secno">1. </span><span class="content">Revision History</span><a class="self-link" href="#revisions"></a></h2>
+   <h2 class="heading settled" data-level="1" id="revisions"><span class="secno">1. </span><span class="content">Revision history</span><a class="self-link" href="#revisions"></a></h2>
    <p>R0: Initial revision.</p>
    <h2 class="heading settled" data-level="2" id="intro"><span class="secno">2. </span><span class="content">Introduction</span><a class="self-link" href="#intro"></a></h2>
    <p>We propose <code class="highlight"><c- p>[[</c->@<c- n>expression</c-><c- p>]]</c-></code> to require a library-defined operation when a class or function is defined. A serialization library can then check field annotations and derive a schema at the definition site.</p>
@@ -2152,7 +2152,8 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      <p>Computed metadata attached to the returned definition.</p>
    </ol>
    <p>The examples use the reflection facilities in <a data-link-type="biblio" href="#biblio-p2996r13" title="Reflection for C++26">[P2996R13]</a>. They are design sketches: definition replacement and the <code class="highlight"><c- n>stdx</c-><c- o>::</c-><c- n>meta</c-></code> interfaces require new language and library support.</p>
-   <h2 class="heading settled" data-level="3" id="proposal"><span class="secno">3. </span><span class="content">The decorator closest to the definition runs first</span><a class="self-link" href="#proposal"></a></h2>
+   <p>We use <code class="highlight"><c- n>stdx</c-><c- o>::</c-></code> only to distinguish proposed library facilities from existing <code class="highlight"><c- n>std</c-><c- o>::</c-></code> facilities. If adopted, <code class="highlight"><c- n>stdx</c-><c- o>::</c-></code> would be replaced with <code class="highlight"><c- n>std</c-><c- o>::</c-></code>.</p>
+   <h2 class="heading settled" data-level="3" id="proposal"><span class="secno">3. </span><span class="content">Decorator order</span><a class="self-link" href="#proposal"></a></h2>
    <p>A decorator receives a value representing a definition and returns a value representing the next definition. Each call must be a constant expression even if no metadata is queried. <code class="highlight"><c- p>[[</c-><c- o>=</c-><c- n>constant</c-><c- o>-</c-><c- n>expression</c-><c- p>]]</c-></code> supplies passive annotations.</p>
 <pre class="highlight language-cpp"><c- p>[[</c->@<c- n>schema</c-><c- o>::</c-><c- n>derive</c-><c- p>]]</c->
 <c- p>[[</c->@<c- n>schema</c-><c- o>::</c-><c- n>validate</c-><c- p>]]</c->
@@ -2163,7 +2164,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 <c- p>};</c->
 </pre>
    <p><code class="highlight"><c- n>schema</c-><c- o>::</c-><c- n>validate</c-></code> runs first. <code class="highlight"><c- n>schema</c-><c- o>::</c-><c- n>derive</c-></code> receives the validated definition and returns the final definition of <code class="highlight"><c- n>User</c-></code>.</p>
-   <h2 class="heading settled" data-level="4" id="representation"><span class="secno">4. </span><span class="content">Replacement needs an inspectable definition</span><a class="self-link" href="#representation"></a></h2>
+   <h2 class="heading settled" data-level="4" id="representation"><span class="secno">4. </span><span class="content">Definition representation</span><a class="self-link" href="#representation"></a></h2>
    <p>Decorators need a representation they can inspect through reflection or replace using tokens. The compiler installs the returned definition at the original definition site. The examples use <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-></code> as a placeholder for this representation:</p>
 <pre class="highlight language-cpp"><c- k>auto</c-> <c- n>class_type</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>as_class</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
 <c- k>auto</c-> <c- n>function</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>as_function</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
@@ -2171,7 +2172,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 </pre>
    <p><code class="highlight"><c- n>as_class</c-></code> exposes the complete class, <code class="highlight"><c- n>as_function</c-></code> the function, and <code class="highlight"><c- n>body_of</c-></code> the function’s body tokens. Converting constructed tokens into an inspectable definition must preserve what names refer to and where the tokens came from.</p>
    <p>It remains unresolved when replacement occurs and whether reflections before and after replacement identify the same entities. Rules are also needed for queries within the class, references to removed members, template instantiation, and generated definitions.</p>
-   <h2 class="heading settled" data-level="5" id="metadata"><span class="secno">5. </span><span class="content">Validation retains computed metadata</span><a class="self-link" href="#metadata"></a></h2>
+   <h2 class="heading settled" data-level="5" id="metadata"><span class="secno">5. </span><span class="content">Computed metadata</span><a class="self-link" href="#metadata"></a></h2>
    <p>The schema helpers inspect public members using their own access permissions. Each <code class="highlight"><c- n>Field</c-></code> remains an input annotation, separate from the computed descriptor:</p>
 <pre class="highlight language-cpp"><c- k>namespace</c-> <c- nn>schema</c->
 <c- p>{</c->
@@ -2225,7 +2226,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
     <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>extract</c-><c- o>&lt;</c-><c- n>schema</c-><c- o>::</c-><c- n>SchemaInfo</c-><c- o>></c-><c- p>(</c-><c- n>annotation</c-><c- p>);</c->
 </pre>
    <p>The query does not repeat derivation.</p>
-   <h2 class="heading settled" data-level="6" id="primary-keys"><span class="secno">6. </span><span class="content">A class validator checks annotations across members</span><a class="self-link" href="#primary-keys"></a></h2>
+   <h2 class="heading settled" data-level="6" id="primary-keys"><span class="secno">6. </span><span class="content">Primary key validation</span><a class="self-link" href="#primary-keys"></a></h2>
    <p>The primary-key validator counts annotations across public non-static data members and reports errors with <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>exception</c-></code> <a data-link-type="biblio" href="#biblio-p3560r2" title="Error Handling in Reflection">[P3560R2]</a>. <code class="highlight"><c- n>access_context</c-><c- o>::</c-><c- n>current</c-><c- p>()</c-></code> applies the access rules where the helper is defined, without inheriting the caller’s privileges.</p>
 <pre class="highlight language-cpp"><c- k>namespace</c-> <c- nn>schema</c->
 <c- p>{</c->
@@ -2261,7 +2262,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 <c- p>};</c->
 </pre>
    <p><code class="highlight"><c- n>Invoice</c-></code> passes. <code class="highlight"><c- n>Batch</c-></code> fails because its annotation applies to both declarators. Repeated annotations on one member also fail.</p>
-   <h2 class="heading settled" data-level="7" id="guarded-members"><span class="secno">7. </span><span class="content">Guard validation can find members declared later</span><a class="self-link" href="#guarded-members"></a></h2>
+   <h2 class="heading settled" data-level="7" id="guarded-members"><span class="secno">7. </span><span class="content">Guard validation</span><a class="self-link" href="#guarded-members"></a></h2>
    <p><code class="highlight"><c- n>GuardedBy</c-></code> can name a public non-static data member declared later in the class:</p>
 <pre class="highlight language-cpp"><c- k>namespace</c-> <c- nn>locking</c->
 <c- p>{</c->
@@ -2308,7 +2309,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 <c- p>};</c->
 </pre>
    <p>Both <code class="highlight"><c- n>GuardedBy</c-></code> annotations name <code class="highlight"><c- n>Connection</c-><c- o>::</c-><c- n>mutex</c-></code>. Missing or misspelled member names fail validation. The check does not inspect guard types or locking within function bodies.</p>
-   <h2 class="heading settled" data-level="8" id="commands"><span class="secno">8. </span><span class="content">Configured decorators check function signatures</span><a class="self-link" href="#commands"></a></h2>
+   <h2 class="heading settled" data-level="8" id="commands"><span class="secno">8. </span><span class="content">Command validation</span><a class="self-link" href="#commands"></a></h2>
    <p><code class="highlight"><c- n>cli</c-><c- o>::</c-><c- n>Command</c-></code> accepts a non-member function of type <code class="highlight"><c- b>void</c-><c- p>(</c-><c- n>command_context</c-><c- o>&amp;</c-><c- p>)</c-></code> or <code class="highlight"><c- b>void</c-><c- p>(</c-><c- n>command_context</c-><c- o>&amp;</c-><c- p>)</c-> <c- k>noexcept</c-></code>. Comparing function types also rejects variadic functions.</p>
 <pre class="highlight language-cpp"><c- k>struct</c-> <c- nc>command_context</c->
 <c- p>{</c->
@@ -2358,7 +2359,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 <c- p>}</c->
 </pre>
    <p>The body remains unchanged. <code class="highlight"><c- n>CommandInfo</c-></code> stores the configured name <code class="highlight"><c- s>"status"</c-></code> and a false <code class="highlight"><c- n>is_noexcept</c-></code> value.</p>
-   <h2 class="heading settled" data-level="9" id="composition"><span class="secno">9. </span><span class="content">Composition retains intermediate facts</span><a class="self-link" href="#composition"></a></h2>
+   <h2 class="heading settled" data-level="9" id="composition"><span class="secno">9. </span><span class="content">Decorator composition</span><a class="self-link" href="#composition"></a></h2>
    <p>A decorator can call other decorators and pass each returned definition to the next. The omitted schema helpers count fields and remove transient fields before the final schema is derived:</p>
 <pre class="highlight language-cpp"><c- k>struct</c-> <c- nc>SchemaChange</c->
 <c- p>{</c->
@@ -2382,7 +2383,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 </pre>
    <p>The output retains the final schema and both field counts so consumers need not reconstruct the earlier definition.</p>
    <p>Each transform specifies which annotations it preserves or recomputes. Computing final metadata after changes to the definition keeps that metadata consistent. <code class="highlight"><c- n>SchemaChange</c-></code> records intermediate facts separately from the final schema.</p>
-   <h2 class="heading settled" data-level="10" id="companion-type"><span class="secno">10. </span><span class="content">Stored schemas can define companion aggregates</span><a class="self-link" href="#companion-type"></a></h2>
+   <h2 class="heading settled" data-level="10" id="companion-type"><span class="secno">10. </span><span class="content">Companion aggregates</span><a class="self-link" href="#companion-type"></a></h2>
    <p>A separate namespace-scope <code class="highlight"><c- k>consteval</c-></code> block can use the schema to define a companion aggregate:</p>
 <pre class="highlight language-cpp"><c- k>struct</c-> <c- nc>UserRow</c-><c- p>;</c->
 
@@ -2403,9 +2404,9 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 </pre>
    <p><code class="highlight"><c- n>UserRow</c-></code> uses the schema’s names, types, and declaration order. Serialization names containing punctuation need separate C++ identifiers. Matching the schema does not require matching <code class="highlight"><c- n>User</c-></code>’s object layout.</p>
    <h2 class="heading settled" data-level="11" id="alternatives"><span class="secno">11. </span><span class="content">Alternatives</span><a class="self-link" href="#alternatives"></a></h2>
-   <h3 class="heading settled" data-level="11.1" id="explicit-call"><span class="secno">11.1. </span><span class="content">"Call the validator explicitly"</span><a class="self-link" href="#explicit-call"></a></h3>
+   <h3 class="heading settled" data-level="11.1" id="explicit-call"><span class="secno">11.1. </span><span class="content">Explicit validation</span><a class="self-link" href="#explicit-call"></a></h3>
    <p>A separate <code class="highlight"><c- k>consteval</c-></code> block can call the validator. The author must keep that call with the definition. Applying a decorator makes the call part of the definition.</p>
-   <h3 class="heading settled" data-level="11.2" id="query-validation"><span class="secno">11.2. </span><span class="content">"Validate when metadata is queried"</span><a class="self-link" href="#query-validation"></a></h3>
+   <h3 class="heading settled" data-level="11.2" id="query-validation"><span class="secno">11.2. </span><span class="content">Validation on query</span><a class="self-link" href="#query-validation"></a></h3>
    <p>A library accessor can compute a descriptor on request. If nobody queries the metadata, that check never runs. Mandatory decorator evaluation also diagnoses errors in those unqueried definitions.</p>
    <h2 class="heading settled" data-level="12" id="conclusion"><span class="secno">12. </span><span class="content">Conclusion</span><a class="self-link" href="#conclusion"></a></h2>
    <p>Explicit decorators let libraries validate or transform definitions and retain computed annotations. Serialization and command libraries can build on the same composition rule. Replacement timing and identity need specification before adoption wording can be written.</p>
