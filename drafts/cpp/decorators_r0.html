@@ -2,7 +2,7 @@
  <head>
   <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
   <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
-  <title>PnnnnR0: Decorators: A Compile-Time Mechanism for Validating and Transforming Definitions</title>
+  <title>PnnnnR0: Decorators: Composing Changes to One Definition</title>
 <style data-fill-with="stylesheet">/******************************************************************************
  *                   Style sheet for the W3C specifications                   *
  *
@@ -1563,7 +1563,7 @@ Possible extra rowspan handling
   </style>
   <meta content="Bikeshed version ea4009a02, updated Thu Sep 17 15:24:44 2026 -0700" name="generator">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="08cef12b7ed0cc4e5b98a907268ca71c3fca918e" name="revision">
+  <meta content="30fab8bece376e2456e2f6ba2e06f03199c47607" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>/* Boilerplate: style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
@@ -2118,9 +2118,9 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
  <body class="h-entry">
   <div class="head">
    <p data-fill-with="logo"></p>
-   <h1 class="no-ref p-name" id="title">PnnnnR0<br>Decorators: A Compile-Time Mechanism for Validating and Transforming Definitions</h1>
+   <h1 class="no-ref p-name" id="title">PnnnnR0<br>Decorators: Composing Changes to One Definition</h1>
    <h2 class="heading no-num no-ref no-toc settled" id="profile-and-date"><span class="content">Draft Proposal,
-    <time class="dt-updated" datetime="2026-10-09">2026-10-09</time></span></h2>
+    <time class="dt-updated" datetime="2026-10-10">2026-10-10</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt class="editor">Reply-to:
@@ -2136,26 +2136,98 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   </div>
   <div class="p-summary" data-fill-with="abstract">
    <h2 class="heading no-num no-ref no-toc settled" id="abstract"><span class="content">Abstract</span></h2>
-   <p>We propose <code class="highlight"><c- p>[[</c->@<c- n>expression</c-><c- p>]]</c-></code> for compile-time decorators, with each returned definition passed to the next decorator.</p>
-   <p>Each decorator call must be a constant expression. Decorators can validate or transform class or function definitions and store computed annotations even if nobody queries them. These annotations can retain facts about intermediate definitions for later reflection. The examples require new language and library support. How definitions are represented, when replacement occurs, and which reflected entities retain their identity remain unresolved. We request direction on this application and composition model.</p>
+   <p>We propose explicit constant-evaluated decorators that compose returned descriptions of one class or function definition.</p>
+   <p>Applications run from the nearest outward, passing each returned description and its computed annotations to the next application before the compiler installs the final definition. Structural validators may return their input unchanged. The proposed contract permits edits to authored declarations while preserving destination identity, retained bindings, and diagnostic origin. This semantic model remains unimplemented and requires wording and compiler evidence. The examples establish no fundamental expressiveness advantage over existing generation facilities. Independent per-application retention and mandatory checks of completed classes and specializations remain unmet requirements outside this narrow core. Completion checks add an execution point and independent retention may add compiler-managed publication state. Their integration can change the execution model. We request direction on this contract for composing semantic edits while keeping those requirements explicit.</p>
   </div>
   <main>
    <h2 class="heading settled" data-level="1" id="revisions"><span class="secno">1. </span><span class="content">Revision history</span><a class="self-link" href="#revisions"></a></h2>
    <p>R0: Initial revision.</p>
    <h2 class="heading settled" data-level="2" id="intro"><span class="secno">2. </span><span class="content">Introduction</span><a class="self-link" href="#intro"></a></h2>
-   <p>We propose <code class="highlight"><c- p>[[</c->@<c- n>expression</c-><c- p>]]</c-></code> to require a library-defined operation when a class or function is defined. A serialization library can then check field annotations and derive a schema at the definition site.</p>
-   <p><a data-link-type="biblio" href="#biblio-p3394r4" title="Annotations for Reflection">[P3394R4]</a> supplies stored annotations and explores callbacks in section 4.5. <a data-link-type="biblio" href="#biblio-p0707r5" title="Declarative class authoring using consteval functions + reflection + generation (aka: Metaclasses for generative C++)">[P0707R5]</a> proposes <code class="highlight"><c- k>class</c-><c- p>(</c-><c- n>metafunc</c-><c- p>)</c-></code> syntax for applying compile-time transformations to class definitions. This design provides:</p>
+   <p>We propose explicit decorators that compose returned descriptions of one class or function definition. A library can change existing members, generate new content, validate its input, or attach computed metadata. The compiler installs the final description at the original definition site after the applications succeed.</p>
+   <p><a data-link-type="biblio" href="#biblio-p0707r5" title="Declarative class authoring using consteval functions + reflection + generation (aka: Metaclasses for generative C++)">[P0707R5]</a> already composes metaclass functions through prototypes. <a data-link-type="biblio" href="#biblio-p4380r0" title="Token Sequence Injection">[P4380R0]</a> provides token generation, annotation callbacks, and composable declaration descriptions. The direction here adds a contract for editing an established destination before its definition is installed:</p>
    <ol>
     <li data-md>
-     <p>Explicit application, with each decorator receiving the previous decorator’s output.</p>
+     <p>Explicit constant evaluation in a defined application order.</p>
     <li data-md>
-     <p>Computed metadata attached to the returned definition.</p>
+     <p>Structural edits with proposed rules for destination identity, retained member bindings, and diagnostic origin.</p>
+    <li data-md>
+     <p>Computed annotations carried by each returned description.</p>
    </ol>
-   <p>The examples use the reflection facilities in <a data-link-type="biblio" href="#biblio-p2996r13" title="Reflection for C++26">[P2996R13]</a>. They are design sketches: definition replacement and the <code class="highlight"><c- n>stdx</c-><c- o>::</c-><c- n>meta</c-></code> interfaces require new language and library support.</p>
-   <p>We use <code class="highlight"><c- n>stdx</c-><c- o>::</c-></code> only to distinguish proposed library facilities from existing <code class="highlight"><c- n>std</c-><c- o>::</c-></code> facilities. If adopted, <code class="highlight"><c- n>stdx</c-><c- o>::</c-></code> would be replaced with <code class="highlight"><c- n>std</c-><c- o>::</c-></code>.</p>
+   <p>Independent per-application retention and mandatory checks of completed classes remain requirements outside this narrow core. They are not satisfied by ordinary annotation preservation or structural validation. Their addition can require changes to the execution model.</p>
+   <p>The examples build on reflection from <a data-link-type="biblio" href="#biblio-p2996r13" title="Reflection for C++26">[P2996R13]</a> and remain design sketches. Provisional-definition queries, edits, and preserved bindings require unimplemented facilities. We use <code class="highlight"><c- n>stdx</c-><c- o>::</c-></code> for the proposed description operations and token construction from <a data-link-type="biblio" href="#biblio-p4380r0" title="Token Sequence Injection">[P4380R0]</a> where stated. Choosing <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-></code> as their carrier does not implement those operations or prove their semantics.</p>
+   <h3 class="heading settled" data-level="2.1" id="value-object"><span class="secno">2.1. </span><span class="content">Encapsulate fields while retaining the authored class</span><a class="self-link" href="#value-object"></a></h3>
+   <p>A library can make public fields private and generate read access without moving the class into a prototype namespace. This example is restricted to an ordinary non-template class with public scalar fields and no bases. The library definition shown below must precede the application in a translation unit. The class’s constructor and method remain authored code:</p>
+<pre class="highlight language-cpp"><c- k>consteval</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- nf>readable_fields</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-><c- p>);</c->
+
+<c- k>struct</c-> <c- nc>Node</c-><c- p>;</c->
+<c- k>using</c-> <c- n>Handle</c-> <c- o>=</c-> <c- n>Node</c-><c- o>*</c-><c- p>;</c->
+<c- b>void</c-> <c- nf>enqueue</c-><c- p>(</c-><c- n>Handle</c-><c- p>);</c->
+
+<c- p>[[</c->@<c- n>readable_fields</c-><c- p>]]</c->
+<c- k>struct</c-> <c- nc>Node</c->
+<c- p>{</c->
+    <c- n>Node</c-><c- o>*</c-> <c- n>next</c-> <c- o>=</c-> nullptr<c- p>;</c->
+    <c- b>int</c-> <c- n>value</c-> <c- o>=</c-> <c- mi>0</c-><c- p>;</c->
+
+    <c- n>Node</c-><c- p>(</c-><c- n>Node</c-><c- o>*</c-> <c- n>link</c-><c- p>,</c-> <c- b>int</c-> <c- n>initial</c-><c- p>)</c-> <c- o>:</c-> <c- n>next</c-><c- p>(</c-><c- n>link</c-><c- p>),</c-> <c- n>value</c-><c- p>(</c-><c- n>initial</c-><c- p>)</c-> <c- p>{}</c->
+    <c- b>void</c-> <c- n>enqueue_next</c-><c- p>()</c-> <c- k>const</c-> <c- p>{</c-> <c- n>enqueue</c-><c- p>(</c-><c- n>next</c-><c- p>);</c-> <c- p>}</c->
+<c- p>};</c->
+</pre>
+   <p>The transformation changes access on each existing field description and appends a getter. The new operations below return descriptions without installing them:</p>
+<pre class="highlight language-cpp"><c- k>consteval</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- nf>readable_fields</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- n>definition</c-><c- p>)</c->
+<c- p>{</c->
+    <c- k>auto</c-> <c- n>members</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>nonstatic_data_members_of</c-><c- p>(</c->
+        <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>as_class</c-><c- p>(</c-><c- n>definition</c-><c- p>),</c->
+        <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>access_context</c-><c- o>::</c-><c- n>unchecked</c-><c- p>());</c->
+
+    <c- k>for</c-> <c- p>(</c-><c- k>auto</c-> <c- n>member</c-> <c- o>:</c-> <c- n>members</c-><c- p>)</c->
+    <c- p>{</c->
+        <c- k>auto</c-> <c- n>type</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>type_of</c-><c- p>(</c-><c- n>member</c-><c- p>);</c->
+        <c- k>auto</c-> <c- n>getter_name</c-> <c- o>=</c-> <c- n>std</c-><c- o>::</c-><c- n>string</c-><c- p>{</c-><c- s>"get_"</c-><c- p>}</c->
+            <c- o>+</c-> <c- n>std</c-><c- o>::</c-><c- n>string</c-><c- p>{</c-><c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>identifier_of</c-><c- p>(</c-><c- n>member</c-><c- p>)};</c->
+        <c- k>if</c-> <c- p>(</c-><c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>has_member_named</c-><c- p>(</c-><c- n>definition</c-><c- p>,</c-> <c- n>getter_name</c-><c- p>))</c->
+            <c- k>throw</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>exception</c-><c- p>(</c-><c- s>"Getter name already exists"</c-><c- p>,</c-> <c- n>member</c-><c- p>);</c->
+
+        <c- n>definition</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>with_access</c-><c- p>(</c->
+            <c- n>definition</c-><c- p>,</c-> <c- n>member</c-><c- p>,</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>access</c-><c- o>::</c-><c- n>private_</c-><c- p>);</c->
+
+        <c- k>auto</c-> <c- n>getter</c-> <c- o>=</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>id</c-><c- p>(</c-><c- n>getter_name</c-><c- p>);</c->
+        <c- n>definition</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>append_members</c-><c- p>(</c-><c- n>definition</c-><c- p>,</c-> <c- o>^^</c-><c- p>{</c->
+            <c- k>public</c-><c- o>:</c->
+                <c- k>auto</c-> \<c- p>(</c-><c- n>getter</c-><c- p>)()</c-> <c- k>const</c-> <c- k>noexcept</c-> <c- o>-></c-> \<c- p>(</c-><c- n>type</c-><c- p>)</c->
+                <c- p>{</c->
+                    <c- k>return</c-> <c- k>this</c-><c- o>-></c->\<c- p>(</c-><c- n>member</c-><c- p>);</c->
+                <c- p>}</c->
+        <c- p>});</c->
+    <c- p>}</c->
+    <c- k>return</c-> <c- n>definition</c-><c- p>;</c->
+<c- p>}</c->
+</pre>
+   <p><code class="highlight"><c- n>with_access</c-></code> retains the field’s identity, type, initializer, and position while changing its access. <code class="highlight"><c- n>append_members</c-></code> parses generated member fragments in the destination’s context and adds their descriptions. Interpolating a provisional member handle into the getter is also proposed: it denotes that retained member without resolving its spelling again. The interpolation of reflected entities in <a data-link-type="biblio" href="#biblio-p4380r0" title="Token Sequence Injection">[P4380R0]</a> does not establish this rule for provisional members. The sketch assumes the stated input restrictions, with a library validator rejecting unsupported inputs before this transform.</p>
+   <p>The expected final definition is ordinary C++:</p>
+<pre class="highlight language-cpp"><c- k>struct</c-> <c- nc>Node</c->
+<c- p>{</c->
+<c- k>private</c-><c- o>:</c->
+    <c- n>Node</c-><c- o>*</c-> <c- n>next</c-> <c- o>=</c-> nullptr<c- p>;</c->
+    <c- b>int</c-> <c- n>value</c-> <c- o>=</c-> <c- mi>0</c-><c- p>;</c->
+
+<c- k>public</c-><c- o>:</c->
+    <c- n>Node</c-><c- p>(</c-><c- n>Node</c-><c- o>*</c-> <c- n>link</c-><c- p>,</c-> <c- b>int</c-> <c- n>initial</c-><c- p>)</c-> <c- o>:</c-> <c- n>next</c-><c- p>(</c-><c- n>link</c-><c- p>),</c-> <c- n>value</c-><c- p>(</c-><c- n>initial</c-><c- p>)</c-> <c- p>{}</c->
+    <c- b>void</c-> <c- n>enqueue_next</c-><c- p>()</c-> <c- k>const</c-> <c- p>{</c-> <c- n>enqueue</c-><c- p>(</c-><c- n>next</c-><c- p>);</c-> <c- p>}</c->
+
+    <c- k>auto</c-> <c- n>get_next</c-><c- p>()</c-> <c- k>const</c-> <c- k>noexcept</c-> <c- o>-></c-> <c- n>Node</c-><c- o>*</c-> <c- p>{</c-> <c- k>return</c-> <c- k>this</c-><c- o>-></c-><c- n>next</c-><c- p>;</c-> <c- p>}</c->
+    <c- k>auto</c-> <c- n>get_value</c-><c- p>()</c-> <c- k>const</c-> <c- k>noexcept</c-> <c- o>-></c-> <c- b>int</c-> <c- p>{</c-> <c- k>return</c-> <c- k>this</c-><c- o>-></c-><c- n>value</c-><c- p>;</c-> <c- p>}</c->
+<c- p>};</c->
+
+<c- n>Node</c-> <c- n>tail</c-><c- p>{</c->nullptr<c- p>,</c-> <c- mi>2</c-><c- p>};</c->
+<c- n>Node</c-> <c- n>head</c-><c- p>{</c-><c- o>&amp;</c-><c- n>tail</c-><c- p>,</c-> <c- mi>1</c-><c- p>};</c->
+<c- k>static_assert</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>is_same_v</c-><c- o>&lt;</c-><c- k>decltype</c-><c- p>(</c-><c- n>head</c-><c- p>.</c-><c- n>get_next</c-><c- p>()),</c-> <c- n>Handle</c-><c- o>></c-><c- p>);</c->
+</pre>
+   <p>The constructor still initializes the same fields. The retained call to <code class="highlight"><c- n>enqueue</c-></code> keeps its original binding and <code class="highlight"><c- n>next</c-></code> still has type <code class="highlight"><c- n>Node</c-><c- o>*</c-></code>. Public field access is deliberately removed. Getter-name collisions fail at the responsible application. This is a concrete contract to implement and test, not a consequence of representing the input with <code class="highlight"><c- n>info</c-></code>. A generator that reconstructs this final class can produce the same behavior.</p>
    <h2 class="heading settled" data-level="3" id="proposal"><span class="secno">3. </span><span class="content">Decorator order</span><a class="self-link" href="#proposal"></a></h2>
-   <p>A decorator receives a value representing a definition and returns a value representing the next definition. Each call must be a constant expression even if no metadata is queried. <code class="highlight"><c- p>[[</c-><c- o>=</c-><c- n>constant</c-><c- o>-</c-><c- n>expression</c-><c- p>]]</c-></code> supplies passive annotations.</p>
-<pre class="highlight language-cpp"><c- p>[[</c->@<c- n>schema</c-><c- o>::</c-><c- n>derive</c-><c- p>]]</c->
+   <p>A decorator receives a value representing a provisional definition and returns the next description of that definition. Applying decorators requires constant evaluation even if no metadata is queried. Applications belong to class or function definitions rather than forward declarations. <code class="highlight"><c- p>[[</c-><c- o>=</c-><c- n>constant</c-><c- o>-</c-><c- n>expression</c-><c- p>]]</c-></code> supplies passive annotations.</p>
+<pre class="highlight language-cpp"><c- c1>// The nearest decorator runs first.</c->
+<c- p>[[</c->@<c- n>schema</c-><c- o>::</c-><c- n>derive</c-><c- p>]]</c->
 <c- p>[[</c->@<c- n>schema</c-><c- o>::</c-><c- n>validate</c-><c- p>]]</c->
 <c- k>struct</c-> <c- nc>User</c->
 <c- p>{</c->
@@ -2163,22 +2235,128 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
     <c- p>[[</c-><c- o>=</c-><c- n>schema</c-><c- o>::</c-><c- n>Field</c-><c- p>{}]]</c-> <c- n>std</c-><c- o>::</c-><c- n>string</c-> <c- n>name</c-><c- p>;</c->
 <c- p>};</c->
 </pre>
-   <p><code class="highlight"><c- n>schema</c-><c- o>::</c-><c- n>validate</c-></code> runs first. <code class="highlight"><c- n>schema</c-><c- o>::</c-><c- n>derive</c-></code> receives the validated definition and returns the final definition of <code class="highlight"><c- n>User</c-></code>.</p>
-   <h2 class="heading settled" data-level="4" id="representation"><span class="secno">4. </span><span class="content">Definition representation</span><a class="self-link" href="#representation"></a></h2>
-   <p>Decorators need a representation they can inspect through reflection or replace using tokens. The compiler installs the returned definition at the original definition site. The examples use <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-></code> as a placeholder for this representation:</p>
-<pre class="highlight language-cpp"><c- k>auto</c-> <c- n>class_type</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>as_class</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
-<c- k>auto</c-> <c- n>function</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>as_function</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
-<c- k>auto</c-> <c- n>body</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>body_of</c-><c- p>(</c-><c- n>function</c-><c- p>);</c->
+   <p><code class="highlight"><c- n>schema</c-><c- o>::</c-><c- n>validate</c-></code> runs first. <code class="highlight"><c- n>schema</c-><c- o>::</c-><c- n>derive</c-></code> receives the validated definition and returns the final definition of <code class="highlight"><c- n>User</c-></code>. At each application, the compiler evaluates the decorator expression and invokes the resulting callable before proceeding outward. This also specifies the order when an expression constructs a configured decorator.</p>
+   <h3 class="heading settled" data-level="3.1" id="explicit-execution"><span class="secno">3.1. </span><span class="content">Explicit applications select execution</span><a class="self-link" href="#explicit-execution"></a></h3>
+   <p>The decorator expression selects the operation to invoke. Passive annotation types remain library inputs. An annotation containing a callable does not schedule it for class completion or template definition. The narrow core carries metadata on the returned definition. It supplies no independent occurrence or result registry. Whether a library convention is sufficient for application history remains an explicit design question in <a href="#application-retention">Independent application retention</a>.</p>
+   <h2 class="heading settled" data-level="4" id="representation"><span class="secno">4. </span><span class="content">Transform descriptions before completing the destination</span><a class="self-link" href="#representation"></a></h2>
+   <p>A provisional definition describes declarations, annotations, retained body structure, and generated fragments before the compiler installs the final definition. We propose the following sequence:</p>
+   <ol>
+    <li data-md>
+     <p>Establish the destination entity at the original declaration site, retaining its name and scope.</p>
+    <li data-md>
+     <p>Make the source definition available as a description with structural queries and source locations.</p>
+    <li data-md>
+     <p>Evaluate and invoke decorators from the nearest application outward, passing each returned description to the next.</p>
+    <li data-md>
+     <p>After successful evaluation, install one final definition for the destination, including the annotations retained by the last decorator.</p>
+   </ol>
+   <p>The core ends at installation. Mandatory completed-class checks require the additional execution point discussed in <a href="#postconditions">Completed-class requirements</a>.</p>
+   <p>We propose that a class destination denote the same type throughout this sequence. The current working draft <a data-link-type="biblio" href="#biblio-cxxdraft" title="C++ working draft (accessed 2026-10-09)">[CXXDRAFT]</a> preserves type identity between an incomplete declaration and its later completion in <a href="https://eel.is/c++draft/basic.types.general#4">[basic.types.general]</a>. Its one-definition rule prohibits multiple definitions of that class in one translation unit, <a href="https://eel.is/c++draft/basic.def.odr#2">[basic.def.odr]</a>. Intermediate descriptions are not additional class definitions.</p>
+   <p>Under the proposed contract, every returned description retains the destination entity and declaration category. The initial function model also preserves the original function type, signature, and overload identity. Replacing a body does not create a second function through which callers are redirected.</p>
+   <p>The distinction between a description and an entity does not require a separate C++ representation type. <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>data_member_spec</c-></code> already returns <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-></code> representing a data member description. <code class="highlight"><c- n>define_aggregate</c-></code> uses those descriptions to define an incomplete destination class and returns the same class reflection, <a href="https://eel.is/c++draft/meta.reflection.define.aggregate">[meta.reflection.define.aggregate]</a>. This provides a limited precedent for descriptions followed by definition. It covers only the members that facility can generate. General class and function descriptions remain proposed facilities.</p>
+   <p>An erased <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-></code> representation permits category-checked description queries. A distinct definition-description type could instead reject category errors earlier. <a data-link-type="biblio" href="#biblio-p4380r0" title="Token Sequence Injection">[P4380R0]</a> section 4 chooses a distinct <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>token_sequence</c-></code> for token indexing, concatenation, and iteration while its section 4.1 still uses <code class="highlight"><c- n>info</c-></code> for declaration descriptions. These choices can coexist: a definition description can contain generated token fragments without being interchangeable with arbitrary tokens. Parsing requires a scope, lookup context, and supported grammar. No arbitrary lossless token-to-semantic round trip is assumed.</p>
+   <p>The examples retain <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-></code> as a provisional choice for definition descriptions:</p>
+<pre class="highlight language-cpp"><c- c1>// These proposed queries inspect the definition before installation.</c->
+<c- k>auto</c-> <c- n>class_definition</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>as_class</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
+<c- k>auto</c-> <c- n>function_definition</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>as_function</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
+<c- k>auto</c-> <c- n>body</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>body_of</c-><c- p>(</c-><c- n>function_definition</c-><c- p>);</c->
 </pre>
-   <p><code class="highlight"><c- n>as_class</c-></code> exposes the complete class, <code class="highlight"><c- n>as_function</c-></code> the function, and <code class="highlight"><c- n>body_of</c-></code> the function’s body tokens. Converting constructed tokens into an inspectable definition must preserve what names refer to and where the tokens came from.</p>
-   <p>It remains unresolved when replacement occurs and whether reflections before and after replacement identify the same entities. Rules are also needed for queries within the class, references to removed members, template instantiation, and generated definitions.</p>
-   <h2 class="heading settled" data-level="5" id="metadata"><span class="secno">5. </span><span class="content">Computed metadata</span><a class="self-link" href="#metadata"></a></h2>
-   <p>The schema helpers inspect public members using their own access permissions. Each <code class="highlight"><c- n>Field</c-></code> remains an input annotation, separate from the computed descriptor:</p>
+   <p>The proposed <code class="highlight"><c- n>stdx</c-><c- o>::</c-><c- n>meta</c-></code> queries below inspect member names, known declared types, and annotations in those descriptions. Member queries take an explicit access context. Queries returning types or annotation values return ordinary reflections that existing reflection facilities can consume.</p>
+   <p>Existing <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>members_of</c-></code> and <code class="highlight"><c- n>nonstatic_data_members_of</c-></code> require the class to be complete from a point in the evaluation context, <a href="https://eel.is/c++draft/meta.reflection.member.queries">[meta.reflection.member.queries]</a>. They cannot supply the proposed inspection of every intermediate description. Structural inspection needs its own contract without promising that layout, completed member bodies, or every type trait is available during transformation.</p>
+   <h3 class="heading settled" data-level="4.1" id="local-effects"><span class="secno">4.1. </span><span class="content">Definition changes stay within the returned description</span><a class="self-link" href="#local-effects"></a></h3>
+   <p>A decorator may add, remove, or replace declarations within its returned description. It may not invoke facilities that inject declarations or define or modify a class or function during evaluation, including its own destination. This restriction applies throughout the application, including callable construction, helper calls, and cleanup. Ordinary template instantiation and constant metadata materialization remain permitted. The schema example’s <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>define_static_string</c-></code> calls are therefore compatible with this model.</p>
+   <p>The restriction concerns where the decorator supplies definition content. Friend declarations and definitions within a returned class follow ordinary C++ rules, including their namespace membership, <a href="https://eel.is/c++draft/class.friend#5">[class.friend]</a>. These effects occur when the returned definition is installed. They do not authorize separate injection or modification of an unrelated definition.</p>
+   <p>During transformation, ordinary operations that inspect an active destination’s unsettled members, bases, layout, conversions, or other definition-dependent properties are diagnosed. This applies even inside a <code class="highlight"><c- k>requires</c-></code> expression or substitution and cannot be suppressed by catching a reflection exception. Such probes cannot return a cached negative answer about the provisional class. Changed satisfaction of an identical atomic constraint is already ill-formed under <a href="https://eel.is/c++draft/temp.constr.atomic#3">[temp.constr.atomic]</a>.</p>
+   <p>Operations independent of the unsettled definition remain permitted. These include comparing type identities, forming <code class="highlight"><c- n>C</c-><c- o>*</c-></code>, evaluating <code class="highlight"><c- k>sizeof</c-><c- p>(</c-><c- n>C</c-><c- o>*</c-><c- p>)</c-></code>, and querying <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>is_class_v</c-><c- o>&lt;</c-><c- n>C</c-><c- o>></c-></code>. A template argument that mentions <code class="highlight"><c- n>C</c-></code> does not by itself make the helper invalid. Structural inspection uses description queries. Checks requiring the final class need a separate invocation after completion. The core does not schedule that invocation. The boundary between permitted operations still needs precise wording.</p>
+   <p>Operations that separately generate companion declarations belong in explicit calls after the definition. An invalid transformation-time operation is not rescheduled for a later event.</p>
+   <h3 class="heading settled" data-level="4.2" id="successful-evaluation"><span class="secno">4.2. </span><span class="content">Installation follows successful evaluation</span><a class="self-link" href="#successful-evaluation"></a></h3>
+   <p>Each explicit application completes its required evaluation and cleanup before the next application begins. Its returned description and metadata must survive that boundary. Failure stops the chain without installing the destination definition. The compiler installs the final definition and retained annotations only after every application and required metadata materialization succeeds.</p>
+   <p>Ordinary helper calls within an application retain C++ evaluation rules. A nested helper expression therefore need not have the cleanup boundaries of separate explicit applications. Temporaries can survive until the end of the containing full-expression under <a href="https://eel.is/c++draft/class.temporary#4">[class.temporary]</a>. Nested calls in an immediate-function context need not be separate immediate invocations, <a href="https://eel.is/c++draft/expr.const.imm#1">[expr.const.imm]</a>. Constant evaluation also permits locally caught exceptions when their objects are destroyed within that evaluation, <a href="https://eel.is/c++draft/expr.const.core#2.24">[expr.const.core]</a>. Description storage and lifetime across those boundaries still need specification. This installation rule does not promise rollback of ordinary template instantiations or materialized constants.</p>
+   <h3 class="heading settled" data-level="4.3" id="source-origin"><span class="secno">4.3. </span><span class="content">Diagnostics retain the source origin</span><a class="self-link" href="#source-origin"></a></h3>
+   <p>Descriptions retain enough source origin to identify the decorator application and the declaration, annotation, or body construct being checked. Diagnostics for generated constructs also need an origin policy, such as identifying the generating application. The representation and propagation rules remain to be specified.</p>
+   <p>Existing <code class="highlight"><c- n>source_location_of</c-></code> returns an implementation-defined location for relevant entities and an empty location for data member descriptions, <a href="https://eel.is/c++draft/meta.reflection.names#7">[meta.reflection.names]</a>.</p>
+   <h3 class="heading settled" data-level="4.4" id="completion"><span class="secno">4.4. </span><span class="content">Completion and lookup need explicit rules</span><a class="self-link" href="#completion"></a></h3>
+   <p>Preserving the destination’s identity does not settle the timing of semantic checks. Member function bodies and default member initializers are already complete-class contexts, <a href="https://eel.is/c++draft/class.mem.general#10">[class.mem.general]</a>. A rule that runs decorators after the closing brace is insufficient to explain which definition those contexts observe.</p>
+   <p>We propose checking retained bodies that require the completed class against its final definition while preserving established name bindings and source locations. If a retained construct refers to a removed member, the transform must repair that construct or the compiler must diagnose it. A declaration with the same spelling does not silently acquire those references. For templates, nondependent constructs cannot acquire a different interpretation at instantiation under <a href="https://eel.is/c++draft/temp.res.general#6">[temp.res.general]</a>. The representation needed to retain these bindings through transformation remains unresolved.</p>
+   <p>The proposed contract assigns stable handles to retained members. Changing access preserves a handle, while removing a member and adding another with the same name creates a new one. Intermediate descriptions need representable declaration structure, not the validity of separately completed classes. A temporarily invalid retained use must be repaired before installation. Queries of removed members diagnose the invalid handle rather than finding a replacement by name. Self-names, forward references, and the point at which complete-class contexts acquire bindings need compiler evidence before these rules can be considered settled.</p>
+   <p>Wording also needs to specify which edits preserve member identity. Generated definitions need rules across translation units and modules. The existing rule for injected definitions requires matching characteristic sequences across translation units, <a href="https://eel.is/c++draft/basic.def.odr#15">[basic.def.odr]</a>. Constant evaluation alone does not establish that consistency.</p>
+   <p>The intended module rule reuses an imported completed definition and its stored annotations. Importing a template retains the decorator expressions and provisional definition needed for newly instantiated specializations. Those specializations run the selected definition’s chain under the ordinary instantiation rules. Correspondence between independently instantiated definitions and their retained reflections remains part of the required wording.</p>
+   <h3 class="heading settled" data-level="4.5" id="template-timing"><span class="secno">4.5. </span><span class="content">Templates transform when a specialization needs its definition</span><a class="self-link" href="#template-timing"></a></h3>
+   <p>We propose specialization-time transformation. A template definition records its decorator expressions and provisional definition. Parsing and nondependent lookup occur at template definition. The chain runs when a specialization’s definition is instantiated, after ordinary specialization selection and substitution of the information needed to describe it. For class templates, the ordinary completeness requirements determine implicit instantiation, <a href="https://eel.is/c++draft/temp.inst#2">[temp.inst]</a>.</p>
+   <p>Implicit and explicit instantiation use the selected definition’s chain. A partial specialization has its own chain. An explicit class specialization follows the rule for a non-template class definition. Neither inherits applications from the primary template. This is one transformation stage per instantiated destination, with no promise of once-per-program evaluation across translation units.</p>
+   <p>Decorators may inspect substituted member types and annotations. Substitution required to form the provisional declaration structure must succeed before transformation. Removing a declaration later cannot rescue an earlier substitution failure. Decorators cannot change the template head, associated constraints, specialization selection, destination identity, or established nondependent bindings. A generated name cannot repair failed nondependent lookup in the template definition. Wording must specify which dependent lookups can observe generated members. Queries requiring the destination’s own completed layout remain unavailable during transformation.</p>
+   <p>Describing a class specialization does not require instantiating every member body. Ordinary class instantiation leaves non-deleted member-function definitions uninstantiated, <a href="https://eel.is/c++draft/temp.inst#3">[temp.inst]</a>. Later instantiation of a retained or generated body does not rerun the enclosing class’s decorators. References already bound to a removed member must be repaired or diagnosed without silently rebinding them by spelling.</p>
+   <p>Function-template decorators likewise run when the function definition is required. For both ordinary functions and function templates, the initial scope requires a return type specified independently of the body. Parameter types, return type, exception specification, associated constraints, and overload identity remain fixed. Functions with deduced return types need a separate deduction contract. A failed decorator application is an error in the required definition, not a new means of removing an overload candidate.</p>
+   <p>This choice checks structural policies and derives metadata for every specialization whose definition is instantiated from a decorated definition. Transforming the template pattern once would instead restrict libraries to symbolic information before concrete member types are available.</p>
+   <h3 class="heading settled" data-level="4.6" id="postconditions"><span class="secno">4.6. </span><span class="content">Completed-class requirements remain outside the core</span><a class="self-link" href="#postconditions"></a></h3>
+   <p>A structural validator checks the description it receives. It can reject duplicate names or unsupported member types without knowing the enclosing class’s layout. A size policy instead needs the completed class. <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>size_of</c-></code> requires completeness, <a href="https://eel.is/c++draft/meta.reflection.layout#6">[meta.reflection.layout]</a>.</p>
+   <p>The following extension sketch makes the outstanding requirement concrete. <code class="highlight"><c- n>bounded</c-></code> requests a final check before a later decorator adds storage:</p>
+<pre class="highlight language-cpp"><c- k>consteval</c-> <c- b>bool</c-> <c- nf>fits_storage</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- n>type</c-><c- p>)</c->
+<c- p>{</c->
+    <c- k>return</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>size_of</c-><c- p>(</c-><c- n>type</c-><c- p>)</c-> <c- o>&lt;=</c-> <c- mi>64</c-><c- p>;</c->
+<c- p>}</c->
+
+<c- k>consteval</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- nf>bounded</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- n>definition</c-><c- p>)</c->
+<c- p>{</c->
+    <c- k>return</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>with_postcondition</c-><c- p>(</c-><c- n>definition</c-><c- p>,</c-> <c- o>^^</c-><c- n>fits_storage</c-><c- p>);</c->
+<c- p>}</c->
+
+<c- k>consteval</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- nf>add_audit_storage</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- n>definition</c-><c- p>)</c->
+<c- p>{</c->
+    <c- k>return</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>append_members</c-><c- p>(</c-><c- n>definition</c-><c- p>,</c-> <c- o>^^</c-><c- p>{</c->
+        <c- b>char</c-> <c- n>audit</c-><c- p>[</c-><c- mi>65</c-><c- p>];</c->
+    <c- p>});</c->
+<c- p>}</c->
+
+<c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c->
+<c- p>[[</c->@<c- n>add_audit_storage</c-><c- p>]]</c->
+<c- p>[[</c->@<c- n>bounded</c-><c- p>]]</c->
+<c- k>struct</c-> <c- nc>Packet</c->
+<c- p>{</c->
+    <c- n>T</c-> <c- n>contents</c-><c- p>;</c->
+<c- p>};</c->
+
+<c- n>Packet</c-><c- o>&lt;</c-><c- b>char</c-><c- o>></c-> <c- n>oversized</c-><c- p>;</c->
+</pre>
+   <p>The final <code class="highlight"><c- n>Packet</c-><c- o>&lt;</c-><c- b>char</c-><c- o>></c-></code> contains <code class="highlight"><c- b>char</c-> <c- n>audit</c-><c- p>[</c-><c- mi>65</c-><c- p>]</c-></code>, so it exceeds the 64-byte bound regardless of padding. The required outcome is a diagnostic even if nobody queries a descriptor or calls a member. <code class="highlight"><c- n>bounded</c-></code> cannot establish that outcome by checking its own input. Placing a layout check in an unused member function also does not make it mandatory for the specialization.</p>
+   <p>The core does not supply <code class="highlight"><c- n>with_postcondition</c-></code>. A completion extension would need to preserve every registered condition through later transformations, run it on each completed specialization produced by the selected decorated definition, and identify both the requesting application and any later conflicting edit. An undecorated specialization would require its own policy. Failure, recursive dependencies, modules, and the permitted effects of predicates need specification. A check-only predicate that cannot inject declarations or modify definitions is the intended restriction.</p>
+   <p><a data-link-type="biblio" href="#biblio-p4380r0" title="Token Sequence Injection">[P4380R0]</a> section 2.5 already provides <code class="highlight"><c- n>on_complete</c-></code> after its pre-completion member-injection hook. A callback can check the final size. Packet therefore demonstrates a requirement, not a counterexample to that proposal. Adding equivalent mandatory checks here introduces a second execution point. It may require compiler-owned condition storage and a change to the execution model.</p>
+   <h3 class="heading settled" data-level="4.7" id="application-retention"><span class="secno">4.7. </span><span class="content">Independent application retention remains a separate requirement</span><a class="self-link" href="#application-retention"></a></h3>
+   <p>A schema migration generator may need the descriptor produced before a field rename as well as the descriptor produced afterward. Applying <code class="highlight"><c- n>schema</c-><c- o>::</c-><c- n>derive</c-></code> on both sides of that rename gives distinct applications even if both use the same callable. A final singleton <code class="highlight"><c- n>SchemaInfo</c-></code> answers what the output contains. It cannot also identify either application’s earlier result after that result has been replaced.</p>
+   <p>A library could preserve both descriptors in annotations or generate separate immutable declarations. Those alternatives can satisfy a cooperating pipeline. The stronger requirement is retrieval by application identity even when a later transform replaces output metadata. Ordinary annotation preservation is not independent application history and a saved reflection is not necessarily a snapshot of earlier properties.</p>
+   <p>This requirement remains unmet by the core. A retention extension needs occurrence identity, publication after successful evaluation and cleanup, payload lifetime, reflected-handle semantics, specialization correspondence, and import rules. Publication would also need to say what happens when a later application fails. Keeping the <code class="highlight"><c- n>info</c-></code>-to-<code class="highlight"><c- n>info</c-></code> signature could still require compiler-managed state associated with an application. A separate return carrier would change composition. Neither option is guaranteed to be a library-only addition.</p>
+   <p><a data-link-type="biblio" href="#biblio-p3603r1" title="Consteval-only Values and Consteval Variables">[P3603R1]</a> section 6.1 explicitly leaves mutable consteval variables to future work. It does not supply a mutable shared cache that resolves these questions. Memoization of equivalent requests, metadata on the final entity, and independently retained application results require separate contracts.</p>
+   <h3 class="heading settled" data-level="4.8" id="static-members"><span class="secno">4.8. </span><span class="content">Static members keep their ordinary inheritance behavior</span><a class="self-link" href="#static-members"></a></h3>
+   <p>A retained static member belongs to the final class. When lookup through a derived class finds that member, it denotes the same declaration, <a href="https://eel.is/c++draft/class.member.lookup">[class.member.lookup]</a>. A non-thread-local static data member has one shared object, <a href="https://eel.is/c++draft/class.static.data#1">[class.static.data]</a>. Intermediate descriptions introduce no additional runtime objects.</p>
+   <p>Deriving from a decorated class neither reapplies its decorators nor copies its computed class annotations onto the derived class.</p>
+   <h3 class="heading settled" data-level="4.9" id="query-access"><span class="secno">4.9. </span><span class="content">Libraries choose the query access context</span><a class="self-link" href="#query-access"></a></h3>
+   <p>Configured decorators can receive an access context as an ordinary value. <code class="highlight"><c- n>access_context</c-><c- o>::</c-><c- n>current</c-><c- p>()</c-></code> captures the context where its invocation lexically appears, <a href="https://eel.is/c++draft/meta.reflection.access.context#5">[meta.reflection.access.context]</a>. Calling a helper from a class does not give that helper the class’s private access. An invocation before the class definition also supplies no implicit in-class access grant.</p>
+   <p>Libraries can deliberately use <code class="highlight"><c- n>access_context</c-><c- o>::</c-><c- n>unchecked</c-><c- p>()</c-></code> for unrestricted member enumeration, as illustrated in <a href="https://eel.is/c++draft/meta.reflection.member.queries#6">[meta.reflection.member.queries]</a>. The proposed description queries retain this explicit choice of access policy.</p>
+   <h2 class="heading settled" data-level="5" id="query-validation"><span class="secno">5. </span><span class="content">Optional metadata is computed on request</span><a class="self-link" href="#query-validation"></a></h2>
+   <p>A library can also inspect a completed type and derive its metadata when a consumer requests it. <a data-link-type="biblio" href="#biblio-p3394r4" title="Annotations for Reflection">[P3394R4]</a> section 3.3 uses passive annotations to configure consumer-driven serialization. This approach needs no decorator application or new execution trigger. It follows the preference in <a data-link-type="biblio" href="#biblio-sd10" title="SD-10: Language Evolution (EWG) Principles">[SD10]</a> section 4.7 for <code class="highlight"><c- k>consteval</c-></code> libraries when they provide equivalent usability, expressiveness, and performance.</p>
+   <p>Passive annotations hold configuration such as field names or binding numbers. The library query performs the expensive validation and derivation. If no use requires that computation, metadata inconsistencies remain undiagnosed. An explicit decorator application requests mandatory checking at the definition. Querying annotations does not implicitly invoke any callable they contain.</p>
+   <p>The optional query returns a descriptor without changing the queried entity. Layout, member lookup, and function signatures must be settled before ordinary code uses them. Deferring their transformation until a metadata query would let query order affect earlier semantic decisions. Definition staging therefore remains separate from optional metadata derivation.</p>
+   <p>Completed entities and provisional descriptions require different inspection facilities. Libraries can share validation and derivation algorithms over extracted records. Separate helpers obtain those records from each representation.</p>
+   <h3 class="heading settled" data-level="5.1" id="cost-model"><span class="secno">5.1. </span><span class="content">Deferral does not remove all compilation costs</span><a class="self-link" href="#cost-model"></a></h3>
+   <p>An annotation expression must satisfy the existing constant-expression requirements even when its value is never queried, <a href="https://eel.is/c++draft/dcl.attr.annotation#2">[dcl.attr.annotation]</a>. Its constructor should store inexpensive configuration because derivation there would defeat deferral. Parsing and ordinary semantic checking also remain necessary. Template definitions can be needed for constant evaluation even when the evaluation does not ultimately use them, <a href="https://eel.is/c++draft/temp.inst#8">[temp.inst]</a>. Heavy derivation belongs in the requested function body, away from constraints, defaults, and type computations that may be needed earlier.</p>
+   <p>The mechanism introduces no required runtime dispatch or validation call. Generated code and any metadata materialized for runtime use retain their execution and storage costs.</p>
+   <p>The model does not promise automatic memoization or once-per-program evaluation. Reflection queries can depend on the evaluation context, <a href="https://eel.is/c++draft/expr.const.reflect#5">[expr.const.reflect]</a>. A cache keyed only by entity identity is therefore insufficient for arbitrary queries. A library can explicitly materialize a descriptor at a chosen point, with defined inputs and the ordinary cross-translation-unit consistency requirements. Any retained descriptor must remain valid or be recomputed, as described in <a href="#composition">Decorator composition</a>.</p>
+   <h2 class="heading settled" data-level="6" id="examples"><span class="secno">6. </span><span class="content">Library uses</span><a class="self-link" href="#examples"></a></h2>
+   <p>The following examples use unchanged-input validators and computed output annotations. Their description queries are proposed facilities with the timing and access rules above.</p>
+   <h3 class="heading settled" data-level="6.1" id="metadata"><span class="secno">6.1. </span><span class="content">Schema generation</span><a class="self-link" href="#metadata"></a></h3>
+   <p>The schema helpers inspect public member descriptions using their own access permissions. Each <code class="highlight"><c- n>Field</c-></code> remains an input annotation, separate from the computed descriptor:</p>
 <pre class="highlight language-cpp"><c- k>namespace</c-> <c- nn>schema</c->
 <c- p>{</c->
     <c- k>struct</c-> <c- nc>Field</c->
     <c- p>{</c->
-        <c- k>const</c-> <c- b>char</c-><c- o>*</c-> <c- n>name</c-> <c- o>=</c-> nullptr<c- p>;</c->
+        <c- k>const</c-> <c- b>char</c-><c- o>*</c-> <c- n>name</c-> <c- o>=</c-> nullptr<c- p>;</c-> <c- c1>// Null keeps the declared field name.</c->
+
+        <c- k>consteval</c-> <c- n>Field</c-><c- p>()</c-> <c- o>=</c-> <c- k>default</c-><c- p>;</c->
+
+        <c- k>consteval</c-> <c- n>Field</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>string_view</c-> <c- n>field_name</c-><c- p>)</c->
+            <c- o>:</c-> <c- n>name</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>define_static_string</c-><c- p>(</c-><c- n>field_name</c-><c- p>))</c->
+        <c- p>{</c->
+        <c- p>}</c->
     <c- p>};</c->
 
     <c- k>struct</c-> <c- nc>FieldInfo</c->
@@ -2193,7 +2371,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
     <c- p>};</c->
 <c- p>}</c->
 </pre>
-   <p><code class="highlight"><c- n>FieldInfo</c-></code> records the resolved name and reflected type. A null <code class="highlight"><c- n>Field</c-><c- o>::</c-><c- n>name</c-></code> selects the declared name without changing the input annotation.</p>
+   <p><code class="highlight"><c- n>Field</c-><c- p>{}</c-></code> retains the null default, which selects the declared name. <code class="highlight"><c- n>Field</c-><c- p>{</c-><c- s>"user_id"</c-><c- p>}</c-></code> promotes its name before annotation formation. A raw pointer to a string literal would fail the constant-template-argument requirements used by <code class="highlight"><c- n>reflect_constant</c-></code>, <a href="https://eel.is/c++draft/temp.arg.nontype#6">[temp.arg.nontype]</a>. An explicitly empty name remains distinct from the null default so validation can reject it.</p>
    <p>The omitted library helpers reject misplaced <code class="highlight"><c- n>Field</c-></code> annotations and empty or duplicate names. <code class="highlight"><c- n>describe_fields</c-></code> preserves declaration order and stores names in static storage with <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>define_static_string</c-></code> <a data-link-type="biblio" href="#biblio-p3491r3" title="define_static_{string,object,array}">[P3491R3]</a>.</p>
 <pre class="highlight language-cpp"><c- k>namespace</c-> <c- nn>schema</c->
 <c- p>{</c->
@@ -2205,44 +2383,48 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 
     <c- k>consteval</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- nf>derive</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- n>definition</c-><c- p>)</c->
     <c- p>{</c->
+        <c- c1>// Inspect provisional members without requiring class layout.</c->
         <c- k>auto</c-> <c- n>fields</c-> <c- o>=</c-> <c- n>describe_fields</c-><c- p>(</c-><c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>as_class</c-><c- p>(</c-><c- n>definition</c-><c- p>));</c->
         <c- k>auto</c-> <c- n>descriptor</c-> <c- o>=</c-> <c- n>SchemaInfo</c-><c- p>{</c->
             <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>reflect_constant_array</c-><c- p>(</c-><c- n>fields</c-><c- p>)</c->
         <c- p>};</c->
 
-        <c- k>return</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>with_annotation</c-><c- p>(</c->
+        <c- c1>// Carry the computed schema with the returned definition.</c->
+        <c- k>return</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>with_replaced_annotation</c-><c- p>(</c->
             <c- n>definition</c-><c- p>,</c->
             <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>reflect_constant</c-><c- p>(</c-><c- n>descriptor</c-><c- p>));</c->
     <c- p>}</c->
 <c- p>}</c->
 </pre>
-   <p><code class="highlight"><c- n>validate</c-></code> returns its input unchanged. <code class="highlight"><c- n>with_annotation</c-></code> attaches the reflected <code class="highlight"><c- n>SchemaInfo</c-></code> constant to that definition. <code class="highlight"><c- n>reflect_constant_array</c-></code> returns a reflection of an array of field descriptors stored as a template parameter object. <code class="highlight"><c- n>SchemaInfo</c-><c- o>::</c-><c- n>fields</c-></code> contains that reflection.</p>
-   <p>Failed validation or descriptor construction makes the program ill-formed. Diagnostics identify the application and checked declaration.</p>
-   <p>After definition, consumers retrieve the stored schema:</p>
-<pre class="highlight language-cpp"><c- k>constexpr</c-> <c- k>auto</c-> <c- n>annotation</c-> <c- o>=</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>annotations_of_with_type</c-><c- p>(</c->
+   <p>The proposed <code class="highlight"><c- n>with_replaced_annotation</c-></code> helper removes every annotation in the description whose value has the supplied constant’s type, then appends the new value. It preserves other annotations in their relative order. This is the library policy for the singleton descriptors in these examples. It does not make annotations generally unique by type. Deriving a schema again therefore replaces its earlier <code class="highlight"><c- n>SchemaInfo</c-></code>, including after a structural change.</p>
+   <p><code class="highlight"><c- n>reflect_constant_array</c-></code> returns a reflection of a template parameter object containing the field descriptors.</p>
+   <p><code class="highlight"><c- n>reflect_constant</c-></code> requires a cv-unqualified, copy-constructible structural type other than a reference type. The supplied value must also be valid for the invented template argument, <a href="https://eel.is/c++draft/meta.reflection.result">[meta.reflection.result]</a>.</p>
+   <p>Failure of the required constant evaluation makes the program ill-formed.</p>
+   <p>After definition, consumers retrieve stored metadata without repeating validation or derivation:</p>
+<pre class="highlight language-cpp"><c- c1>// Retrieve retained metadata without running the decorators again.</c->
+<c- k>constexpr</c-> <c- k>auto</c-> <c- n>annotation</c-> <c- o>=</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>annotations_of_with_type</c-><c- p>(</c->
     <c- o>^^</c-><c- n>User</c-><c- p>,</c-> <c- o>^^</c-><c- n>schema</c-><c- o>::</c-><c- n>SchemaInfo</c-><c- p>)[</c-><c- mi>0</c-><c- p>];</c->
 
 <c- k>constexpr</c-> <c- k>auto</c-> <c- n>descriptor</c-> <c- o>=</c->
     <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>extract</c-><c- o>&lt;</c-><c- n>schema</c-><c- o>::</c-><c- n>SchemaInfo</c-><c- o>></c-><c- p>(</c-><c- n>annotation</c-><c- p>);</c->
 </pre>
-   <p>The query does not repeat derivation.</p>
-   <h2 class="heading settled" data-level="6" id="primary-keys"><span class="secno">6. </span><span class="content">Primary key validation</span><a class="self-link" href="#primary-keys"></a></h2>
-   <p>The primary-key validator counts annotations across public non-static data members and reports errors with <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>exception</c-></code> <a data-link-type="biblio" href="#biblio-p3560r2" title="Error Handling in Reflection">[P3560R2]</a>. <code class="highlight"><c- n>access_context</c-><c- o>::</c-><c- n>current</c-><c- p>()</c-></code> applies the access rules where the helper is defined, without inheriting the caller’s privileges.</p>
+   <h3 class="heading settled" data-level="6.2" id="primary-keys"><span class="secno">6.2. </span><span class="content">Primary key validation</span><a class="self-link" href="#primary-keys"></a></h3>
+   <p>The primary-key validator counts annotations across public non-static data member descriptions and reports errors with <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>exception</c-></code> <a data-link-type="biblio" href="#biblio-p3560r2" title="Error Handling in Reflection">[P3560R2]</a>.</p>
 <pre class="highlight language-cpp"><c- k>namespace</c-> <c- nn>schema</c->
 <c- p>{</c->
     <c- k>struct</c-> <c- nc>PrimaryKey</c-> <c- p>{};</c->
 
     <c- k>consteval</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- nf>validate_primary_key</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- n>definition</c-><c- p>)</c->
     <c- p>{</c->
-        <c- k>auto</c-> <c- n>class_type</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>as_class</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
+        <c- k>auto</c-> <c- n>class_definition</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>as_class</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
         <c- k>auto</c-> <c- n>access</c-> <c- o>=</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>access_context</c-><c- o>::</c-><c- n>current</c-><c- p>();</c->
         <c- n>std</c-><c- o>::</c-><c- b>size_t</c-> <c- n>count</c-> <c- o>=</c-> <c- mi>0</c-><c- p>;</c->
 
-        <c- k>for</c-> <c- p>(</c-><c- k>auto</c-> <c- n>member</c-> <c- o>:</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>nonstatic_data_members_of</c-><c- p>(</c-><c- n>class_type</c-><c- p>,</c-> <c- n>access</c-><c- p>))</c->
-            <c- n>count</c-> <c- o>+=</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>annotations_of_with_type</c-><c- p>(</c-><c- n>member</c-><c- p>,</c-> <c- o>^^</c-><c- n>PrimaryKey</c-><c- p>).</c-><c- n>size</c-><c- p>();</c->
+        <c- k>for</c-> <c- p>(</c-><c- k>auto</c-> <c- n>member</c-> <c- o>:</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>nonstatic_data_members_of</c-><c- p>(</c-><c- n>class_definition</c-><c- p>,</c-> <c- n>access</c-><c- p>))</c->
+            <c- n>count</c-> <c- o>+=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>annotations_of_with_type</c-><c- p>(</c-><c- n>member</c-><c- p>,</c-> <c- o>^^</c-><c- n>PrimaryKey</c-><c- p>).</c-><c- n>size</c-><c- p>();</c->
 
         <c- k>if</c-> <c- p>(</c-><c- n>count</c-> <c- o>></c-> <c- mi>1</c-><c- p>)</c->
-            <c- k>throw</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>exception</c-><c- p>(</c-><c- s>"At most one primary key is permitted"</c-><c- p>,</c-> <c- n>class_type</c-><c- p>);</c->
+            <c- k>throw</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>exception</c-><c- p>(</c-><c- s>"At most one primary key is permitted"</c-><c- p>,</c-> <c- n>class_definition</c-><c- p>);</c->
 
         <c- k>return</c-> <c- n>definition</c-><c- p>;</c->
     <c- p>}</c->
@@ -2258,11 +2440,16 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 <c- p>[[</c->@<c- n>schema</c-><c- o>::</c-><c- n>validate_primary_key</c-><c- p>]]</c->
 <c- k>struct</c-> <c- nc>Batch</c->
 <c- p>{</c->
+    <c- c1>// Expected error: the annotation applies to both declarators.</c->
     <c- p>[[</c-><c- o>=</c-><c- n>schema</c-><c- o>::</c-><c- n>PrimaryKey</c-><c- p>{}]]</c-> <c- b>int</c-> <c- n>batch_id</c-><c- p>,</c-> <c- n>sequence</c-><c- p>;</c->
 <c- p>};</c->
 </pre>
    <p><code class="highlight"><c- n>Invoice</c-></code> passes. <code class="highlight"><c- n>Batch</c-></code> fails because its annotation applies to both declarators. Repeated annotations on one member also fail.</p>
-   <h2 class="heading settled" data-level="7" id="guarded-members"><span class="secno">7. </span><span class="content">Guard validation</span><a class="self-link" href="#guarded-members"></a></h2>
+   <h4 class="heading settled" data-level="6.2.1" id="child-annotations"><span class="secno">6.2.1. </span><span class="content">Child annotations require an explicit parent validator</span><a class="self-link" href="#child-annotations"></a></h4>
+   <p>A parent decorator can also validate annotations on base relationships or function parameters once the corresponding description queries are specified. Omitting the parent decorator performs no such check. Definition-only applications also leave declaration-only functions outside this mechanism.</p>
+   <p>Parameter queries need an additional decision. Existing <code class="highlight"><c- n>annotations_of</c-></code> gathers annotations from reachable declarations of the corresponding parameter, <a href="https://eel.is/c++draft/meta.reflection.annotation#2">[meta.reflection.annotation]</a>. Occurrences written on the current definition need to be distinguished from that accumulated set. The parameter-description contract remains open.</p>
+   <p>A library marker that requires a pointer parameter would validate its declaration but would not itself enforce non-null arguments.</p>
+   <h3 class="heading settled" data-level="6.3" id="guarded-members"><span class="secno">6.3. </span><span class="content">Guard validation</span><a class="self-link" href="#guarded-members"></a></h3>
    <p><code class="highlight"><c- n>GuardedBy</c-></code> can name a public non-static data member declared later in the class:</p>
 <pre class="highlight language-cpp"><c- k>namespace</c-> <c- nn>locking</c->
 <c- p>{</c->
@@ -2278,18 +2465,18 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 
     <c- k>consteval</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- nf>validate_guards</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- n>definition</c-><c- p>)</c->
     <c- p>{</c->
-        <c- k>auto</c-> <c- n>class_type</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>as_class</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
-        <c- k>auto</c-> <c- n>members</c-> <c- o>=</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>nonstatic_data_members_of</c-><c- p>(</c->
-            <c- n>class_type</c-><c- p>,</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>access_context</c-><c- o>::</c-><c- n>current</c-><c- p>());</c->
+        <c- k>auto</c-> <c- n>class_definition</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>as_class</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
+        <c- k>auto</c-> <c- n>members</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>nonstatic_data_members_of</c-><c- p>(</c->
+            <c- n>class_definition</c-><c- p>,</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>access_context</c-><c- o>::</c-><c- n>current</c-><c- p>());</c->
 
         <c- k>for</c-> <c- p>(</c-><c- k>auto</c-> <c- n>member</c-> <c- o>:</c-> <c- n>members</c-><c- p>)</c->
-            <c- k>for</c-> <c- p>(</c-><c- k>auto</c-> <c- n>annotation</c-> <c- o>:</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>annotations_of_with_type</c-><c- p>(</c-><c- n>member</c-><c- p>,</c-> <c- o>^^</c-><c- n>GuardedBy</c-><c- p>))</c->
+            <c- k>for</c-> <c- p>(</c-><c- k>auto</c-> <c- n>annotation</c-> <c- o>:</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>annotations_of_with_type</c-><c- p>(</c-><c- n>member</c-><c- p>,</c-> <c- o>^^</c-><c- n>GuardedBy</c-><c- p>))</c->
             <c- p>{</c->
                 <c- k>auto</c-> <c- n>guard</c-> <c- o>=</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>extract</c-><c- o>&lt;</c-><c- n>GuardedBy</c-><c- o>></c-><c- p>(</c-><c- n>annotation</c-><c- p>);</c->
                 <c- b>bool</c-> <c- n>found</c-> <c- o>=</c-> false<c- p>;</c->
                 <c- k>for</c-> <c- p>(</c-><c- k>auto</c-> <c- n>candidate</c-> <c- o>:</c-> <c- n>members</c-><c- p>)</c->
-                    <c- k>if</c-> <c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>has_identifier</c-><c- p>(</c-><c- n>candidate</c-><c- p>)</c->
-                        <c- o>&amp;&amp;</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>identifier_of</c-><c- p>(</c-><c- n>candidate</c-><c- p>)</c-> <c- o>==</c-> <c- n>guard</c-><c- p>.</c-><c- n>member_name</c-><c- p>)</c->
+                    <c- k>if</c-> <c- p>(</c-><c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>has_identifier</c-><c- p>(</c-><c- n>candidate</c-><c- p>)</c->
+                        <c- o>&amp;&amp;</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>identifier_of</c-><c- p>(</c-><c- n>candidate</c-><c- p>)</c-> <c- o>==</c-> <c- n>guard</c-><c- p>.</c-><c- n>member_name</c-><c- p>)</c->
                         <c- n>found</c-> <c- o>=</c-> true<c- p>;</c->
 
                 <c- k>if</c-> <c- p>(</c-><c- o>!</c-><c- n>found</c-><c- p>)</c->
@@ -2303,14 +2490,15 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 <c- p>[[</c->@<c- n>locking</c-><c- o>::</c-><c- n>validate_guards</c-><c- p>]]</c->
 <c- k>struct</c-> <c- nc>Connection</c->
 <c- p>{</c->
+    <c- c1>// The guard may appear later in the same definition.</c->
     <c- p>[[</c-><c- o>=</c-><c- n>locking</c-><c- o>::</c-><c- n>GuardedBy</c-><c- p>{</c-><c- s>"mutex"</c-><c- p>}]]</c-> <c- b>int</c-> <c- n>refcount</c-> <c- o>=</c-> <c- mi>0</c-><c- p>;</c->
     <c- p>[[</c-><c- o>=</c-><c- n>locking</c-><c- o>::</c-><c- n>GuardedBy</c-><c- p>{</c-><c- s>"mutex"</c-><c- p>}]]</c-> <c- b>bool</c-> <c- n>connected</c-> <c- o>=</c-> false<c- p>;</c->
     <c- n>std</c-><c- o>::</c-><c- n>mutex</c-> <c- n>mutex</c-><c- p>;</c->
 <c- p>};</c->
 </pre>
-   <p>Both <code class="highlight"><c- n>GuardedBy</c-></code> annotations name <code class="highlight"><c- n>Connection</c-><c- o>::</c-><c- n>mutex</c-></code>. Missing or misspelled member names fail validation. The check does not inspect guard types or locking within function bodies.</p>
-   <h2 class="heading settled" data-level="8" id="commands"><span class="secno">8. </span><span class="content">Command validation</span><a class="self-link" href="#commands"></a></h2>
-   <p><code class="highlight"><c- n>cli</c-><c- o>::</c-><c- n>Command</c-></code> accepts a non-member function of type <code class="highlight"><c- b>void</c-><c- p>(</c-><c- n>command_context</c-><c- o>&amp;</c-><c- p>)</c-></code> or <code class="highlight"><c- b>void</c-><c- p>(</c-><c- n>command_context</c-><c- o>&amp;</c-><c- p>)</c-> <c- k>noexcept</c-></code>. Comparing function types also rejects variadic functions.</p>
+   <p>Missing or misspelled member names fail validation. The check does not inspect guard types or locking within function bodies.</p>
+   <h3 class="heading settled" data-level="6.4" id="commands"><span class="secno">6.4. </span><span class="content">Command validation</span><a class="self-link" href="#commands"></a></h3>
+   <p><code class="highlight"><c- n>cli</c-><c- o>::</c-><c- n>Command</c-></code> accepts a non-member function of type <code class="highlight"><c- b>void</c-><c- p>(</c-><c- n>command_context</c-><c- o>&amp;</c-><c- p>)</c-></code> or <code class="highlight"><c- b>void</c-><c- p>(</c-><c- n>command_context</c-><c- o>&amp;</c-><c- p>)</c-> <c- k>noexcept</c-></code> without changing its body. Comparing function types also rejects variadic functions.</p>
 <pre class="highlight language-cpp"><c- k>struct</c-> <c- nc>command_context</c->
 <c- p>{</c->
     <c- n>std</c-><c- o>::</c-><c- n>ostream</c-><c- o>&amp;</c-> <c- n>out</c-><c- p>;</c->
@@ -2337,17 +2525,18 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
         <c- p>{</c->
             <c- k>using</c-> <c- n>signature</c-> <c- o>=</c-> <c- b>void</c-><c- p>(</c-><c- n>command_context</c-><c- o>&amp;</c-><c- p>);</c->
             <c- k>using</c-> <c- n>nothrow_signature</c-> <c- o>=</c-> <c- b>void</c-><c- p>(</c-><c- n>command_context</c-><c- o>&amp;</c-><c- p>)</c-> <c- k>noexcept</c-><c- p>;</c->
-            <c- k>auto</c-> <c- n>function</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>as_function</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
-            <c- k>auto</c-> <c- n>function_type</c-> <c- o>=</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>type_of</c-><c- p>(</c-><c- n>function</c-><c- p>);</c->
-            <c- k>if</c-> <c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>is_class_member</c-><c- p>(</c-><c- n>function</c-><c- p>)</c->
+            <c- k>auto</c-> <c- n>function_definition</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>as_function</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
+            <c- k>auto</c-> <c- n>function_type</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>type_of</c-><c- p>(</c-><c- n>function_definition</c-><c- p>);</c->
+            <c- c1>// Exact function-type checks also exclude variadic signatures.</c->
+            <c- k>if</c-> <c- p>(</c-><c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>is_class_member</c-><c- p>(</c-><c- n>function_definition</c-><c- p>)</c->
                 <c- o>||</c-> <c- p>(</c-><c- o>!</c-><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>is_same_type</c-><c- p>(</c-><c- n>function_type</c-><c- p>,</c-> <c- o>^^</c-><c- n>signature</c-><c- p>)</c->
                     <c- o>&amp;&amp;</c-> <c- o>!</c-><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>is_same_type</c-><c- p>(</c-><c- n>function_type</c-><c- p>,</c-> <c- o>^^</c-><c- n>nothrow_signature</c-><c- p>)))</c->
                 <c- k>throw</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>exception</c-><c- p>(</c->
-                    <c- s>"Command requires a non-member void(command_context&amp;) function"</c-><c- p>,</c-> <c- n>function</c-><c- p>);</c->
+                    <c- s>"Command requires a non-member void(command_context&amp;) function"</c-><c- p>,</c-> <c- n>function_definition</c-><c- p>);</c->
 
-            <c- k>return</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>with_annotation</c-><c- p>(</c->
+            <c- k>return</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>with_replaced_annotation</c-><c- p>(</c->
                 <c- n>definition</c-><c- p>,</c->
-                <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>reflect_constant</c-><c- p>(</c-><c- n>CommandInfo</c-><c- p>{</c-><c- n>name</c-><c- p>,</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>is_noexcept</c-><c- p>(</c-><c- n>function</c-><c- p>)}));</c->
+                <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>reflect_constant</c-><c- p>(</c-><c- n>CommandInfo</c-><c- p>{</c-><c- n>name</c-><c- p>,</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>is_noexcept</c-><c- p>(</c-><c- n>function_definition</c-><c- p>)}));</c->
         <c- p>}</c->
     <c- p>};</c->
 <c- p>}</c->
@@ -2358,33 +2547,102 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
     <c- n>context</c-><c- p>.</c-><c- n>out</c-> <c- o>&lt;&lt;</c-> <c- s>"Ready</c-><c- se>\n</c-><c- s>"</c-><c- p>;</c->
 <c- p>}</c->
 </pre>
-   <p>The body remains unchanged. <code class="highlight"><c- n>CommandInfo</c-></code> stores the configured name <code class="highlight"><c- s>"status"</c-></code> and a false <code class="highlight"><c- n>is_noexcept</c-></code> value.</p>
-   <h2 class="heading settled" data-level="9" id="composition"><span class="secno">9. </span><span class="content">Decorator composition</span><a class="self-link" href="#composition"></a></h2>
-   <p>A decorator can call other decorators and pass each returned definition to the next. The omitted schema helpers count fields and remove transient fields before the final schema is derived:</p>
-<pre class="highlight language-cpp"><c- k>struct</c-> <c- nc>SchemaChange</c->
+   <h3 class="heading settled" data-level="6.5" id="graphics-bindings"><span class="secno">6.5. </span><span class="content">Material resource bindings</span><a class="self-link" href="#graphics-bindings"></a></h3>
+   <p>A rendering library can derive a shader resource layout from a material declaration. In this example, each public direct non-static data member represents one resource visible to the fragment shader. The library requires a unique set and binding pair for each resource.</p>
+   <p>The omitted <code class="highlight"><c- n>UniformBuffer</c-></code>, <code class="highlight"><c- n>SampledTexture2D</c-></code>, and <code class="highlight"><c- n>Sampler</c-></code> wrappers are library types. <code class="highlight"><c- n>MaterialParameters</c-></code> is the application’s material parameter type. The omitted <code class="highlight"><c- n>describe_binding</c-></code> helper requires exactly one <code class="highlight"><c- n>Binding</c-></code> annotation per inspected member, rejects unsupported resource types, and returns the slot and resource kind.</p>
+<pre class="highlight language-cpp"><c- k>namespace</c-> <c- nn>gfx</c->
 <c- p>{</c->
-    <c- n>std</c-><c- o>::</c-><c- b>size_t</c-> <c- n>fields_before</c-><c- p>;</c->
-    <c- n>std</c-><c- o>::</c-><c- b>size_t</c-> <c- n>fields_after</c-><c- p>;</c->
+    <c- k>struct</c-> <c- nc>Binding</c->
+    <c- p>{</c->
+        <c- b>unsigned</c-> <c- n>set</c-><c- p>;</c->
+        <c- b>unsigned</c-> <c- n>binding</c-><c- p>;</c->
+    <c- p>};</c->
+
+    <c- k>enum</c-> <c- k>class</c-> <c- nc>ResourceKind</c-> <c- p>{</c-> <c- n>uniform_buffer</c-><c- p>,</c-> <c- n>sampled_texture</c-><c- p>,</c-> <c- n>sampler</c-> <c- p>};</c->
+
+    <c- k>struct</c-> <c- nc>BindingInfo</c->
+    <c- p>{</c->
+        <c- n>Binding</c-> <c- n>slot</c-><c- p>;</c->
+        <c- n>ResourceKind</c-> <c- n>kind</c-><c- p>;</c->
+    <c- p>};</c->
+
+    <c- k>struct</c-> <c- nc>BindingLayout</c->
+    <c- p>{</c->
+        <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- n>bindings</c-><c- p>;</c->
+    <c- p>};</c->
+
+    <c- k>consteval</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- nf>material</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- n>definition</c-><c- p>)</c->
+    <c- p>{</c->
+        <c- k>auto</c-> <c- n>members</c-> <c- o>=</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>nonstatic_data_members_of</c-><c- p>(</c->
+            <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>as_class</c-><c- p>(</c-><c- n>definition</c-><c- p>),</c->
+            <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>access_context</c-><c- o>::</c-><c- n>current</c-><c- p>());</c->
+        <c- n>std</c-><c- o>::</c-><c- n>vector</c-><c- o>&lt;</c-><c- n>BindingInfo</c-><c- o>></c-> <c- n>bindings</c-><c- p>;</c->
+
+        <c- k>for</c-> <c- p>(</c-><c- k>auto</c-> <c- n>member</c-> <c- o>:</c-> <c- n>members</c-><c- p>)</c->
+        <c- p>{</c->
+            <c- k>auto</c-> <c- n>entry</c-> <c- o>=</c-> <c- n>describe_binding</c-><c- p>(</c-><c- n>member</c-><c- p>);</c->
+            <c- c1>// Resource slots must be unique even when their types differ.</c->
+            <c- k>for</c-> <c- p>(</c-><c- k>auto</c-> <c- n>previous</c-> <c- o>:</c-> <c- n>bindings</c-><c- p>)</c->
+                <c- k>if</c-> <c- p>(</c-><c- n>previous</c-><c- p>.</c-><c- n>slot</c-><c- p>.</c-><c- n>set</c-> <c- o>==</c-> <c- n>entry</c-><c- p>.</c-><c- n>slot</c-><c- p>.</c-><c- n>set</c->
+                    <c- o>&amp;&amp;</c-> <c- n>previous</c-><c- p>.</c-><c- n>slot</c-><c- p>.</c-><c- n>binding</c-> <c- o>==</c-> <c- n>entry</c-><c- p>.</c-><c- n>slot</c-><c- p>.</c-><c- n>binding</c-><c- p>)</c->
+                    <c- k>throw</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>exception</c-><c- p>(</c->
+                        <c- s>"Duplicate material resource slot"</c-><c- p>,</c-> <c- n>member</c-><c- p>);</c->
+            <c- n>bindings</c-><c- p>.</c-><c- n>push_back</c-><c- p>(</c-><c- n>entry</c-><c- p>);</c->
+        <c- p>}</c->
+
+        <c- k>auto</c-> <c- n>layout</c-> <c- o>=</c-> <c- n>BindingLayout</c-><c- p>{</c->
+            <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>reflect_constant_array</c-><c- p>(</c-><c- n>bindings</c-><c- p>)};</c->
+        <c- k>return</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>with_replaced_annotation</c-><c- p>(</c->
+            <c- n>definition</c-><c- p>,</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>reflect_constant</c-><c- p>(</c-><c- n>layout</c-><c- p>));</c->
+    <c- p>}</c->
+<c- p>}</c->
+
+<c- p>[[</c->@<c- n>gfx</c-><c- o>::</c-><c- n>material</c-><c- p>]]</c->
+<c- k>struct</c-> <c- nc>Material</c->
+<c- p>{</c->
+    <c- p>[[</c-><c- o>=</c-><c- n>gfx</c-><c- o>::</c-><c- n>Binding</c-><c- p>{</c-><c- mi>1</c-><c- p>,</c-> <c- mi>0</c-><c- p>}]]</c-> <c- n>gfx</c-><c- o>::</c-><c- n>UniformBuffer</c-><c- o>&lt;</c-><c- n>MaterialParameters</c-><c- o>></c-> <c- n>parameters</c-><c- p>;</c->
+    <c- p>[[</c-><c- o>=</c-><c- n>gfx</c-><c- o>::</c-><c- n>Binding</c-><c- p>{</c-><c- mi>1</c-><c- p>,</c-> <c- mi>1</c-><c- p>}]]</c-> <c- n>gfx</c-><c- o>::</c-><c- n>SampledTexture2D</c-> <c- n>albedo</c-><c- p>;</c->
+    <c- p>[[</c-><c- o>=</c-><c- n>gfx</c-><c- o>::</c-><c- n>Binding</c-><c- p>{</c-><c- mi>1</c-><c- p>,</c-> <c- mi>2</c-><c- p>}]]</c-> <c- n>gfx</c-><c- o>::</c-><c- n>Sampler</c-> <c- n>sampler</c-><c- p>;</c->
 <c- p>};</c->
 
-<c- k>consteval</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- nf>prepare_schema</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- n>definition</c-><c- p>)</c->
+<c- k>constexpr</c-> <c- k>auto</c-> <c- n>layout</c-> <c- o>=</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>extract</c-><c- o>&lt;</c-><c- n>gfx</c-><c- o>::</c-><c- n>BindingLayout</c-><c- o>></c-><c- p>(</c->
+    <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>annotations_of_with_type</c-><c- p>(</c->
+        <c- o>^^</c-><c- n>Material</c-><c- p>,</c-> <c- o>^^</c-><c- n>gfx</c-><c- o>::</c-><c- n>BindingLayout</c-><c- p>)[</c-><c- mi>0</c-><c- p>]);</c->
+</pre>
+   <p><code class="highlight"><c- n>Material</c-></code> retains its input annotations and gains a <code class="highlight"><c- n>BindingLayout</c-></code> that a renderer can translate into backend resource bindings. Changing the sampler’s slot to <code class="highlight"><c- n>Binding</c-><c- p>{</c-><c- mi>1</c-><c- p>,</c-> <c- mi>1</c-><c- p>}</c-></code> makes the definition fail with <code class="highlight"><c- s>"Duplicate material resource slot"</c-></code>, even if no consumer queries the layout.</p>
+   <p>Derivation uses declared resource types and explicit binding numbers without member offsets or completed class layout. Shader interface compatibility and device limits require separate checks by the rendering library.</p>
+   <h4 class="heading settled" data-level="6.5.1" id="graphics-query"><span class="secno">6.5.1. </span><span class="content">The same binding policy can be checked on demand</span><a class="self-link" href="#graphics-query"></a></h4>
+   <p>To defer checking <code class="highlight"><c- n>Material</c-></code>, omit <code class="highlight"><c- p>[[</c->@<c- n>gfx</c-><c- o>::</c-><c- n>material</c-><c- p>]]</c-></code> and replace the stored-layout retrieval above with:</p>
+<pre class="highlight language-cpp"><c- c1>// Without the decorator, checking occurs only when this query is required.</c->
+<c- k>constexpr</c-> <c- k>auto</c-> <c- n>requested_layout</c-> <c- o>=</c-> <c- n>gfx</c-><c- o>::</c-><c- n>bindings_for</c-><c- o>&lt;</c-><c- n>Material</c-><c- o>></c-><c- p>();</c->
+</pre>
+   <p>The omitted <code class="highlight"><c- n>bindings_for</c-></code> helper uses ordinary reflection to extract the declared bindings and apply the same library policy. It returns a <code class="highlight"><c- n>BindingLayout</c-></code> without attaching an annotation or modifying the class. Duplicate slots are diagnosed when this computation is required. Without the query, the binding policy does not prevent ordinary use of the completed class.</p>
+   <h3 class="heading settled" data-level="6.6" id="composition"><span class="secno">6.6. </span><span class="content">Composition carries current metadata by library policy</span><a class="self-link" href="#composition"></a></h3>
+   <p>A decorator can call other decorators and pass each returned definition to the next. Serialization can exclude a field from its descriptor while retaining that field as ordinary program state. The proposed <code class="highlight"><c- n>schema</c-><c- o>::</c-><c- n>Transient</c-></code> annotation below is a passive input to <code class="highlight"><c- n>describe_fields</c-></code>:</p>
+<pre class="highlight language-cpp"><c- k>namespace</c-> <c- nn>schema</c->
+<c- p>{</c->
+    <c- k>struct</c-> <c- nc>Transient</c-> <c- p>{};</c->
+<c- p>}</c->
+
+<c- k>consteval</c-> <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- n>prepare_schema</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>info</c-> <c- n>definition</c-><c- p>)</c->
 <c- p>{</c->
     <c- n>definition</c-> <c- o>=</c-> <c- n>schema</c-><c- o>::</c-><c- n>validate</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
-    <c- k>auto</c-> <c- n>before</c-> <c- o>=</c-> <c- n>schema</c-><c- o>::</c-><c- n>field_count</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
-
-    <c- n>definition</c-> <c- o>=</c-> <c- n>schema</c-><c- o>::</c-><c- n>remove_transient_fields</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
-    <c- k>auto</c-> <c- n>after</c-> <c- o>=</c-> <c- n>schema</c-><c- o>::</c-><c- n>field_count</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
-    <c- n>definition</c-> <c- o>=</c-> <c- n>schema</c-><c- o>::</c-><c- n>derive</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
-
-    <c- k>return</c-> <c- n>stdx</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>with_annotation</c-><c- p>(</c->
-        <c- n>definition</c-><c- p>,</c->
-        <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>reflect_constant</c-><c- p>(</c-><c- n>SchemaChange</c-><c- p>{</c-><c- n>before</c-><c- p>,</c-> <c- n>after</c-><c- p>}));</c->
+    <c- k>return</c-> <c- n>schema</c-><c- o>::</c-><c- n>derive</c-><c- p>(</c-><c- n>definition</c-><c- p>);</c->
 <c- p>}</c->
+
+<c- p>[[</c->@<c- n>prepare_schema</c-><c- p>]]</c->
+<c- k>struct</c-> <c- nc>Session</c->
+<c- p>{</c->
+    <c- p>[[</c-><c- o>=</c-><c- n>schema</c-><c- o>::</c-><c- n>Field</c-><c- p>{}]]</c-> <c- b>int</c-> <c- n>id</c-><c- p>;</c->
+    <c- p>[[</c-><c- o>=</c-><c- n>schema</c-><c- o>::</c-><c- n>Transient</c-><c- p>{}]]</c-> <c- b>int</c-> <c- n>cached_hash</c-> <c- o>=</c-> <c- mi>0</c-><c- p>;</c->
+<c- p>};</c->
 </pre>
-   <p>The output retains the final schema and both field counts so consumers need not reconstruct the earlier definition.</p>
-   <p>Each transform specifies which annotations it preserves or recomputes. Computing final metadata after changes to the definition keeps that metadata consistent. <code class="highlight"><c- n>SchemaChange</c-></code> records intermediate facts separately from the final schema.</p>
-   <h2 class="heading settled" data-level="10" id="companion-type"><span class="secno">10. </span><span class="content">Companion aggregates</span><a class="self-link" href="#companion-type"></a></h2>
-   <p>A separate namespace-scope <code class="highlight"><c- k>consteval</c-></code> block can use the schema to define a companion aggregate:</p>
+   <p>For this policy, <code class="highlight"><c- n>describe_fields</c-></code> omits members marked <code class="highlight"><c- n>Transient</c-></code> and diagnoses a member marked both <code class="highlight"><c- n>Field</c-></code> and <code class="highlight"><c- n>Transient</c-></code>. The final schema contains <code class="highlight"><c- n>id</c-></code>. The final class still contains <code class="highlight"><c- n>cached_hash</c-></code>. Serialization policy does not remove runtime storage.</p>
+   <p>Each transform specifies which annotations it preserves or recomputes. A transform that changes schema inputs must invalidate or recompute the descriptor before publishing it as the current schema. The singleton replacement policy makes that responsibility visible but does not enforce it for arbitrary decorators. Intermediate records that a cooperating library preserves are still output annotations, subject to subsequent edits.</p>
+   <p>Saving an entity reflection does not freeze the properties observed by later queries. For example, <code class="highlight"><c- n>is_complete_type</c-></code> depends on the evaluation context, <a href="https://eel.is/c++draft/meta.reflection.queries#29">[meta.reflection.queries]</a>. References to removed provisional members also require the identity rules described in <a href="#completion">Completion and lookup</a>.</p>
+   <p>Validation applies to the description passed to that validator. Structural validation of final invariants belongs after the relevant edits. Completed-layout invariants require the separate completion mechanism that the core leaves unresolved.</p>
+   <h3 class="heading settled" data-level="6.7" id="companion-type"><span class="secno">6.7. </span><span class="content">Companion aggregates</span><a class="self-link" href="#companion-type"></a></h3>
+   <p>A separate namespace-scope <code class="highlight"><c- k>consteval</c-></code> block can use the schema to define a companion aggregate. Defining that second entity lies outside the decorator’s permitted effects:</p>
 <pre class="highlight language-cpp"><c- k>struct</c-> <c- nc>UserRow</c-><c- p>;</c->
 
 <c- k>consteval</c->
@@ -2397,20 +2655,86 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
     <c- k>for</c-> <c- p>(</c-><c- k>auto</c-> <c- n>field</c-> <c- o>:</c-> <c- p>[</c-><c- o>:</c-><c- n>descriptor</c-><c- p>.</c-><c- n>fields</c-><c- o>:</c-><c- p>])</c->
         <c- n>members</c-><c- p>.</c-><c- n>push_back</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>data_member_spec</c-><c- p>(</c-><c- n>field</c-><c- p>.</c-><c- n>type</c-><c- p>,</c-> <c- p>{.</c-><c- n>name</c-> <c- o>=</c-> <c- n>field</c-><c- p>.</c-><c- n>name</c-><c- p>}));</c->
 
+    <c- c1>// Defining a second entity requires work outside the decorator.</c->
     <c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>define_aggregate</c-><c- p>(</c-><c- o>^^</c-><c- n>UserRow</c-><c- p>,</c-> <c- n>members</c-><c- p>);</c->
 <c- p>}</c->
 
 <c- k>static_assert</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>is_same_v</c-><c- o>&lt;</c-><c- k>decltype</c-><c- p>(</c-><c- n>UserRow</c-><c- o>::</c-><c- n>id</c-><c- p>),</c-> <c- b>int</c-><c- o>></c-><c- p>);</c->
 </pre>
    <p><code class="highlight"><c- n>UserRow</c-></code> uses the schema’s names, types, and declaration order. Serialization names containing punctuation need separate C++ identifiers. Matching the schema does not require matching <code class="highlight"><c- n>User</c-></code>’s object layout.</p>
-   <h2 class="heading settled" data-level="11" id="alternatives"><span class="secno">11. </span><span class="content">Alternatives</span><a class="self-link" href="#alternatives"></a></h2>
-   <h3 class="heading settled" data-level="11.1" id="explicit-call"><span class="secno">11.1. </span><span class="content">Explicit validation</span><a class="self-link" href="#explicit-call"></a></h3>
-   <p>A separate <code class="highlight"><c- k>consteval</c-></code> block can call the validator. The author must keep that call with the definition. Applying a decorator makes the call part of the definition.</p>
-   <h3 class="heading settled" data-level="11.2" id="query-validation"><span class="secno">11.2. </span><span class="content">Validation on query</span><a class="self-link" href="#query-validation"></a></h3>
-   <p>A library accessor can compute a descriptor on request. If nobody queries the metadata, that check never runs. Mandatory decorator evaluation also diagnoses errors in those unqueried definitions.</p>
-   <h2 class="heading settled" data-level="12" id="conclusion"><span class="secno">12. </span><span class="content">Conclusion</span><a class="self-link" href="#conclusion"></a></h2>
-   <p>Explicit decorators let libraries validate or transform definitions and retain computed annotations. Serialization and command libraries can build on the same composition rule. Replacement timing and identity need specification before adoption wording can be written.</p>
-   <p>We request direction on proceeding with <code class="highlight"><c- p>[[</c->@<c- n>expression</c-><c- p>]]</c-></code> applications where each decorator returns the definition passed to the next.</p>
+   <h2 class="heading settled" data-level="7" id="alternatives"><span class="secno">7. </span><span class="content">Prior work and alternatives</span><a class="self-link" href="#alternatives"></a></h2>
+   <p>Other languages and earlier C++ proposals provide precedents for decorator composition and definition transformation. The choice here concerns how transformations compose and which effects an application permits.</p>
+   <h3 class="heading settled" data-level="7.1" id="language-prior-art"><span class="secno">7.1. </span><span class="content">Other languages provide composition and transformation precedents</span><a class="self-link" href="#language-prior-art"></a></h3>
+   <p>Runtime decorators, syntax macros, and transformations of reflected definitions differ in what an operation receives and what its result can replace.</p>
+   <h4 class="heading settled" data-level="7.1.1" id="runtime-decorators"><span class="secno">7.1.1. </span><span class="content">Python and TypeScript compose decorated values</span><a class="self-link" href="#runtime-decorators"></a></h4>
+   <p>Python applies function and class decorators from the nearest outward. Each returned value passes to the next decorator. The final value is bound to the declared name. <a data-link-type="biblio" href="#biblio-pythondecorators" title="Python Language Reference: Function and class definitions">[PYTHONDECORATORS]</a> This supplies a direct precedent for return-value composition. Python operates on runtime function and class objects. Our proposed operations instead transform provisional definitions during constant evaluation while retaining the destination entity. The shared application order does not establish identical expression-evaluation or cleanup rules.</p>
+   <p>The decorator model documented in TypeScript 5.0 also applies method decorators from the nearest outward. A decorator receives the method and a context object and may return a replacement method. The context’s <code class="highlight"><c- n>addInitializer</c-></code> operation separately schedules initialization work. <a data-link-type="biblio" href="#biblio-ts50decorators" title="TypeScript 5.0: Decorators">[TS50DECORATORS]</a> Its runtime initialization callbacks differ from the constant-evaluated completion checks considered here.</p>
+   <h4 class="heading settled" data-level="7.1.2" id="csharp-generators"><span class="secno">7.1.2. </span><span class="content">C# combines attributes with additive source generation</span><a class="self-link" href="#csharp-generators"></a></h4>
+   <p>C# custom attributes provide metadata for consumers. Applying one does not itself execute a user-defined compile-time transformation. <a data-link-type="biblio" href="#biblio-csharpattributes" title="C# documentation: Define and read custom attributes">[CSHARPATTRIBUTES]</a> Roslyn incremental generators can select annotated declarations, inspect syntax and symbols, and add members through partial classes. They can also report diagnostics, though Roslyn recommends separate analyzers for that purpose. Their output is additive and cannot remove existing fields or rewrite existing bodies. <a data-link-type="biblio" href="#biblio-roslyngenerators" title="Roslyn: Incremental Generators Cookbook">[ROSLYNGENERATORS]</a> C# therefore provides prior art for annotation-driven generation and validation. The ordered transformation of an existing definition remains a separate contract.</p>
+   <h4 class="heading settled" data-level="7.1.3" id="rust-macros"><span class="secno">7.1.3. </span><span class="content">Rust attribute macros replace syntax during compilation</span><a class="self-link" href="#rust-macros"></a></h4>
+   <p>Rust attribute procedural macros receive token streams for their arguments and the annotated item. The returned token stream replaces that item with zero or more items. Derive macros instead append items after the original definition and can declare inert helper attributes. <a data-link-type="biblio" href="#biblio-rustprocmacros" title="The Rust Reference: Procedural macros">[RUSTPROCMACROS]</a> These facilities provide precedents for compile-time transformation and passive configuration consumed by an explicit operation. Rust’s replacement contract operates on tokens and permits multiple output items. The contract here returns one description for an established destination entity.</p>
+   <h4 class="heading settled" data-level="7.1.4" id="swift-macros"><span class="secno">7.1.4. </span><span class="content">Swift attached macros separate expansion roles</span><a class="self-link" href="#swift-macros"></a></h4>
+   <p>Swift’s attached macro design passes attribute and declaration syntax to expansion functions with declared roles. Member macros add members, peer macros add adjacent declarations, and accessor macros can turn stored properties into computed properties. <a data-link-type="biblio" href="#biblio-swiftse0389" title="SE-0389: Attached Macros">[SWIFTSE0389]</a> SE-0415 also specifies function-body replacement, with at most one body macro per function. The original body must parse but need not type-check before expansion. <a data-link-type="biblio" href="#biblio-swiftse0415" title="SE-0415: Function Body Macros">[SWIFTSE0415]</a> This is close prior art for the value-object and function-instrumentation examples. Our proposed chain composes whole-definition results while preserving established bindings.</p>
+   <h4 class="heading settled" data-level="7.1.5" id="scala-macro-annotations"><span class="secno">7.1.5. </span><span class="content">Scala macro annotations preserve the original symbol</span><a class="self-link" href="#scala-macro-annotations"></a></h4>
+   <p>Scala 3’s experimental <code class="highlight"><c- n>MacroAnnotation</c-></code> facility is particularly close to the proposed representation model. Its <code class="highlight"><c- n>transform</c-></code> operation receives reflected definition trees and an optional companion, then returns a nonempty list containing the transformed definition. That definition must retain the original symbol. Additional definitions are permitted under ownership and visibility restrictions. <a data-link-type="biblio" href="#biblio-scalamacroannotation" title="Scala 3 API: MacroAnnotation (experimental)">[SCALAMACROANNOTATION]</a> Definition transformation with preserved identity therefore has direct prior art. Our output is restricted to the destination definition, with companion generation performed separately.</p>
+   <p>These precedents support treating composition, representation, identity, and permitted effects as separate design decisions. The C++ rules for specialization-time transformation and the proposed completion extension still require their own specification.</p>
+   <h3 class="heading settled" data-level="7.2" id="prior-decorators"><span class="secno">7.2. </span><span class="content">Annotation callbacks and explicit decorators have prior art</span><a class="self-link" href="#prior-decorators"></a></h3>
+   <p><a data-link-type="biblio" href="#biblio-p3394r4" title="Annotations for Reflection">[P3394R4]</a>, <em>Annotations for Reflection</em>, section 4.5 explores callbacks for conditional and composed annotations and completion-triggered formatter generation. It leaves callback syntax, mutation, naming, and registration unresolved. Explicit execution is therefore an existing design question.</p>
+   <p><a data-link-type="biblio" href="#biblio-p3587r0" title="Reconsider reflection access for C++26">[P3587R0]</a>, <em>Reconsider reflection access for C++26</em>, section 6.2.2 illustrates a possible Python-like decorator that transforms a class for serialization by generating a constructor and friend access. It supplies prior art for explicit class transformation without specifying a complete decorator mechanism. The return-value composition and effect restrictions proposed here still require their own design.</p>
+   <h3 class="heading settled" data-level="7.3" id="explicit-call"><span class="secno">7.3. </span><span class="content">Explicit validation</span><a class="self-link" href="#explicit-call"></a></h3>
+   <p>A separate <code class="highlight"><c- k>consteval</c-></code> block can validate the completed entity using ordinary reflection. The author must keep that check with the definition. Applying a decorator makes structural validation part of the definition. Validation alone does not establish the need for definition transformation.</p>
+   <h3 class="heading settled" data-level="7.4" id="completed-validation"><span class="secno">7.4. </span><span class="content">Ordinary assertions cover structural checks, not final layout</span><a class="self-link" href="#completed-validation"></a></h3>
+   <p>A generated class-scope <code class="highlight"><c- k>static_assert</c-></code> can check a dependent member type when the specialization is instantiated. It cannot generally inspect the enclosing class’s final layout because it is not a complete-class context, <a href="https://eel.is/c++draft/class.mem.general#10">[class.mem.general]</a>. Moving it into an unused member function does not make the check mandatory, <a href="https://eel.is/c++draft/temp.inst#3">[temp.inst]</a>.</p>
+   <p>A following <code class="highlight"><c- k>consteval</c-></code> call can inspect a completed class but does not automatically follow future template instantiations. The completion extension would need to address that requirement. Ordinary assertions remain suitable where the checked information is already available. External generation stays explicit so the author selects its scope and position relative to other declarations.</p>
+   <h3 class="heading settled" data-level="7.5" id="prototype-class"><span class="secno">7.5. </span><span class="content">Prototype composition already exists</span><a class="self-link" href="#prototype-class"></a></h3>
+   <p><a data-link-type="biblio" href="#biblio-p0707r5" title="Declarative class authoring using consteval functions + reflection + generation (aka: Metaclasses for generative C++)">[P0707R5]</a> section 3 uses a reflected prototype to generate a class. Section 3.2 applies multiple metaclass functions in listed order through successive prototypes. Both class transformation and composition are therefore prior art. The proposed difference here is an established destination with retained bindings across descriptions.</p>
+   <p>A naive prototype of <code class="highlight"><c- n>Node</c-></code> changes its injected-class-name references to <code class="highlight"><c- n>prototype</c-><c- o>::</c-><c- n>Node</c-></code>. Copying the resulting pointer type unchanged would give the final class the wrong link type. Copying a retained <code class="highlight"><c- k>return</c-> <c- k>this</c-></code> body also needs an account of its new owner. Rebinding self-types can fix the pointer case. A destination-parameterized prototype can defer dependent constructs and generation can emit the retained body in the final class. These alternatives prevent self-reference alone from establishing an expressiveness separation. They also identify the rebinding work that the proposed description contract must handle.</p>
+   <h3 class="heading settled" data-level="7.6" id="expression-macros"><span class="secno">7.6. </span><span class="content">Generation and completion hooks already exist</span><a class="self-link" href="#expression-macros"></a></h3>
+   <p><a data-link-type="biblio" href="#biblio-p4380r0" title="Token Sequence Injection">[P4380R0]</a>, <em>Token Sequence Injection</em>, provides <code class="highlight"><c- n>on_template_defined</c-></code>, <code class="highlight"><c- n>inject_members</c-></code>, and <code class="highlight"><c- n>on_complete</c-></code> in section 2.5. It also provides declaration cloning, composable declaration descriptions, declaration macros, and source-oriented diagnostic examples in sections 2.7, 4.1, 3.6, and 2.10. Those facilities support semantic inspection, generation, and eager checking.</p>
+   <p>For <code class="highlight"><c- n>readable_fields</c-></code>, appending getters with <code class="highlight"><c- n>inject_members</c-></code> leaves the earlier fields public. An appended <code class="highlight"><c- k>private</c-><c- o>:</c-></code> label changes only subsequent declarations. The published interface does not specify editing those existing fields' access or preserving their handles through such an edit. That is a direct semantic-edit API gap.</p>
+   <p>A declaration macro can instead receive the whole source form and generate the expected <code class="highlight"><c- n>Node</c-></code>, including its private fields and destination-typed links. A prototype-based generator can also work with an explicit rebinding policy. Declaration cloning helps reconstruct function interfaces. Neither technique is ruled out by the examples here. No fundamental expressiveness separation from <a data-link-type="biblio" href="#biblio-p4380r0" title="Token Sequence Injection">[P4380R0]</a> has been established.</p>
+   <p>Function instrumentation gives the same result under scrutiny. A scope guard inserted at an explicit injection site can preserve the existing function, recursion, and early returns. A declaration macro can wrap a restricted body. The proposed benefit is semantic access to an ordinary authored definition with a specified replacement contract. An initial body-edit facility would preserve the function type and bindings and exclude constructors, coroutines, function-try-blocks, contracts, and deduced return types. Exceptions and cleanup would follow the guard’s ordinary semantics, with a nonthrowing guard required for the sketch.</p>
+   <h3 class="heading settled" data-level="7.7" id="comparison-criteria"><span class="secno">7.7. </span><span class="content">A semantic edit contract is the proposed improvement</span><a class="self-link" href="#comparison-criteria"></a></h3>
+   <p>The proposed library interface combines edits to retained declarations with token fragments for new declarations. For Node, <code class="highlight"><c- n>with_access</c-></code> changes the existing fields and <code class="highlight"><c- n>append_members</c-></code> adds the getters. Library authors specify those edits without reconstructing the whole class. The token and declaration facilities in <a data-link-type="biblio" href="#biblio-p4380r0" title="Token Sequence Injection">[P4380R0]</a> remain useful building blocks.</p>
+   <table>
+    <caption>Design criteria for the proposed semantic edit contract and its alternatives.</caption>
+    <thead>
+     <tr>
+      <th>Criterion
+      <th>Proposed improvement or remaining test
+    <tbody>
+     <tr>
+      <td>Semantic clarity
+      <td>State which destination and member each retained reference denotes. Node tests self-types, authored initializers, and the binding of <code class="highlight"><c- n>enqueue</c-></code>.
+     <tr>
+      <td>Composability
+      <td>Every application receives the previous returned description. <a data-link-type="biblio" href="#biblio-p0707r5" title="Declarative class authoring using consteval functions + reflection + generation (aka: Metaclasses for generative C++)">[P0707R5]</a> already composes prototypes and <a data-link-type="biblio" href="#biblio-p4380r0" title="Token Sequence Injection">[P4380R0]</a> composes declaration descriptions. The additional contract concerns edits to the original definition.
+     <tr>
+      <td>Practical transformations
+      <td>Demonstrate changes to existing access and retained bodies. Generation can reproduce the restricted examples, so reduced library reconstruction is the claim to test.
+     <tr>
+      <td>Diagnostics
+      <td>Identify the application, original construct, and conflicting generated construct. <a data-link-type="biblio" href="#biblio-p4380r0" title="Token Sequence Injection">[P4380R0]</a> already demonstrates source-oriented errors. Diagnostic quality needs comparison in a prototype.
+     <tr>
+      <td>Implementation burden
+      <td>Stable handles, deferred checks, preserved bindings, templates, and modules require compiler work. <a data-link-type="biblio" href="#biblio-p4380r0" title="Token Sequence Injection">[P4380R0]</a> reports implemented examples. This core has no implementation and no demonstrated cost advantage.
+     <tr>
+      <td>Reflection compatibility
+      <td>Reuse ordinary type and constant reflections, access contexts, and generated token fragments. Provisional inspection and editing need new operations.
+   </table>
+   <h3 class="heading settled" data-level="7.8" id="executable-evidence"><span class="secno">7.8. </span><span class="content">Executable tests support a limited semantic-edit experiment</span><a class="self-link" href="#executable-evidence"></a></h3>
+   <p>A local Clang-based source transformer implements <code class="highlight"><c- n>readable_fields</c-></code> and field renaming for ordinary classes with directly spelled public scalar fields. It edits declarations, constructor initializers, and AST-bound uses, reparses the output, and audits selected bindings. Its independently rerun suite passes 69 mixed checks, including 17 clean runtime executions under address and undefined-behavior sanitizers. Three emitted programs pass four available frontends under C++20 with <code class="highlight"><c- o>-</c-><c- n>pedantic</c-><c- o>-</c-><c- n>errors</c-></code>. The local evidence bundle, <code class="highlight"><c- n>scratch</c-><c- o>/</c-><c- n>decorator</c-><c- o>-</c-><c- n>prototype</c-></code>, contains the implementation, inputs, emitted programs, commands, diagnostics, and review regressions.</p>
+   <p>The tests exercise self-references, prior forward declarations, saved function addresses, shadowing parameters, both transformation orders, and stale metadata. Renaming before getter generation changes the getter’s name. Renaming afterward keeps that name and changes its bound field use. Independent review found and verified repairs for cross-file field-identity collisions, missed field references, and sanitizer failure detection. The retained collision reproducer changed an unrelated access’s result from 3 to 8 before repair. Both runtime tests now verify that the unrelated access returns 3.</p>
+   <p>Ten probes on the actual <a data-link-type="biblio" href="#biblio-p4380r0" title="Token Sequence Injection">[P4380R0]</a> experimental compiler produce five successful executions, two compile-only successes, and three intended compilation failures. Member-injection getters and declaration macros, including a rename using explicit field placeholders, succeed. The <code class="highlight"><c- n>on_complete</c-></code> hook rejects the oversized completed Packet specialization. A fitting specialization and an uninstantiated template pass. In two negative cases, an injected getter hides an unqualified function or type used in an existing body. Explicit global qualification repairs both and the repaired programs execute successfully.</p>
+   <p>The local transformer requires already-valid input and uses simulated origin handles and metadata history. Its reconstruction baseline shares the same semantic extractor. The binding audit covers selected references and has explicit unsupported cases. These results do not implement provisional definitions, preserve compiler declaration identity across parses, or establish general binding preservation. Native scheduling, annotation publication, and independent application retention remain unimplemented. The next experiment needs a compiler hook before final semantic completion, with retained declarations in one semantic context.</p>
+   <h3 class="heading settled" data-level="7.9" id="transform-attribute"><span class="secno">7.9. </span><span class="content">An attribute spelling still needs execution semantics</span><a class="self-link" href="#transform-attribute"></a></h3>
+   <p>A spelling such as <code class="highlight"><c- p>[[</c-><c- n>transform</c-><c- p>(</c-><c- n>schema</c-><c- o>::</c-><c- n>derive</c-><c- p>)]]</c-></code> could be specified to invoke a decorator. Existing attribute rules do not provide that invocation: attribute-token names undergo no name lookup and their order within an attribute-list is insignificant, <a href="https://eel.is/c++draft/dcl.attr.grammar#4">[dcl.attr.grammar]</a>. Lookup of the argument, mandatory evaluation, and composition order would all need specification. The <code class="highlight">@</code> spelling makes that explicit application visible. The definition model is independent of the spelling.</p>
+   <h2 class="heading settled" data-level="8" id="conclusion"><span class="secno">8. </span><span class="content">Conclusion</span><a class="self-link" href="#conclusion"></a></h2>
+   <p>We request SG7, EWG, and LEWG direction on explicit constant-evaluated decorators that compose descriptions of one destination before installation. The proposed gain is a defined way to edit authored members while retaining their bindings and diagnostic origin. Existing reflection, token generation, and declaration cloning can support that work. The provisional semantic model still needs implementation evidence and wording.</p>
+   <p>Independent per-application retention and mandatory completed-class or specialization checks remain unmet requirements outside this core. Completion checks add an execution point and independent retention may add compiler-managed publication state. Their eventual integration can change the execution model.</p>
+   <p>The next compiler experiment needs to establish the Node contract and compare it with prototype and declaration-macro generation. The examples have not established a fundamental expressiveness advantage over <a data-link-type="biblio" href="#biblio-p4380r0" title="Token Sequence Injection">[P4380R0]</a>. They support investigating a direct semantic edit interface whose composition and identity rules library authors can rely on.</p>
+   <h2 class="heading settled" data-level="9" id="acknowledgments"><span class="secno">9. </span><span class="content">Acknowledgments</span><a class="self-link" href="#acknowledgments"></a></h2>
+   <p>The explicit decorator model in this proposal grew out of suggestions by <a href="https://github.com/Tsche/">Matthias Wippich (Tsche)</a>. These included separate application syntax, definition-only use, and ordered composition through ordinary functions returning the next definition. Matthias also suggested connecting token representations with semantic reflection, sharing transformation functions with expression macros, and retaining computed metadata as annotations on the resulting definition. I thank Matthias for these substantial design contributions and the accompanying examples.</p>
   </main>
 <script>
 (function() {
@@ -2544,6 +2868,10 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   <h2 class="heading no-num no-ref settled" id="references"><span class="content">References</span><a class="self-link" href="#references"></a></h2>
   <h3 class="heading no-num no-ref settled" id="informative"><span class="content">Non-Normative References</span><a class="self-link" href="#informative"></a></h3>
   <dl>
+   <dt id="biblio-csharpattributes">[CSHARPATTRIBUTES]
+   <dd><a href="https://learn.microsoft.com/en-us/dotnet/csharp/advanced-topics/reflection-and-attributes/attribute-tutorial"><cite>C# documentation: Define and read custom attributes</cite></a>. URL: <a href="https://learn.microsoft.com/en-us/dotnet/csharp/advanced-topics/reflection-and-attributes/attribute-tutorial">https://learn.microsoft.com/en-us/dotnet/csharp/advanced-topics/reflection-and-attributes/attribute-tutorial</a>
+   <dt id="biblio-cxxdraft">[CXXDRAFT]
+   <dd><a href="https://eel.is/c++draft/"><cite>C++ working draft (accessed 2026-10-09)</cite></a>. URL: <a href="https://eel.is/c++draft/">https://eel.is/c++draft/</a>
    <dt id="biblio-p0707r5">[P0707R5]
    <dd>Herb Sutter. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p0707r5.pdf"><cite>Declarative class authoring using consteval functions + reflection + generation (aka: Metaclasses for generative C++)</cite></a>. 2024-10-12. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p0707r5.pdf">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p0707r5.pdf</a>
    <dt id="biblio-p2996r13">[P2996R13]
@@ -2554,4 +2882,26 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <dd>Wyatt Childers; et al. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3491r3.html"><cite>define_static_{string,object,array}</cite></a>. 2025-06-20. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3491r3.html">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3491r3.html</a>
    <dt id="biblio-p3560r2">[P3560R2]
    <dd>Peter Dimov; Barry Revzin. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3560r2.html"><cite>Error Handling in Reflection</cite></a>. 2025-06-17. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3560r2.html">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3560r2.html</a>
+   <dt id="biblio-p3587r0">[P3587R0]
+   <dd>Lauri Vasama. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3587r0.html"><cite>Reconsider reflection access for C++26</cite></a>. 2025-01-13. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3587r0.html">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3587r0.html</a>
+   <dt id="biblio-p3603r1">[P3603R1]
+   <dd>Barry Revzin; Peter Dimov. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3603r1.html"><cite>Consteval-only Values and Consteval Variables</cite></a>. 2025-10-06. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3603r1.html">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3603r1.html</a>
+   <dt id="biblio-p4380r0">[P4380R0]
+   <dd>Barry Revzin; Daveed Vandevoorde; Andrei Alexandrescu. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/p4380r0.html"><cite>Token Sequence Injection</cite></a>. 2026-09-22. URL: <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/p4380r0.html">https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/p4380r0.html</a>
+   <dt id="biblio-pythondecorators">[PYTHONDECORATORS]
+   <dd><a href="https://docs.python.org/3/reference/compound_stmts.html#function-definitions"><cite>Python Language Reference: Function and class definitions</cite></a>. URL: <a href="https://docs.python.org/3/reference/compound_stmts.html#function-definitions">https://docs.python.org/3/reference/compound_stmts.html#function-definitions</a>
+   <dt id="biblio-roslyngenerators">[ROSLYNGENERATORS]
+   <dd><a href="https://github.com/dotnet/roslyn/blob/main/docs/features/incremental-generators.cookbook.md"><cite>Roslyn: Incremental Generators Cookbook</cite></a>. URL: <a href="https://github.com/dotnet/roslyn/blob/main/docs/features/incremental-generators.cookbook.md">https://github.com/dotnet/roslyn/blob/main/docs/features/incremental-generators.cookbook.md</a>
+   <dt id="biblio-rustprocmacros">[RUSTPROCMACROS]
+   <dd><a href="https://doc.rust-lang.org/reference/procedural-macros.html"><cite>The Rust Reference: Procedural macros</cite></a>. URL: <a href="https://doc.rust-lang.org/reference/procedural-macros.html">https://doc.rust-lang.org/reference/procedural-macros.html</a>
+   <dt id="biblio-scalamacroannotation">[SCALAMACROANNOTATION]
+   <dd><a href="https://www.scala-lang.org/api/current/scala/annotation/MacroAnnotation.html"><cite>Scala 3 API: MacroAnnotation (experimental)</cite></a>. URL: <a href="https://www.scala-lang.org/api/current/scala/annotation/MacroAnnotation.html">https://www.scala-lang.org/api/current/scala/annotation/MacroAnnotation.html</a>
+   <dt id="biblio-sd10">[SD10]
+   <dd>EWG chairs. <a href="https://isocpp.org/std/standing-documents/sd-10-language-evolution-principles"><cite>SD-10: Language Evolution (EWG) Principles</cite></a>. 2024-12-02. URL: <a href="https://isocpp.org/std/standing-documents/sd-10-language-evolution-principles">https://isocpp.org/std/standing-documents/sd-10-language-evolution-principles</a>
+   <dt id="biblio-swiftse0389">[SWIFTSE0389]
+   <dd>Doug Gregor; Holly Borla; Richard Wei. <a href="https://github.com/swiftlang/swift-evolution/blob/main/proposals/0389-attached-macros.md"><cite>SE-0389: Attached Macros</cite></a>. URL: <a href="https://github.com/swiftlang/swift-evolution/blob/main/proposals/0389-attached-macros.md">https://github.com/swiftlang/swift-evolution/blob/main/proposals/0389-attached-macros.md</a>
+   <dt id="biblio-swiftse0415">[SWIFTSE0415]
+   <dd>Doug Gregor. <a href="https://github.com/swiftlang/swift-evolution/blob/main/proposals/0415-function-body-macros.md"><cite>SE-0415: Function Body Macros</cite></a>. URL: <a href="https://github.com/swiftlang/swift-evolution/blob/main/proposals/0415-function-body-macros.md">https://github.com/swiftlang/swift-evolution/blob/main/proposals/0415-function-body-macros.md</a>
+   <dt id="biblio-ts50decorators">[TS50DECORATORS]
+   <dd><a href="https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html#decorators"><cite>TypeScript 5.0: Decorators</cite></a>. URL: <a href="https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html#decorators">https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html#decorators</a>
   </dl>
