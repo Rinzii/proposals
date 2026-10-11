@@ -1,0 +1,110 @@
+<pre class=metadata>
+Title: Homogeneous function parameter packs: a feeler
+Shortname: Pnnnn
+Level: 0
+Status: D
+Group: WG21
+Date: 2026-10-10
+Audience: EWGI
+Editor: Ian Pike, ianpike98cs@gmail.com
+Editor: Eczbek
+Editor Term: Reply-to, Reply-to
+!Intent: Early design feedback
+Abstract: We are exploring function parameter packs with one declared element type. This draft seeks feedback on usefulness and design before developing wording.
+Boilerplate: omit conformance, omit feedback-header, omit table-of-contents
+Markup Shorthands: markdown yes
+</pre>
+
+# Basic idea # {#idea}
+
+We are revisiting James Touton's P1219R2 proposal for homogeneous function parameter packs. <sup>[[P1219R2]]</sup>
+
+<xmp class=language-cpp>
+int sum(int... values) {
+    return (0 + ... + values);
+}
+</xmp>
+
+The starting model has one trailing pack. The function is implicitly a template specialized by pack length, even when the element type is fixed. Calls deduce the length and use ordinary parameter initialization, including for runtime arguments.
+
+# Motivation # {#motivation}
+
+Passing element values to a <code>std::initializer_list</code> parameter requires braces and gives the function const access to those elements. Requiring exact types in a deduced pack can reject otherwise valid implicit conversions. <sup>[[P1219R2]]</sup>
+
+Pack constructors would not receive initializer-list constructors' special overload preference. <sup>[[P1219R2]]</sup>
+
+# TODO # {#todo}
+
+- Add a concrete interface example and compare a constrained pack, an initializer list, and a range interface.
+- Compare implicit packs with typed runtime arguments, bounded overload families, and checked C varargs.
+- Choose new syntax that preserves existing declarations and their meaning, including named and unnamed C varargs. Avoid retiring existing language features.
+- Start with named, type-first packs. Compare unnamed-pack markers and declaration contexts. Keep prefix ellipsis and explicit length as alternatives.
+- Define pack-length identity separately from deduction. Cover explicit lengths, typed function pointers versus <code>auto</code>, explicit instantiation, and explicit specialization.
+- Settle deduction for dependent <code>T</code>, including mixed types and value categories, empty packs, and minimum counts.
+- Distinguish maximum counts, checked count arguments, and bounded traversal. Count checks alone do not establish argument types.
+- Decide whether the initial scope includes references, lambdas, member functions, and constructors.
+- Define reference binding and temporary lifetimes, including move-only arguments. Check braced arguments and overloaded function names.
+- Check overload resolution, constructor list-initialization, constraints, <code>noexcept</code>, and constant evaluation.
+- Check that separate declarations and definitions agree across translation units and modules.
+- Record which P1219R2 rules are retained or changed and why. Discuss the direction with Touton and implementers before drafting standard wording. <sup>[[P1219R2]]</sup>
+- Write expected outcomes and rejection cases, then test a prototype. Measure build time and code size across pack lengths and convertible input types.
+
+# Design references # {#design-references}
+
+- P1219R2 discusses template markers and explicit pack lengths alongside its implicit-length model. <sup>[[P1219R2]]</sup>
+- The current function declaration rules distinguish packs from C varargs. Comma-less varargs remain permitted but deprecated. Return type deduction is independent of that distinction. <sup>[[CXX-FUNCTIONS]] [[CXX-VARARGS-DEPRECATION]] [[CXX-AUTO]]</sup>
+- Existing ellipsis arguments undergo default promotions. This matters when comparing typed packs with checked C varargs. <sup>[[CXX-CALLS]]</sup>
+- D's typesafe variadic functions provide a reference for collecting arguments into a typed runtime array. GCC's <code>__builtin_va_arg_pack_len</code> provides a reference for counting trailing arguments, limited to functions guaranteed to be inlined. <sup>[[D-VARIADIC]] [[GCC-CALLS]]</sup>
+- Alternative spellings need to account for pack indexing, optional attribute semantics, and existing template-id uses in specialization and friend declarations. <sup>[[CXX-PACK-INDEX]] [[CXX-ATTRIBUTES]] [[CXX-SPECIALIZATION]] [[CXX-TEMPLATE-FRIENDS]]</sup>
+
+<pre class=biblio>
+{
+  "P1219R2": {
+    "title": "Homogeneous variadic function parameters",
+    "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1219r2.html",
+    "authors": ["James Touton"],
+    "date": "5 October 2019",
+    "publisher": "ISO/IEC JTC 1/SC 22/WG 21"
+  },
+  "CXX-FUNCTIONS": {
+    "title": "C++ working draft: Functions [dcl.fct]",
+    "href": "https://eel.is/c++draft/dcl.fct"
+  },
+  "CXX-VARARGS-DEPRECATION": {
+    "title": "C++ working draft: Non-comma-separated ellipsis parameters [depr.ellipsis.comma]",
+    "href": "https://eel.is/c++draft/depr.ellipsis.comma"
+  },
+  "CXX-AUTO": {
+    "title": "C++ working draft: Placeholder type specifiers [dcl.spec.auto.general]",
+    "href": "https://eel.is/c++draft/dcl.spec.auto.general"
+  },
+  "CXX-CALLS": {
+    "title": "C++ working draft: Function call [expr.call]",
+    "href": "https://eel.is/c++draft/expr.call"
+  },
+  "D-VARIADIC": {
+    "title": "Functions: Typesafe Variadic Functions",
+    "href": "https://dlang.org/spec/function.html#typesafe_variadic_functions"
+  },
+  "GCC-CALLS": {
+    "title": "Using the GNU Compiler Collection: Constructing Calls",
+    "href": "https://gcc.gnu.org/onlinedocs/gcc/Constructing-Calls.html"
+  },
+  "CXX-PACK-INDEX": {
+    "title": "C++ working draft: Pack indexing specifier [dcl.type.pack.index]",
+    "href": "https://eel.is/c++draft/dcl.type.pack.index"
+  },
+  "CXX-ATTRIBUTES": {
+    "title": "C++ working draft: Attribute syntax and semantics [dcl.attr.grammar]",
+    "href": "https://eel.is/c++draft/dcl.attr.grammar"
+  },
+  "CXX-SPECIALIZATION": {
+    "title": "C++ working draft: Explicit specialization [temp.expl.spec]",
+    "href": "https://eel.is/c++draft/temp.expl.spec"
+  },
+  "CXX-TEMPLATE-FRIENDS": {
+    "title": "C++ working draft: Friends [temp.friend]",
+    "href": "https://eel.is/c++draft/temp.friend"
+  }
+}
+</pre>
