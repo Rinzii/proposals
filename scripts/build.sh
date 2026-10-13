@@ -14,7 +14,7 @@ Usage:
 
 Examples:
     ./scripts/build.sh
-    ./scripts/build.sh drafts/cpp/invoking_annotations_r0.bs
+    ./scripts/build.sh drafts/cpp/P1219R3.bs
     ./scripts/build.sh cpp/P1234.bs out/cpp/P1234.html
     ./scripts/build.sh --all
 EOF
@@ -81,6 +81,10 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
     exit 0
 fi
 
+if [[ $# -eq 0 ]]; then
+    exec make build
+fi
+
 BIKESHED_BIN="$(resolve_bikeshed)"
 
 if [[ "${1:-}" == "--all" ]]; then
@@ -105,19 +109,7 @@ EOF
     exit 0
 fi
 
-SPEC_FILE=""
-if [[ $# -ge 1 ]]; then
-    SPEC_FILE="$(normalize_path "$1")"
-else
-    for candidate in \
-        "${ROOT_DIR}/drafts/cpp/invoking_annotations_r0.bs"
-    do
-        if [[ -f "${candidate}" ]]; then
-            SPEC_FILE="${candidate}"
-            break
-        fi
-    done
-fi
+SPEC_FILE="$(normalize_path "$1")"
 
 if [[ -z "${SPEC_FILE}" || ! -f "${SPEC_FILE}" ]]; then
     cat >&2 <<EOF

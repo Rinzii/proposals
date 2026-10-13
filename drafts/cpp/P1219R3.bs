@@ -1,0 +1,1665 @@
+<pre class=metadata>
+Title: Homogeneous variadic function parameters
+Shortname: P1219
+Level: 3
+Status: D
+Group: WG21
+Date: 2026-10-12
+Audience: EWGI
+Editor: Ian Pike&lt;ianpike98cs@gmail.com&gt;, ianpike98cs@gmail.com
+Editor: Eczbek&lt;eczbek.void@gmail.com&gt;, eczbek.void@gmail.com
+Editor: Jan Schultke&lt;janschultke@gmail.com&gt;, janschultke@gmail.com
+Editor Term: Author, Author
+!Original author: <a href="mailto:bekenn@gmail.com">James Touton&lt;bekenn@gmail.com&gt;</a>
+Metadata Order: Editor, Original author, Audience, *, !*
+No Abstract: yes
+Boilerplate: omit conformance, omit feedback-header, omit issues-index
+Markup Shorthands: markdown no
+</pre>
+
+<style>
+:root {
+    --bs-code-bg: #f6f6f6;
+    --bs-code-keyword: #990055;
+    --bs-code-name: #006b99;
+    --bs-code-string: #76512c;
+    --bs-code-comment: #52616d;
+    --bs-code-punctuation: #52616d;
+    --bs-valid-bg: #e9fbe9;
+    --bs-invalid-bg: #fbe9e9;
+}
+
+@media screen and (prefers-color-scheme: dark) {
+    :root {
+        --bs-code-bg: #0d0d0d;
+        --bs-code-keyword: #e969a8;
+        --bs-code-name: #4aa4df;
+        --bs-code-string: #a4a6e8;
+        --bs-code-comment: #5ab9ae;
+        --bs-code-punctuation: #9aaeb6;
+        --bs-valid-bg: #123c22;
+        --bs-invalid-bg: #4a1f25;
+    }
+}
+
+body .highlight:not(.idl) {
+    background: var(--bs-code-bg);
+}
+
+body c-[a], body c-[b], body c-[k], body c-[kc], body c-[kn], body c-[kp], body c-[kr] { color: var(--bs-code-keyword); }
+body c-[e], body c-[n], body c-[nc], body c-[no], body c-[nd], body c-[ni], body c-[ne], body c-[nf], body c-[nl], body c-[nn], body c-[py], body c-[fm] { color: var(--bs-code-name); }
+body c-[s], body c-[t], body c-[u], body c-[sa], body c-[sb], body c-[sc], body c-[dl], body c-[sd], body c-[se], body c-[sh], body c-[si], body c-[sx], body c-[sr], body c-[ss] { color: var(--bs-code-string); }
+body c-[c], body c-[d], body c-[ch], body c-[cp], body c-[cpf], body c-[c1], body c-[cs] { color: var(--bs-code-comment); }
+body c-[o], body c-[p], body c-[ow], body c-[l], body c-[m], body c-[mb], body c-[mf], body c-[mh], body c-[mi], body c-[mo], body c-[ld], body c-[il] { color: var(--bs-code-punctuation); }
+
+ins, del {
+    --bs-code-keyword: currentColor;
+    --bs-code-name: currentColor;
+    --bs-code-string: currentColor;
+    --bs-code-comment: currentColor;
+    --bs-code-punctuation: currentColor;
+}
+
+body ins .highlight:not(.idl), body del .highlight:not(.idl) {
+    background: transparent;
+}
+
+td.code-valid {
+    background: var(--bs-valid-bg);
+}
+
+td.code-invalid {
+    background: var(--bs-invalid-bg);
+}
+
+pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+table.data td, table.data th {
+    overflow-wrap: anywhere;
+}
+
+table.data th {
+    text-align: start;
+}
+
+table.poll-table {
+    width: auto;
+    margin-inline: 0;
+}
+
+table.poll-table th, table.poll-table td {
+    min-width: 2.5em;
+    padding-inline: 0.4em;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+table.poll-summary {
+    width: 100%;
+}
+
+table.poll-summary th:first-child, table.poll-summary td:first-child {
+    text-align: start;
+}
+
+table.numeric-table th:last-child, table.numeric-table td:last-child {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+}
+
+table.constructor-comparison {
+    table-layout: fixed;
+}
+
+table.constructor-comparison td, table.constructor-comparison th {
+    padding: 0.5em 0.4em;
+}
+
+table.constructor-comparison pre {
+    font-size: 0.8em;
+    padding: 0.5em;
+}
+
+@media print {
+    table.data tr {
+        break-inside: avoid;
+    }
+}
+</style>
+
+# Revision History # {#revision-history}
+
+## R3 (2026-10-12) ## {#revision-r3}
+
+- Update the proposal for the C++26 draft N5050.
+- Account for type and value pack indexing without changing which expansion handles an existing pack occurrence.
+- Distinguish a new homogeneous parameter pack from an ordinary expansion of an enclosing pack.
+- Narrow the new lambda genericness rule to homogeneous declarations.
+- Separate the preferred comma-less varargs reclamation from the compatibility decision it requires.
+- Defer explicit lengths.
+
+## R2 (2019-10-05) ## {#revision-r2}
+
+- Rebased wording against N4830.
+- Added discussion on the impact of making varargs commas mandatory.
+
+## R1 (2019-03-11) ## {#revision-r1}
+
+- Rebased wording against N4800.
+- Added wording for signature changes.
+- Removed wording permitting empty template parameter lists for template declarations.
+- Added feature test macro.
+- Added discussion of alternative designs aimed at addressing or avoiding confusion with explicit specializations.
+- Added straw polls from EWGI in Kona.
+- Added acknowledgments.
+- Minor corrections to examples.
+
+## R0 (2018-10-08) ## {#revision-r0}
+
+- Initial draft. [[P1219R2]]
+
+# Introduction # {#introduction}
+
+This paper proposes function parameter packs with a single element type. If the committee permits us to reclaim the comma-less syntax, we could use the following form:
+
+<xmp class=language-cpp>
+template <class T> // T is not a parameter pack...
+void foo(T... vs); // ...but vs is a parameter pack.
+</xmp>
+
+C++ already permits a homogeneous template parameter pack:
+
+<xmp class=language-cpp>
+// Legal since C++11: T is not a parameter pack, but vs is.
+template <class T, T... vs>
+void foo();
+</xmp>
+
+The first pack would contain ordinary function parameters initialized at the call. The second contains constant template arguments. [[CXX-VARIADIC]] A homogeneous function parameter pack deduces its length at compile time while accepting values computed at runtime.
+
+This revision proposes a single homogeneous pack at the end of a function's parameter list. The pack could be named or unnamed. The function would implicitly be a template and its specializations would be distinguished in part by the pack length. The named spelling is unambiguous. The unnamed spelling <code>int...</code> requires committee approval of the comma-less C-varargs change in [[#compatibility]]. The examples and wording below use this syntax subject to that approval.
+
+1. A declarator ellipsis introduces a new homogeneous pack only when its parameter pattern has no remaining unexpanded pack after ordinary placeholder processing.
+2. Existing indexed selection and nested expansions retain their meanings, including in lambdas.
+3. Calls, target function types, and declarations identifying particular specializations deduce the implicit length. Ordinary redeclarations preserve the same homogeneous declaration.
+
+# Straw Polls # {#straw-polls}
+
+A draft revision of this paper was seen by EWGI in Kona in March of 2019.
+
+<table class="data poll-table poll-summary">
+<caption>Kona EWGI polls, March 2019. [[P1219R2]]</caption>
+<thead><tr><th scope=col>Poll</th><th scope=col>SF</th><th scope=col>F</th><th scope=col>N</th><th scope=col>A</th><th scope=col>SA</th></tr></thead>
+<tbody>
+  <tr><td>Make vararg declaration comma mandatory.</td><td>10</td><td>6</td><td>1</td><td>0</td><td>0</td></tr>
+  <tr><td>This should be valid and declare a template: <code>template &lt;class T&gt; constexpr T min(T v1, T... vs);</code></td><td>10</td><td>5</td><td>1</td><td>0</td><td>0</td></tr>
+  <tr><td>This should be valid and declare a template: <code>template &lt;&gt; void foo(int... v);</code></td><td>0</td><td>4</td><td>7</td><td>2</td><td>3</td></tr>
+  <tr><td>This should be valid and declare a template: <code>void foo(int... v);</code></td><td>4</td><td>6</td><td>4</td><td>0</td><td>1</td></tr>
+</tbody>
+</table>
+
+A follow-up revision incorporating EWGI's feedback was seen by EWGI in Cologne in July of 2019.
+
+<table class="data poll-table poll-summary">
+<caption>Cologne EWGI poll, July 2019, following revisions incorporating the Kona feedback. [[P1219R2]]</caption>
+<thead><tr><th scope=col>Poll</th><th scope=col>SF</th><th scope=col>F</th><th scope=col>N</th><th scope=col>A</th><th scope=col>SA</th></tr></thead>
+<tbody>
+  <tr><td>Forward to EWG.</td><td>5</td><td>2</td><td>3</td><td>0</td><td>0</td></tr>
+</tbody>
+</table>
+
+# Definitions # {#definitions}
+
+A <em>homogeneous parameter pack</em> (or <em>homogeneous pack</em>) contains values of one type and its declaration introduces an independent count. A <em>heterogeneous parameter pack</em> (or <em>heterogeneous pack</em>) permits values of different types.
+
+These terms apply to both function parameter packs and template parameter packs.
+
+A homogeneous function parameter pack's parameter pattern contains no unexpanded pack after placeholder processing. An ordinary expansion remains an ordinary expansion even when every resulting parameter type is the same.
+
+# Implementation Experience # {#implementation}
+
+An implementation of the R2 proposal based on Clang can be found in <a href="https://github.com/Bekenn/clang/tree/func-parm-packs">the prototype repository</a>. [[P1219R2]] [[P1219-CLANG]]
+
+<aside class=issue>
+<p><strong>TODO:</strong> Update the R2 prototype to a current Clang release and test this revision in modern C++ language modes.</p>
+</aside>
+
+# Motivation and Scope # {#motivation}
+## Meeting user expectations ## {#symmetry}
+<p>This table shows the current lack of symmetry between template parameter packs and function parameter packs: [[CXX-VARIADIC]] [[CXX-AUTO]]</p>
+<table class=data>
+<caption>Parameter-pack declarations in C++26. Each declaration is independent, and the ill-formed function-parameter form is proposed.</caption>
+    <tr><th></th><th>Template parameter pack</th><th>Function parameter pack</th></tr>
+    <tr>
+        <th>Heterogeneous</th>
+        <td class=code-valid>
+<xmp class=language-cpp>
+// OK:
+template <auto... vs>
+void f();
+</xmp>
+        </td>
+        <td class=code-valid>
+<xmp class=language-cpp>
+// OK:
+void f(auto... vs);
+</xmp>
+        </td>
+    </tr>
+    <tr>
+        <th>Homogeneous</th>
+        <td class=code-valid>
+<xmp class=language-cpp>
+// OK:
+template <class Type, Type... vs>
+void f();
+</xmp>
+        </td>
+        <td class=code-invalid>
+<xmp class=language-cpp>
+// Ill-formed:
+template <class Type>
+void f(Type... vs);
+</xmp>
+        </td>
+    </tr>
+</table>
+
+## Greater expressivity ## {#expressivity}
+
+<p>R2 cited eight <a href="https://stackoverflow.com/">Stack Overflow</a> questions asking how to write a function with a homogeneous parameter pack. [[SO-1]] [[SO-2]] [[SO-3]] [[SO-4]] [[SO-5]] [[SO-6]] [[SO-7]] [[SO-8]]</p>
+
+<p>In May 2022, a programmer asked for a fixed parameter type with ordinary implicit conversions and explained why constraining deduced argument types with <code>std::same_as</code> or <code>std::convertible_to</code> does not provide that behavior. [[SO-9]]
+In January 2026, another programmer asked how to declare a function taking an even number of <code>int</code> arguments and was unsure why templates were needed when all parameters had a concrete type. [[SO-10]]</p>
+
+<p>Each workaround below is independent. The homogeneous-pack row is proposed.</p>
+<table class=data>
+<caption>Workarounds and the proposed homogeneous-pack form, with complete function bodies.</caption>
+    <tr>
+        <th>Recursion</th>
+        <td>
+<xmp class=language-cpp>
+template <class T>
+T min(T v)
+{
+    return v;
+}
+
+template <class T, class... Args>
+T min(T v1, Args... vs)
+{
+    T v2 = min(vs...);
+    return v2 < v1 ? v2 : v1;
+}
+</xmp>
+        </td>
+    </tr>
+    <tr>
+        <th><code>std::initializer_list</code></th>
+        <td>
+<p>Precondition: <code>vs.size() &gt; 0</code>.</p>
+<xmp class=language-cpp>
+template <class T>
+T min(std::initializer_list<T> vs)
+{
+    auto i = vs.begin();
+    T v = *i++;
+    for (; i != vs.end(); ++i)
+    {
+        if (*i < v)
+            v = *i;
+    }
+
+    return v;
+}
+</xmp>
+        </td>
+    </tr>
+    <tr>
+        <th>SFINAE</th>
+        <td>
+<xmp class=language-cpp>
+template <class T, class... Args,
+          std::enable_if_t<(... && std::is_same_v<Args, T>),
+                           std::nullptr_t> = nullptr>
+T min(T v1, Args... vs)
+{
+    return (v1, ..., (v1 = vs < v1 ? vs : v1));
+}
+</xmp>
+        </td>
+    </tr>
+    <tr>
+        <th>Concepts</th>
+        <td>
+<xmp class=language-cpp>
+template <class T, class... Args>
+    requires (... && std::same_as<Args, T>)
+T min(T v1, Args... vs)
+{
+    return (v1, ..., (v1 = vs < v1 ? vs : v1));
+}
+</xmp>
+        </td>
+    </tr>
+    <tr>
+        <th>Homogeneous pack (this proposal)</th>
+        <td>
+<xmp class=language-cpp>
+template <class T>
+T min(T v1, T... vs)
+{
+    return (v1, ..., (v1 = vs < v1 ? vs : v1));
+}
+</xmp>
+        </td>
+    </tr>
+</table>
+
+<p>The work-arounds suffer from a lack of clarity in the interface.</p>
+<ul>
+<li>The recursion approach advertises a function that can take variadic arguments of any type, but any attempt to call the function with a non-<code>T</code> will either cause the program to fail to compile, or lead to potentially unwanted implicit conversions.</li>
+<li>The <code>std::initializer_list</code> approach correctly advertises the accepted type, but is inflexible with respect to mutability and requires the user to enclose its arguments in braces.
+In the <code>min</code> example above, the precondition could be removed if an explicit argument preceded the <code>std::initializer_list</code>, but the syntactic separation remains, resulting in calls such as <code>min(a, { b, c, d })</code>.</li>
+<li>The SFINAE approach achieves the goal of constraining all arguments to be of the same type, but at the expense of readability, and the application of the <code>is_same_v</code> trait can disable desired conversions when constraining to a non-dependent parameter type.</li>
+<li>The Concepts approach is more readable than the SFINAE approach, but is otherwise interchangeable.</li>
+</ul>
+
+<p>Explicitly specifying <code>T</code> also permits ordinary argument conversions in the proposed form. The SFINAE and Concepts forms still deduce each <code>Args</code> and reject a different type. For example, their <code>min&lt;int&gt;(1, 2.5)</code> calls fail the equal-type requirement. [[CXX-DEDUCTION-CALL]] [[CXX-EXPLICIT-ARGS]]</p>
+
+<p>If the committee permits us to reclaim the comma-less syntax, we could use this form for a fixed element type without an explicit template head. Each argument would initialize an <code>int</code> parameter:</p>
+
+<xmp class=language-cpp>
+int sum(int... values) {
+    return (0 + ... + values);
+}
+
+int use_sum(int runtime_value) {
+    return sum(runtime_value, 2.5);
+}
+</xmp>
+
+<aside class=issue>
+<p><strong>TODO:</strong> Develop and test braced-initializer calls for a known aggregate type without CTAD or repeated argument types. Compare constrained packs and initializer lists, covering deduction, empty calls and initializers, designated initializers, and narrowing. Unnamed packs require committee approval to reclaim the comma-less syntax. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.init.aggr">[dcl.init.aggr]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.call">[temp.deduct.call]</a></p>
+</aside>
+
+<p>The earlier workarounds can be found in the Library Fundamentals TS v2 in the form of <code>make_array</code>, and even in the standard for <code>std::min</code> and <code>std::max</code> and the deduction guide for <code>std::array</code>.
+All of these could arguably be written more naturally with homogeneous parameter packs. [[LFTS2-ARRAY-CREATION]] [[CXX-MIN-MAX]] [[CXX-ARRAY-DEDUCTION]]</p>
+
+<p>The library declarations below omit their enclosing namespace. In the TS declaration, <code>VT</code> is <code>common_type_t&lt;Types...&gt;</code> when <code>D</code> is <code>void</code>, and is <code>D</code> otherwise. The current <code>std::array</code> deduction guide has the mandate that <code>(is_same_v&lt;T, U&gt; &amp;&amp; ...)</code> is true. [[LFTS2-ARRAY-CREATION]] [[CXX-ARRAY-DEDUCTION]]</p>
+
+<table class=data>
+<caption>Standard and Library Fundamentals TS v2 interfaces compared with proposed homogeneous-pack interfaces.</caption>
+    <tr><th>Current</th><th>With homogeneous packs</th></tr>
+    <tr>
+        <td>
+<xmp class=language-cpp>
+template <class T>
+constexpr T min(initializer_list<T> t);
+
+template <class T, class Compare>
+constexpr T min(initializer_list<T> t, Compare comp);
+</xmp>
+        </td>
+        <td>
+<xmp class=language-cpp>
+template <class T>
+constexpr T min(T v1, T... vs);
+
+template <class Compare, class T>
+constexpr T min(Compare comp, T v1, T... vs);
+</xmp>
+        </td>
+    </tr>
+    <tr>
+        <td>
+<xmp class=language-cpp>
+template <class D = void, class... Types>
+constexpr array<VT, sizeof...(Types)>
+    make_array(Types&&... t);
+</xmp>
+        </td>
+        <td>
+<xmp class=language-cpp>
+template <class T>
+constexpr auto make_array(T... t)
+    -> array<T, sizeof...(t)>;
+</xmp>
+        </td>
+    </tr>
+    <tr>
+        <td>
+<xmp class=language-cpp>
+template<class T, class... U>
+array(T, U...) -> array<T, 1 + sizeof...(U)>;
+</xmp>
+        </td>
+        <td>
+<xmp class=language-cpp>
+template<class T>
+array(T... t) -> array<T, sizeof...(t)>;
+</xmp>
+        </td>
+    </tr>
+</table>
+
+<p>The proposed <code>make_array</code> is not a replacement with identical deduction semantics. The TS can find a common type for mixed arguments when <code>D</code> is omitted. The proposed <code>T... t</code> uses ordinary deduction for one <code>T</code>, so inconsistent deductions fail. Explicitly supplying <code>T</code> permits ordinary parameter conversions. An empty call cannot deduce <code>T</code>, but an explicitly supplied <code>T</code> permits an empty pack. The TS also permits an empty call when <code>D</code> is supplied. [[LFTS2-ARRAY-CREATION]] [[CXX-DEDUCTION-CALL]] [[CXX-EXPLICIT-ARGS]]</p>
+
+<aside class=issue>
+<p><strong>TODO:</strong> Decide whether to support homogeneous packs in deduction guides and, if so, specify deduction and return-type rules.</p>
+</aside>
+
+## Initializer lists ## {#initializer-lists}
+
+<table class=data>
+<caption>Homogeneous function parameter packs compared with std::initializer_list.</caption>
+    <tr><th></th><th><code>std::initializer_list</code></th><th>homogeneous packs</th></tr>
+    <tr><th>Can be used outside of a template?</th><td>Yes</td><td>No</td></tr>
+    <tr><th>Can mutate elements?</th><td>No</td><td>Yes, when the declared element type permits it</td></tr>
+    <tr><th>Can appear before other arguments?</th><td>Yes</td><td>No</td></tr>
+    <tr><th>Get the number of elements</th><td><code class="prettyprint">x.size()</code></td><td><code class="prettyprint">sizeof...(x)</code></td></tr>
+    <tr><th>Iterate over the elements</th><td>Range-based <code class="prettyprint">for</code></td><td>Fold expressions</td></tr>
+</table>
+
+<p>Homogeneous function parameter packs are <em>not</em> intended as a replacement for <code>std::initializer_list</code>.
+A <code>std::initializer_list</code> provides access to an array of const elements and is passed as a single argument. A function parameter pack accepts separate arguments. [[CXX-INITIALIZER-LIST]] [[CXX-VARIADIC]]
+List-initialization gives initializer-list constructors priority under [over.match.list], which can prevent selection of a constructor taking a parameter pack. [[CXX-LIST-OVERLOAD]]
+Consider the case of container initialization:</p>
+
+<xmp class=language-cpp>
+template <class T>
+class MyContainer
+{
+public:
+    MyContainer(std::initializer_list<T> elems);
+    // ...
+};
+</xmp>
+
+<p>List-initialization selects this constructor:</p>
+
+<xmp class=language-cpp>
+MyContainer<int> cont = { 5, 10 };  // invokes MyContainer<int>::MyContainer(std::initializer_list<int>)
+</xmp>
+
+<p>The corresponding homogeneous constructor would permit the same initialization:</p>
+
+<aside class=issue>
+<p><strong>TODO:</strong> Decide whether to permit homogeneous packs in constructors and test the examples under R2's overload model, treating the constructor as an implicit template.</p>
+</aside>
+
+<xmp class=language-cpp>
+template <class T>
+class MyContainer
+{
+public:
+    MyContainer(const T&... elems);
+    // ...
+};
+
+MyContainer<int> cont = { 5, 10 };  // invokes MyContainer<int>::MyContainer(const int&, const int&)
+</xmp>
+
+<p><em>...unless</em> there is a competing constructor that is a better match:</p>
+
+<xmp class=language-cpp>
+template <class T>
+class MyContainer
+{
+public:
+    MyContainer(const T&... elems);
+    explicit MyContainer(const T& min, const T& max);
+    // ...
+};
+
+// error: MyContainer<int>::MyContainer(const int&, const int&) is explicit
+MyContainer<int> cont = { 5, 10 };  
+</xmp>
+
+<p>With the additional constructor, it is now impossible to invoke the constructor containing the homogeneous parameter pack when there are exactly two elements, regardless of the initialization syntax chosen.
+In contrast, the constructor with <code>std::initializer_list</code> is chosen when using list-initialization in these examples, and can be unambiguously selected (or not) when using direct non-list initialization.</p>
+
+<table class="data constructor-comparison">
+<caption>Constructor selection for the listed declarations. The homogeneous-pack column gives proposed outcomes.</caption>
+<colgroup><col style="width: 20%"><col style="width: 40%"><col style="width: 40%"></colgroup>
+<thead>
+    <tr><th scope=col>Declaration</th><th scope=col>With <code>std::initializer_list</code></th><th scope=col>With homogeneous packs</th></tr>
+</thead>
+<tbody>
+    <tr>
+        <td></td>
+        <td><xmp class=language-cpp>
+template <class T>
+class MyContainer
+{
+public:
+    MyContainer(
+        std::initializer_list<T> elems);
+    explicit MyContainer(
+        const T& min, const T& max);
+    // ...
+};
+</xmp>
+        </td>
+        <td><xmp class=language-cpp>
+template <class T>
+class MyContainer
+{
+public:
+    MyContainer(
+        const T&... elems);
+    explicit MyContainer(
+        const T& min, const T& max);
+    // ...
+};
+</xmp>
+        </td>
+    </tr>
+    <tr>
+        <td><code class="prettyprint">MyContainer&lt;int&gt; cont{1, 2, 3};</code></td>
+        <td>Selects <code>std::initializer_list</code> constructor</td>
+        <td>Selects homogeneous pack constructor</td>
+    </tr>
+    <tr>
+        <td><code class="prettyprint">MyContainer&lt;int&gt; cont = { 1, 2, 3 };</code></td>
+        <td>Selects <code>std::initializer_list</code> constructor</td>
+        <td>Selects homogeneous pack constructor</td>
+    </tr>
+    <tr>
+        <td><code class="prettyprint">MyContainer&lt;int&gt; cont(1, 2, 3);</code></td>
+        <td>Error: no matching constructor</td>
+        <td>Selects homogeneous pack constructor</td>
+    </tr>
+    <tr>
+        <td><code class="prettyprint">MyContainer&lt;int&gt; cont({ 1, 2, 3 });</code></td>
+        <td>Selects <code>std::initializer_list</code> constructor</td>
+        <td>Error: no matching constructor</td>
+    </tr>
+    <tr>
+        <td><code class="prettyprint">MyContainer&lt;int&gt; cont{1, 2};</code></td>
+        <td>Selects <code>std::initializer_list</code> constructor</td>
+        <td>Selects <code>explicit</code> constructor</td>
+    </tr>
+    <tr>
+        <td><code class="prettyprint">MyContainer&lt;int&gt; cont = { 1, 2 };</code></td>
+        <td>Selects <code>std::initializer_list</code> constructor</td>
+        <td>Error: selects <code>explicit</code> constructor</td>
+    </tr>
+    <tr>
+        <td><code class="prettyprint">MyContainer&lt;int&gt; cont(1, 2);</code></td>
+        <td>Selects <code>explicit</code> constructor</td>
+        <td>Selects <code>explicit</code> constructor</td>
+    </tr>
+    <tr>
+        <td><code class="prettyprint">MyContainer&lt;int&gt; cont({ 1, 2 });</code></td>
+        <td>Selects <code>std::initializer_list</code> constructor</td>
+        <td>Error: no matching constructor</td>
+    </tr>
+</tbody>
+</table>
+
+<p>For this reason, homogeneous packs are likely inappropriate for constructors.
+Homogeneous packs are likely the better option outside of constructors, where initializer lists must be separately enclosed in curly braces.
+One possible exception to this is when the API designer wishes to <em>move</em> or <em>forward</em> variadic constructor arguments rather than <em>copy</em> them.
+Frustratingly, the <code>std::initializer_list</code> template permits access to its elements only via references to <code>const</code>, whereas packs do not have this limitation. [[CXX-INITIALIZER-LIST]]</p>
+
+
+<aside class=issue>
+<p><strong>TODO:</strong> Agree with Jan and Eczbek which maintained interface to use as an example. Compare homogeneous packs with constrained packs, initializer lists, ranges, and bounded overloads.</p>
+</aside>
+
+<aside class=issue>
+<p><strong>TODO:</strong> Compare typed runtime variadics and checked C varargs, including D's variadics and GCC's argument-count builtin. Distinguish count from type checks and account for default promotions. <a href="https://dlang.org/spec/function.html#typesafe_variadic_functions">D variadics</a> <a href="https://gcc.gnu.org/onlinedocs/gcc/Constructing-Calls.html">GCC argument-count builtin</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.call">[expr.call]</a></p>
+</aside>
+
+## Interpolated logging arguments ## {#interpolated-logging}
+
+<aside class=issue>
+<p><strong>TODO:</strong> Develop a logging example with a message and separately interpolated fields, each retaining its format string and arguments. Decide whether to add class-template placeholders to function parameters here or in a separate proposal, or use one concrete wrapper type. Deducing a wrapper specialization per field would make the pack heterogeneous and is distinct from permitting homogeneous packs in deduction guides. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.type.class.deduct">[dcl.type.class.deduct]</a></p>
+</aside>
+
+<aside class=issue>
+<p><strong>TODO:</strong> Specify the order of rewriting, CTAD, and overload resolution for the logging example, including constrained <code>auto</code>. Determine whether wrappers can be constructed before default formatting and what changes each proposal needs for multiple fields under P3412R3's rule that only the last interpolated literal can be expanded. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3412r3.pdf">P3412R3</a></p>
+</aside>
+
+<aside class=issue>
+<p><strong>TODO:</strong> Compare the logging interface with P3951R2's interpolation objects and with a formatter result implicitly convertible to a string, which P3951R2 does not propose. Identify what homogeneous packs add without replacing the program's default formatter. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/p3951r2.html">P3951R2</a></p>
+</aside>
+
+# Design Decisions # {#design-decisions}
+
+## Pack declarations ## {#implicit-template}
+
+A homogeneous function parameter pack is declared in exactly the same way as any other function parameter pack. The difference is that its parameter pattern contains no unexpanded pack after placeholder processing:
+
+<xmp class=language-cpp>
+template <class... T> void f(T... v); // heterogeneous function parameter pack
+template <class T>    void f(T... v); // homogeneous function parameter pack
+</xmp>
+
+In fact, the pattern does not have to mention any template parameters at all:
+
+<xmp class=language-cpp>
+void f(int... v); // homogeneous function parameter pack
+</xmp>
+
+Any function declaration that includes a homogeneous function parameter pack implicitly declares a function template.
+
+<aside class=issue>
+<p><strong>TODO:</strong> Confirm and address the objection to implicit templates, then decide whether an explicit template introducer is needed.</p>
+</aside>
+
+The size of a homogeneous function parameter pack is deduced from function arguments at the call site. This requires the pack to be placed in a deduced context, which means that a function template can have at most one homogeneous function parameter pack, and the pack must appear at the end of the function parameter list. Once its parameters have been formed, a homogeneous function parameter pack behaves no differently from any other function parameter pack.
+
+### Abbreviated syntax ### {#abbreviated-syntax}
+
+<blockquote>
+<p>EWGI Poll: This should be valid and declare a template: <code>void foo(int... v);</code></p>
+<table class="data poll-table">
+<thead><tr><th scope=col>SF</th><th scope=col>F</th><th scope=col>N</th><th scope=col>A</th><th scope=col>SA</th></tr></thead>
+<tbody><tr><td>4</td><td>6</td><td>4</td><td>0</td><td>1</td></tr></tbody>
+</table>
+</blockquote>
+
+Since C++20, a function template that needs no template parameter names can use abbreviated syntax, with placeholders such as <code>auto</code> in its parameter list. [[P1141R2]] [[CXX-FUNCTIONS]]
+
+Under this proposal, the presence of a homogeneous parameter pack in a function signature also indicates that a function declaration is an abbreviated function template declaration:
+
+<xmp class=language-cpp>
+void foo(int... v); // OK, declares a template with an empty template parameter list
+</xmp>
+
+If the parameter pack is the only part of the function declaration requiring it to be a template and the pattern of the parameter pack does not contain any dependent names, then the template has no formal template parameters and the <code nohighlight>template-head</code> must be omitted. To avoid confusion with explicit specializations, this proposal does not allow an empty <code nohighlight>template-head</code> on a template declaration, even though the syntax is unambiguous in the presence of a function parameter pack declaration:
+
+<xmp class=language-cpp>
+template <class T> void foo(T... v);     // #1 OK
+void foo(int... v);                      // #2 OK, declares a template with an empty template parameter list
+template <> void foo(float... v);        // Error: function parameter pack in explicit specialization
+template <> void foo(int a);             // OK, declares an explicit specialization of #2
+template <> void foo<>(int a, int b);    // OK, declares an explicit specialization of #2
+template <> void foo<int>(int a, int b); // OK, declares an explicit specialization of #1
+template <> void foo(float a);           // OK, declares an explicit specialization of #1
+</xmp>
+
+If the committee approves reclamation, the proposed rules would make both declarations below templates:
+
+<xmp class=language-cpp>
+void a(auto...) {}
+void b(int...) {}
+</xmp>
+
+The first already declares an abbreviated function template in C++26. Ordinary placeholder processing invents a type parameter pack, allowing different deduced argument types. The second declares one <code>int</code> parameter followed by C varargs in C++26, using a deprecated comma-less spelling. With that approval, the second would declare a homogeneous pack with a fixed element type and an independently deduced count. [[CXX-FUNCTIONS]] [[CXX-VARARGS-DEPRECATION]]
+
+The function template, its ordinary template arguments, and the pack length determine the specialization. Converting arguments to a fixed element type does not add their original types to the specialization's identity. These proposed uses therefore select the same two-parameter specialization:
+
+<xmp class=language-cpp>
+void use_b() {
+    b(1, 2);
+    b(1.0, 2.0);
+    void (*callback)(int, int) = b;
+    callback(3, 4);
+}
+</xmp>
+
+The programmer cannot name or explicitly supply the implicit count as a constant template parameter. The count does not make every expression in the function body dependent.
+
+### Type deduction ### {#deduction}
+
+A dependent element type is deduced from every applicable argument. There is no common-type inference or priority for the first argument.
+
+<xmp class=language-cpp>
+template<class T>
+T total(T... values) {
+    return (T{} + ... + values);
+}
+</xmp>
+
+<table class=data>
+<caption>Proposed call outcomes for a fixed <code>int</code> pack and a pack with one deduced element type <code>T</code>.</caption>
+<thead><tr><th scope=col>Call</th><th scope=col>Proposed outcome</th></tr></thead>
+<tbody>
+  <tr><td><code>sum()</code></td><td>Length zero. The initialized addition fold returns zero.</td></tr>
+  <tr><td><code>sum(1, 2.5)</code></td><td>Length two. Ordinary conversion initializes both <code>int</code> parameters.</td></tr>
+  <tr><td><code>total(1, 2)</code></td><td>Deduce <code>T</code> as <code>int</code> and length two.</td></tr>
+  <tr><td><code>total(1, 2.5)</code></td><td>Reject conflicting deductions for <code>T</code>.</td></tr>
+  <tr><td><code>total&lt;int&gt;(1, 2.5)</code></td><td>Use the explicit element type and ordinary conversions.</td></tr>
+  <tr><td><code>total()</code></td><td>Reject because there is no argument from which to deduce <code>T</code>.</td></tr>
+  <tr><td><code>total&lt;int&gt;()</code></td><td>Length zero with a known element type.</td></tr>
+</tbody>
+</table>
+
+Ordinary reference binding, list-initialization, parameter adjustment, and lifetime rules apply. [[CXX-FUNCTIONS]] [[CXX-LIST-INIT]] [[CXX-TEMPORARIES]]
+
+<aside class=issue>
+<p><strong>TODO:</strong> Test deduction and initialization in a compiler implementation with move-only arguments, forwarding references, overloaded function names, braced arguments, constraints, exception specifications, and constant evaluation.</p>
+</aside>
+
+### Address-taking ### {#addresses}
+
+The count is deduced from the target function type when taking the function's address. Explicit specialization and instantiation declarations use the same deduction. A template-id alone leaves the count undetermined.
+
+<table class=data>
+<caption>Proposed address-taking and declaration behavior. The element type and count both need to match the identified function. The unnamed declaration depends on approval to reclaim the comma-less spelling.</caption>
+<thead><tr><th scope=col>Operation</th><th scope=col>Proposed outcome</th></tr></thead>
+<tbody>
+  <tr><td><code>int (*two)(int, int) = sum</code></td><td>Select length two.</td></tr>
+  <tr><td><code>auto two = &amp;sum</code></td><td>Reject because no length is determined.</td></tr>
+  <tr><td><code>auto two = &amp;total&lt;int&gt;</code></td><td>Reject because specifying <code>T</code> does not supply the length.</td></tr>
+  <tr><td><code>int (*two)(double, double) = sum</code></td><td>Reject the mismatched parameter types. Call conversions do not adapt a function pointer signature.</td></tr>
+  <tr><td><code>int sum(int...)</code> and a named definition</td><td>Corresponding declarations of the same template.</td></tr>
+  <tr><td><code>int sum(int, int)</code></td><td>An ordinary overload, not an implicit specialization declaration.</td></tr>
+</tbody>
+</table>
+
+The existing explicit-specialization and explicit-instantiation syntax is retained. [[CXX-SPECIALIZATION]] [[CXX-INSTANTIATION]] In these proposed declarations, the ordinary parameter list identifies the count:
+
+<xmp class=language-cpp>
+template<>
+int sum<>(int value) { return value + 10; }
+
+template int sum<>(int, int);
+</xmp>
+
+Ordinary overload ranking applies after forming viable specializations, including partial ordering and constraints for template candidates. [[CXX-OVERLOAD]]
+
+<aside class=issue>
+<p><strong>TODO:</strong> Update R2's partial-ordering rules for C++26 and specify how homogeneous and heterogeneous packs compare. Cover constrained candidates, empty calls, and fold-expanded constraints without preferring one fixed element type automatically. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.constr.fold">[temp.constr.fold]</a></p>
+</aside>
+
+<aside class=issue>
+<p><strong>TODO:</strong> Specify count deduction and call-operator selection for generic-lambda conversion to a function pointer. A typed target should work, while unary plus should fail when the count is undetermined. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.lambda.closure">[expr.prim.lambda.closure]</a></p>
+</aside>
+
+The count identifies the same specialization whether the function is called or its address is taken. It does not provide a C-varargs function type or one compiled function that accepts any number of arguments.
+
+## Lambdas ## {#lambdas}
+
+<xmp class=language-cpp>
+auto a = [](int... v) { return (1 * ... * v); };
+</xmp>
+
+A homogeneous function parameter pack makes a lambda generic.
+
+An ordinary expansion of an enclosing pack does not by itself make a lambda generic. This distinction also applies when the element type uses pack indexing. [[CXX-LAMBDA]]
+
+## Pack indexing ## {#indexing}
+
+The expansion pattern of pack indexing is the pack name alone. In <code>Ts...[Is]</code>, the indexed occurrence of <code>Ts</code> belongs to that expansion while <code>Is</code> remains available to an enclosing expansion. These C++26 rules apply to the proposed declarations as well. [[CXX-VARIADIC]] [[CXX-PACK-INDEX]]
+
+The following is valid C++26. Each lambda has one unnamed parameter:
+
+<xmp class=language-cpp>
+template<class... Ts, std::size_t... Is>
+void indexed(std::index_sequence<Is...>) {
+    (..., [](Ts...[Is]) {});
+}
+
+int main() {
+    indexed<int, double, char>(std::index_sequence<2, 0, 2, 1>{});
+}
+</xmp>
+
+The four indices select <code>char</code>, <code>int</code>, <code>char</code>, and <code>double</code> from the three types. Each indexed type is replaced in full by the selected type, with no ellipsis or bracket suffix left over.
+
+Each row below is independent and assumes an appropriate enclosing declaration of <code>Ts</code> and <code>Is</code>, with valid selected indices. The proposed column assumes committee approval of the comma-less varargs change in [[#compatibility]].
+
+<table class=data>
+<caption>C++26 and proposed interpretations of indexed lambda parameters and enclosing folds.</caption>
+<thead><tr><th scope=col>Spelling</th><th scope=col>C++26 interpretation</th><th scope=col>Proposed interpretation</th></tr></thead>
+<tbody>
+  <tr><td><code>[](Ts...[1]) {}</code></td><td>One unnamed parameter of the selected type.</td><td>Unchanged.</td></tr>
+  <tr><td><code>(..., [](Ts...[1]) {})</code></td><td>Ill-formed. No unexpanded pack remains for the fold.</td><td>Unchanged.</td></tr>
+  <tr><td><code>(..., [](Ts...[Is]) {})</code></td><td>The fold expands <code>Is</code> into single-parameter lambdas.</td><td>Unchanged.</td></tr>
+  <tr><td><code>(..., [] { Ts...[Is]{}; })</code></td><td>The fold expands <code>Is</code>. Constructing these lambdas does not invoke their bodies.</td><td>Unchanged.</td></tr>
+  <tr><td><code>[](Ts...[1]... values) {}</code></td><td>Ill-formed. The parameter declaration has no unexpanded pack.</td><td>A homogeneous pack of the selected type with its own count.</td></tr>
+  <tr><td><code>[](Ts...[Is]... values) {}</code></td><td>The parameter declaration expands <code>Is</code> into one parameter list.</td><td>Unchanged. No new count.</td></tr>
+  <tr><td><code>(..., [](Ts...[Is]... values) {})</code></td><td>Ill-formed. The inner declaration already expands <code>Is</code>.</td><td>Unchanged.</td></tr>
+  <tr><td><code>[](Ts... values) {}</code></td><td>Ordinary expansion of the enclosing <code>Ts</code>. This alone does not make the lambda generic.</td><td>Unchanged.</td></tr>
+  <tr><td><code>[](int... values) {}</code></td><td>Ill-formed.</td><td>A generic lambda with one homogeneous pack.</td></tr>
+  <tr><td><code>[](int...) {}</code></td><td>One <code>int</code> parameter followed by C varargs.</td><td>An unnamed homogeneous pack. Compatibility change.</td></tr>
+  <tr><td><code>[](int, ...) {}</code></td><td>One <code>int</code> parameter followed by C varargs.</td><td>Unchanged.</td></tr>
+</tbody>
+</table>
+
+The varying-index form with a second ellipsis leaves no unexpanded pack for an enclosing fold, because the parameter declaration already expands <code>Is</code>. [[CXX-FOLDS]] [[CXX-VARIADIC]]
+
+<aside class=issue>
+<p><strong>TODO:</strong> Confirm whether C++26 [dcl.fct] treats unnamed <code>Ts...[1]...</code> as C varargs after indexing expands <code>Ts</code>. Coordinate the transition with Jan. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct">[dcl.fct]</a></p>
+</aside>
+
+### Pairwise and Cartesian expansion ### {#multiple-packs}
+
+Pairwise expansion places both packs in one expansion pattern. The following current-language fragment pairs each type with one index constant and requires equal pack lengths:
+
+<xmp class=language-cpp>
+(..., [](Ts, std::integral_constant<std::size_t, Is>) {});
+</xmp>
+
+This does not index <code>Ts</code>. By contrast, a Cartesian product requires separate nested expansions. This current-language fragment fixes one type before expanding all index constants:
+
+<xmp class=language-cpp>
+template<class... Ts, std::size_t... Is>
+void cartesian(std::index_sequence<Is...> indices) {
+    (..., []<class T>(std::index_sequence<Is...>) {
+        (..., [](T, std::integral_constant<std::size_t, Is>) {});
+    }.template operator()<Ts>(indices));
+}
+</xmp>
+
+With three types and four index entries, the nested expansions form twelve pairings. Equal-length packs or repeated identical types can conceal the distinction between selection and pairing. The existing equal-length requirement and innermost-expansion rule account for each operation without changing the meaning of indexing. [[CXX-VARIADIC]]
+
+### Homogeneous packs of indexed types ### {#indexed-homogeneous}
+
+A second declarator ellipsis can introduce the proposed homogeneous pack when the index is a scalar. The indexed type is selected before the new pack's independent count is deduced:
+
+<xmp class=language-cpp>
+template<class... Ts>
+auto selected_counter() {
+    return [](Ts...[1]... values) {
+        return sizeof...(values);
+    };
+}
+</xmp>
+
+For <code>selected_counter&lt;int, double, char&gt;()</code>, the proposed lambda accepts a deduced number of ordinary <code>double</code> parameters. That count is unrelated to the length of <code>Ts</code>.
+
+To create homogeneous lambdas selected by different indices, pass each index to a helper as a scalar. The following example uses the proposed syntax:
+
+<xmp class=language-cpp>
+template<class... Ts>
+struct selectors {
+    template<std::size_t I>
+    static auto make() {
+        return [](Ts...[I]... values) {
+            return sizeof...(values);
+        };
+    }
+};
+
+template<class... Ts, std::size_t... Is>
+auto make_selected(std::index_sequence<Is...>) {
+    return std::tuple{selectors<Ts...>::template make<Is>()...};
+}
+</xmp>
+
+Each resulting call operator has its own homogeneous count. The expansion of <code>Is</code> in <code>make_selected</code> supplies a scalar index to each specialization of <code>make</code>.
+
+### Array parameters ### {#arrays}
+
+In C++26, the named declaration <code>int... values[Is]</code> expands <code>Is</code> into array bounds. The resulting array parameters undergo ordinary pointer adjustment. Positive extents 1, 2, and 3 therefore produce a function pointer taking three <code>int*</code> parameters. Zero extents are independently invalid. [[CXX-FUNCTIONS]] [[CXX-ARRAYS]]
+
+The C++26 [dcl.name] grammar has no array-suffix production for an abstract pack declarator. P2662R3 removed that production when introducing pack indexing. The named array declaration remains valid. [[CXX-DECLARATORS]] [[P2662R3]]
+
+An enclosing fold around the named array-pack declaration has no unexpanded <code>Is</code> left. The inner parameter declaration already expands it.
+
+The proposal retains the C++26 abstract-declarator grammar. If the committee approves reclamation, an array alias could supply an unnamed homogeneous parameter type with ordinary adjustment. Its array extent remains separate from the homogeneous count.
+
+### Empty packs and return types ### {#empty-and-return}
+
+An empty outer expansion over <code>Is</code> need not instantiate an indexed selection. A fixed index still needs to designate an element when its type is required. In the proposed homogeneous form, calling a lambda with zero arguments does not repair an invalid fixed selection in its declaration. [[CXX-VARIADIC]] [[CXX-PACK-INDEX]]
+
+The body <code>{ Ts...[Is]{}; }</code> discards the constructed value and returns <code>void</code>. For the scalar types above, <code>{ return Ts...[Is]{}; }</code> deduces the selected scalar type under the C++26 return-deduction rules. [[CXX-LAMBDA]] [[CXX-AUTO]]
+
+## Captures ## {#captures}
+
+Constant template parameters can supply values inside a lambda without capturing automatic function parameter objects. This current-language program prints <code>abc</code> without a newline:
+
+<xmp class=language-cpp>
+template<char... C, std::size_t... I>
+void print_constants(std::index_sequence<I...>) {
+    (..., [] { std::putchar(C...[I]); }());
+}
+
+int main() {
+    print_constants<'a', 'b', 'c'>(std::make_index_sequence<3>());
+}
+</xmp>
+
+The fold expands <code>I</code> and value pack indexing selects from <code>C</code>. Repeated indices 2, 0, 2, and 1 produce <code>cacb</code>. The proposed homogeneous declaration rule does not apply to this program and leaves its meaning unchanged. [[CXX-VALUE-PACK-INDEX]] [[CXX-VARIADIC]]
+
+In the proposed counterpart, <code>characters</code> names function parameter objects:
+
+<xmp class=language-cpp>
+void print_characters(char... characters) {
+    (..., [&] { std::putchar(characters); }());
+}
+</xmp>
+
+These function parameter objects require capture. Value capture follows the ordinary copying rules. [[CXX-CAPTURES]]
+
+The lambda can be omitted:
+
+<xmp class=language-cpp>
+(..., std::putchar(characters));
+</xmp>
+
+Nested lambdas retain ordinary capture propagation. Reference capture does not extend a parameter's lifetime. [[CXX-CAPTURES]]
+
+## Alternatives ## {#alternatives}
+
+### Empty template heads ### {#empty-template-heads}
+
+An alternative is to allow empty template parameter lists in template declarations:
+
+<xmp class=language-cpp>
+template <> void foo(float... v); // OK, declares a template with a homogeneous parameter pack
+</xmp>
+
+Although this alternative does not introduce a true syntactic ambiguity with explicit specializations, the forms are similar enough that there is significant potential for programmer confusion. In an e-mail conversation with Richard Smith following the San Diego meeting in 2018, he indicated that he would be against the adoption of homogeneous function parameter packs under this model. EWGI had the same opinion in Kona in 2019: [[P1219R2]]
+
+<blockquote>
+<p>EWGI Poll: This should be valid and declare a template: <code>template &lt;&gt; void foo(int... v);</code></p>
+<table class="data poll-table">
+<thead><tr><th scope=col>SF</th><th scope=col>F</th><th scope=col>N</th><th scope=col>A</th><th scope=col>SA</th></tr></thead>
+<tbody><tr><td>0</td><td>4</td><td>7</td><td>2</td><td>3</td></tr></tbody>
+</table>
+</blockquote>
+
+Homogeneous function parameter packs introduce a form of function template that has no formal template parameters. Without this option, these templates <em>cannot</em> be declared with the <code>template</code> keyword; the abbreviated syntax must be used instead. For consistency with other declarations, the idea of permitting the <code>template</code> keyword here is appealing; along with the next option, this could actually improve the overall consistency of the syntax surrounding template (and non-template) declarations.
+
+### Alternative specialization syntax ### {#alternative-specializations}
+
+Explicit specialization declarations are inconsistent with the rest of the language. These declarations are prefixed with <code>template &lt;&gt;</code>, giving the appearance of a template declaration. The function, class, and variable template specializations considered in this alternative are ordinary non-template entities that provide the definition for a particular specialization of a template, and the template specialization must be named in (or deducible from) the declaration. Explicit specialization declarations can name the specialization with a <code nohighlight>template-id</code>. This makes the <code>template &lt;&gt;</code> introducer both misleading and redundant for the declarations considered here. [[CXX-SPECIALIZATION]]
+
+The <code>template &lt;&gt;</code> introducer can be dropped without any reduction in expressivity:
+
+<xmp class=language-cpp>
+template <class T> class C; // class template
+template <> class C<int>;   // ok, explicit specialization (proposed: not deprecated)
+class C<int>;               // proposed: explicit specialization
+
+template <int V> constexpr int v = V; // variable template
+template <> constexpr int v<1> = 0;   // ok, explicit specialization (proposed: deprecated)
+constexpr int v<1> = 0;               // proposed: explicit specialization
+
+template <class T, class U> void f(T t, U u);     // function template
+template <> void f<int, double>(int i, double d); // ok: explicit specialization (proposed: deprecated)
+template <> void f<>(int i, double d);            // ok: explicit specialization (proposed: deprecated)
+template <> void f(int i, double d);              // ok: explicit specialization (proposed: deprecated)
+void f<int, double>(int i, double d);             // proposed: explicit specialization
+void f<>(int i, double d);                        // proposed: explicit specialization
+void f(int i, double d);                          // ok: ordinary function declaration (proposed: no change)
+</xmp>
+
+The declarations illustrate alternative spellings independently. In particular, the two definitions of <code>v&lt;1&gt;</code> are not to be used together.
+
+R2 assessed this alternative as follows in 2019: [[P1219R2]]
+
+<blockquote>
+<p>Under this approach, the misleading part of the syntax is removed, and the result is a more consistent language. Non-template entities no longer look like templates. For explicit specializations of function and variable templates, the old syntax can be deprecated. (The old syntax for explicit specializations of class templates probably cannot be deprecated at this time, as their use is <em>very</em> common.) Anecdotally, explicit specializations of function templates are rare and their use is generally discouraged due to subtleties around overloading.</p>
+</blockquote>
+
+EWGI in Kona in 2019 opted not to poll this option, but the general sentiment of the room was that a separate paper exploring this idea would be welcome. This revision retains the existing explicit-specialization syntax. [[P1219R2]]
+
+### Explicit template markers ### {#marker}
+
+An alternative is to require a sigil in the template parameter list to indicate that a homogeneous pack will be present in the function declaration:
+
+<xmp class=language-cpp>
+template <...> void foo(int... v);
+template <class T, ...> void bar(T... v);
+</xmp>
+
+R2 reported the following implementation experience and discussions after the San Diego meeting in 2018: [[P1219R2]]
+
+<blockquote>
+<p>This idea, including the use of the ellipsis as the sigil, was suggested by Richard Smith in an impromptu conversation during the San Diego meeting. He and David Vandevoorde both indicated that this requirement would make the feature simpler to implement across a broad range of compilers. This notion is not directly supported by the experience of implementing the feature in Clang, but there is as yet no implementation experience with any other compiler. In Clang, the presence of an unparenthesized ellipsis in a declarator causes the compiler to treat the declaration as having a particular dependent type corresponding to a parameter pack, and the presence of a parameter of that type is enough to differentiate a function declaration as a template declaration instead of an explicit specialization or ordinary function declaration.</p>
+
+<p>P1141R2, adopted in San Diego, adds support for function template declarations that lack a template head entirely; in this case, the presence of the <code>auto</code> keyword in the function parameter list indicates that the function declaration declares a function template. Any implementation that can handle these new declarations should also be able to handle homogeneous packs without added syntax. In a follow-up conversation with Richard over e-mail, he agreed with this conclusion. [[P1141R2]]</p>
+</blockquote>
+
+The corresponding lambda form would be <code>[]&lt;...&gt;(int... values) {}</code>. A marker could declare the independent count and opt into revised unnamed-ellipsis parsing. Those are separate effects. Making a lambda generic alone does not change indexing or move <code>Is</code> between expansions.
+
+<aside class=issue>
+<p><strong>TODO:</strong> If retained, specify the marker's grammar, count deduction, and ellipsis disambiguation. Neither <code>[]&lt;...&gt;(...){}</code> nor <code>template&lt;void&gt;</code> is an existing marker for this feature and the former does not declare a typed homogeneous parameter.</p>
+</aside>
+
+### Bare template introducer ### {#bare-template-introducer}
+
+An alternative is to allow the angle brackets to be omitted when no template parameters are needed:
+
+<xmp class=language-cpp>
+template void foo(int... v);
+</xmp>
+
+This removes the apparent conflict with explicit specialization syntax, but introduces the same apparent conflict with the syntax for explicit instantiations. In both cases, there is no actual conflict for this homogeneous declaration; the compiler can tell that the function is a template by the presence of the homogeneous parameter pack. This approach was considered and rejected because it introduces an irregularity into the grammar. Currently, all templates introduced with the <code>template</code> keyword must include a parameter list enclosed in angle brackets; removing them would be akin to removing the parentheses on a parameterless function declaration. The declaration form that uses the <code>template</code> keyword without angle brackets as an introducer is the explicit instantiation declaration, and those do not declare templates. [[CXX-INSTANTIATION]]
+
+### Explicit lengths ### {#explicit-lengths}
+
+An alternative is to allow or require a template parameter for the size of the pack. The spelling considered in R2 predates pack indexing:
+
+<xmp class=language-cpp>
+template <std::size_t Len> void foo(int...[Len] v);
+</xmp>
+
+A formal length parameter would allow callers to specify the pack length and make its role in specialization explicit. The proposed implicit count can only be deduced.
+
+The drawback to this approach is a matter of regularity. While the language allows the user to query the size of a pack using the <code>sizeof...</code> operator, it does not currently allow the size to be explicitly specified. If this facility were added, it could reasonably be applied to homogeneous template parameter packs as well as homogeneous function parameter packs. It would make little sense to try to apply this to heterogeneous packs, since the size must match the number of arguments passed to the template parameter pack. Since this facility would necessarily be optional for homogeneous template parameter packs, consistency demands that it should also be optional for homogeneous function parameter packs.
+
+A type-pack variant conflicts with indexed type selection. An explicit marker does not resolve that conflict by itself.
+
+Calls and target function types determine the count. Constraints on <code>sizeof...</code> can restrict it. Explicit lengths, multiple homogeneous packs, and non-trailing homogeneous packs are deferred. Restoring removed abstract array-pack grammar would be a separate change.
+
+### Trivial templates ### {#trivial-templates}
+
+An alternative is to allow empty angle brackets even when there is no homogeneous parameter pack:
+
+<xmp class=language-cpp>
+template <> void foo(int n);
+</xmp>
+
+Under the first alternative to the proposed rules, the <code nohighlight>template-parameter-list</code> is optional in a <code nohighlight>template-head</code> in order to permit homogeneous packs with non-dependent types. The alternative rules also add semantic constraints requiring at least one template parameter whenever there is no homogeneous pack. The semantic constraints could be relaxed, allowing trivial templates that only permit vacuous specialization. This would not be very useful; these trivial templates would behave like normal non-template entities in almost every way imaginable, aside from syntactic minutiae (for instance, a trivial function template could be defined in a header file without using the <code>inline</code> keyword).
+
+This alternative also gives rise to a genuine ambiguity with explicit specializations:
+
+<xmp class=language-cpp>
+template <> void f(int v);     // #1: trivial function template
+template <> void f(int... vs); // #2: function template with homogeneous pack
+template <> void f(int v);     // #3: redeclaration of #1 or explicit specialization of #2?
+</xmp>
+
+Apart from minor simplifications in the language specification, about the only "benefit" of this approach would be to make the token sequence <code>[]&lt;&gt;(){}</code> well-formed for the amusement of language nerds.
+
+## The Oxford variadic comma ## {#compatibility}
+
+<table class="data poll-table poll-summary">
+<caption>Kona EWGI poll, March 2019. [[P1219R2]]</caption>
+<thead><tr><th scope=col>Poll</th><th scope=col>SF</th><th scope=col>F</th><th scope=col>N</th><th scope=col>A</th><th scope=col>SA</th></tr></thead>
+<tbody>
+<tr><td>Make vararg declaration comma mandatory.</td><td>10</td><td>6</td><td>1</td><td>0</td><td>0</td></tr>
+</tbody>
+</table>
+
+A <em>varargs ellipsis</em> is a C-style ellipsis rather than a parameter-pack ellipsis. C requires an intervening comma when a parameter list precedes it. C23 also permits an ellipsis alone: [[N3096]]
+
+<pre nohighlight>
+<code nohighlight>parameter-type-list:</code>
+    <code nohighlight>parameter-list</code>
+    <code nohighlight>parameter-list , ...</code>
+    <code nohighlight>...</code>
+</pre>
+
+C++26 also permits a standalone varargs ellipsis. Unlike C, it additionally permits a varargs ellipsis after a parameter list without an intervening comma. The comma-less alternative is deprecated in C++26: [[CXX-FUNCTIONS]] [[CXX-VARARGS-DEPRECATION]]
+
+<pre nohighlight>
+<code nohighlight>parameter-declaration-clause:</code>
+    <code nohighlight>...</code>
+    <code nohighlight>parameter-declaration-list</code><sub>opt</sub>
+    <code nohighlight>parameter-declaration-list , ...</code>
+    <code nohighlight>parameter-declaration-list ...</code>
+</pre>
+
+The varargs ellipsis was originally introduced in C++ along with function prototypes. At that time, the feature did not permit a comma prior to the ellipsis. When C later adopted these features, the syntax was altered to require the intervening comma, emphasizing the distinction between the last formal parameter and the varargs parameters. To retain compatibility with C, the C++ syntax was modified to permit the user to add the intervening comma. Users therefore can choose to provide the comma or leave it out. [[P1219R2]]
+
+When paired with function parameter packs, this creates a syntactic ambiguity that is currently resolved via a disambiguation rule: When an ellipsis that appears at the end of a function parameter list might be part of an abstract (nameless) declarator, it is treated as a pack declaration if the parameter's type names an unexpanded template parameter pack or contains <code>auto</code>; otherwise, it is a varargs ellipsis. [[CXX-FUNCTIONS]]
+
+For example, these declarations have different meanings in C++26:
+
+<xmp class=language-cpp>
+template <class... T>
+void f(T...); // declares a variadic function template with a function parameter pack
+
+template <class T>
+void f(T...); // same as void f(T, ...)
+</xmp>
+
+If the committee approves reclamation, the second declaration would instead declare a homogeneous function parameter pack. Requiring a comma between a parameter list and a varargs ellipsis would remove the need for the disambiguation rule while preserving C-compatible declarations.
+
+Reusing the spelling would be a breaking change. An unnamed homogeneous pack would use the same spelling as an existing comma-less varargs declaration. The current declaration <code>void send(int...)</code> takes one <code>int</code> followed by C varargs. Its proposed homogeneous meaning would change accepted calls, initialization, function types, address-taking, and template linkage consequences. The explicit comma spelling <code>void send(int, ...)</code> retains its meaning. [[CXX-FUNCTIONS]]
+
+R2 made the following migration argument in 2019: [[P1219R2]]
+
+<blockquote>
+<p>This is a breaking change, but likely not a very impactful one. In the parlance of P0684R2, this would be a "Very Good Change": Compilers can issue warnings in C++20 mode (or earlier) whenever the disambiguation rule is resolved in favor of a varargs ellipsis, and the warning can be resolved without any change in meaning by the addition of a single character. Moreover, the number of instances should be vanishingly small. In modern C++ code, the varargs ellipsis has largely been superseded by function parameter packs. Today, apart from SFINAE uses where the disambiguation rule doesn't apply, the varargs ellipsis can mainly be found in header files that are intended to be consumed by both C and C++ code, in order to facilitate interoperability between the two languages. In these cases, the declarations must conform to the rules imposed by C syntax, and so they will already conform to the rules proposed here. Lastly, personal experience suggests that the vast majority of C++ users aren't even aware that the comma preceding a varargs ellipsis is optional. [[P0684R2]]</p>
+</blockquote>
+
+Jan Schultke's P3176R1, <em>The Oxford variadic comma</em>, continued the comma-separation work from P1219R2. It deprecated the comma-less spelling while retaining its meaning and standalone ellipsis parameters. If the committee approves reclamation, this proposal would use the comma-less spelling for homogeneous packs while preserving optional parameter names. Deprecation alone does not change its meaning. Reuse is a source and link compatibility change under SD-10. [[P3176R1]] [[P1219R2]] [[CXX-VARARGS-DEPRECATION]] [[SD10]]
+
+P3776R1, <em>More trailing commas</em>, proposes trailing commas in function parameter lists but excludes them after C ellipsis parameters. This preserves a grammar distinction between function parameter packs and C ellipsis parameters. [[P3776R1]]
+
+<aside class=issue>
+<p><strong>TODO:</strong> Agree with Jan on language modes, migration, and trailing-comma wording. Decide whether to remove the old meaning before or alongside homogeneous packs, or use different syntax. Check shared C/C++ headers, macros, and address-taking code. If reclamation is declined, specify a consistent explicit alternative. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3776r1.html">P3776R1</a></p>
+</aside>
+
+If the committee approves reclamation, the named comma-less form <code>void send(int value...)</code> would require migration to <code>void send(int value, ...)</code>. The name cannot be moved across the ellipsis as an implicit reinterpretation. Preserving every existing declaration is therefore incompatible with reclamation.
+
+### The impact of a breaking change ### {#compatibility-survey}
+
+The following survey and its descriptions of the dataset and Boost are retained from P1219R2, published in 2019. They describe that historical dataset, not the state of current code. [[P1219R2]]
+
+The ACTCD19 dataset at <a href="https://web.archive.org/web/20190820083052id_/https://codesearch.isocpp.org/">codesearch.isocpp.org (2019 archive)</a> contains a vast amount of source code collected from various open-source projects. According to the codesearch FAQ, the dataset comprises 876,800,403 lines of source code across 2,489,599 files. This dataset was used to estimate the impact of requiring a comma before a varargs ellipsis. [[CODESEARCH-FAQ]]
+
+Identifying uses of varargs ellipses is decidedly non-trivial. Since this is an area of syntactic ambiguity, only a C++ parser with sufficient knowledge of the language can identify all occurrences and distinguish them from parameter pack declarations. Such a parser would also require special build scripts for each of the projects represented in the dataset. In the absence of those resources, a mix of regular expression searches and human review was used instead.
+
+Only header files (those with extensions of <code>.h</code>, <code>.hh</code>, <code>.hpp</code>, or <code>.hxx</code>) were considered. In order to discard comments and macro definitions, each source file was stripped of preprocessor directives and then run through the C++ preprocessor, reducing the search space to syntactically significant text. (This process still left behind a significant number of macro invocations, because the macro definitions were no longer visible after stripping preprocessor directives. Inactive code blocks, such as those guarded by <code>#if 0</code>, were also retained.) The collective output was then scanned for lines containing ellipses, resulting in 258,196 lines of interesting text, which were then tagged according to the file each line originated in.
+
+A variety of patterns were identified based on common identifiers, operators, and other textual hints that typically declare variadic packs or expand them; these were excluded from further analysis.
+
+From these results, 89,614 lines contain a comma immediately preceding an ellipsis; those lines unambiguously declare varargs functions.
+
+8,101 lines begin with an ellipsis, and further analysis showed that 6,241 of those lines appeared to come from function declarations. Of those, 6,092 are immediately preceded by a comma on a prior line; from the remaining 149 lines, 131 are catch clauses or function declarations containing only an ellipsis. The last 18 lines have macros mixed in with the parameter list for static analysis purposes. Every single one of these ellipses is unambiguous with respect to pack declarations.
+
+From the entire result set, 6,318 lines were positively identified as containing a varargs ellipsis <em>without</em> a preceding comma.
+
+<table class="data numeric-table">
+<caption>Comma-less varargs survey reported in P1219R2, 2019. [[P1219R2]]</caption>
+<thead><tr><th scope=col>Classification</th><th scope=col>Lines</th></tr></thead>
+<tbody>
+<tr><td>Lines containing ellipses</td><td>258,196</td></tr>
+<tr><td>Varargs ellipses, with comma</td><td>95,724</td></tr>
+<tr><td>Varargs ellipses, without comma</td><td>6,318</td></tr>
+<tr><td>From Boost</td><td>6,182</td></tr>
+<tr><td>From Boost, deduplicated</td><td>879</td></tr>
+<tr><td>All others</td><td>136</td></tr>
+</tbody>
+</table>
+
+Of the 6,318 confirmed varargs declarations without a preceding comma, 6,182 come from a single source: the boost library. Boost is a very popular general-purpose library in the C++ ecosystem, and several of the open-source projects in the dataset contain their own independent copies. In total, the dataset contains seventeen separate complete or partial copies of various versions of boost. After deduplication, the 6,182 results found in boost are reduced to 879.
+
+The 879 unique hits in boost tend to follow a generic pattern; nearly half (416 hits) come from <code>type_traits/detail/is_mem_fun_ptr_tester.hpp</code>. This one file defines a family of function templates (all named <code>is_mem_fun_pointer_tester</code>), each taking a function pointer of progressively higher arity, from 0 to 24, in every possible combination of qualifiers and calling convention, all both with and without a varargs ellipsis. The intent is to allow generic code to detect at compile time whether or not a given type is a member function pointer type. In modern C++, using variadic templates with class template partial specialization, this 2,759 line file can be reduced to just a small handful of lines. Most of the other hits in boost follow a similar pattern, and are intended to facilitate generic programming in pre-C++11 modes.
+
+<aside class=issue>
+<p><strong>TODO:</strong> Update the code-search survey and Boost analysis using recent data, documenting the dataset and methodology.</p>
+</aside>
+
+# Wording # {#candidate-rules}
+
+All modifications are presented relative to the C++26 working draft N5050. [[N5050]]
+
+The wording below is conditional on committee approval to reclaim the comma-less spelling. If that reuse is not approved, the syntax and affected clauses will need to be revised.
+
+<aside class=issue>
+<p><strong>TODO:</strong> Resolve the TODOs below before proposing this wording for adoption.</p>
+</aside>
+
+## Signatures ## {#wording-signatures}
+
+Modify [defns.signature.spec]:
+
+<blockquote>
+<p><strong>signature</strong></p>
+<p>&lang;function template specialization&rang; signature ([defns.signature.templ]) of the template of which it is a specialization<del> and</del><ins>,</ins> its template arguments ([defns.argument.templ]) (whether explicitly specified or deduced)<ins>, and the size of its trailing homogeneous function parameter pack ([temp.variadic]) (if any)</ins></p>
+</blockquote>
+
+Modify [defns.signature.member.spec]:
+
+<blockquote>
+<p><strong>signature</strong></p>
+<p>&lang;class member function template specialization&rang; signature ([defns.signature.member.templ]) of the member function template of which it is a specialization<del> and</del><ins>,</ins> its template arguments (whether explicitly specified or deduced)<ins>, and the size of its trailing homogeneous function parameter pack ([temp.variadic]) (if any)</ins></p>
+</blockquote>
+
+## Lambdas ## {#wording-lambdas}
+
+In [expr.prim.lambda.general], extend the definition of a generic lambda:
+
+<blockquote>
+<p><ins>A <code nohighlight>lambda-expression</code> is also a generic lambda if its <code nohighlight>parameter-declaration-clause</code> declares a homogeneous function parameter pack ([temp.variadic]).</ins></p>
+</blockquote>
+
+In the example in [expr.prim.lambda.general], retain the existing cases and add the homogeneous case:
+
+<xmp class=language-cpp>
+int i = [](int i, auto a) { return i; }(3, 4);        // OK: a generic lambda
+int j = []<class T>(T t, int i) { return i; }(3, 4);  // OK: a generic lambda
+int k = [](int... i) { return (0 + ... + i); }(3, 4); // OK: a generic lambda
+</xmp>
+
+In [expr.prim.lambda.closure], after the specification of the template parameters of a generic lambda's function call operator template, insert:
+
+<blockquote>
+<p><ins>If the <code nohighlight>lambda-expression</code> declares a homogeneous function parameter pack, its function call operator template has an implicit pack count ([temp.variadic]). This count is independent of the template parameters of that operator template.</ins></p>
+</blockquote>
+
+<aside class=issue>
+<p><strong>TODO:</strong> Complete [expr.prim.lambda.closure] wording for deducing the count from a target function-pointer type, including closures without type or constant template parameters. Preserve conversion restrictions for constrained, static, and explicit object call operators.</p>
+</aside>
+
+## Functions ## {#wording-functions}
+
+Modify the first sentence of [dcl.fct]/22:
+
+<blockquote>
+<p>An abbreviated function template is a function declaration that has one or more generic parameter type placeholders ([dcl.spec.auto])<ins> or declares a homogeneous function parameter pack ([temp.variadic])</ins>.</p>
+</blockquote>
+
+After the provisions introducing invented template parameters for an abbreviated function template, insert:
+
+<blockquote>
+<p><ins>An abbreviated function template that declares a homogeneous function parameter pack has an implicit pack count ([temp.variadic]). Its template parameter list can be empty. The implicit pack count does not introduce a template parameter and cannot be supplied as an explicit template argument.</ins></p>
+</blockquote>
+
+Replace the assertion that every function parameter pack is a pack expansion with:
+
+<blockquote>
+<p>A function parameter pack is a pack expansion <ins>unless it is a homogeneous function parameter pack ([temp.variadic])</ins>.</p>
+</blockquote>
+
+Retain the existing [dcl.fct] example of a function parameter pack that is a pack expansion:
+
+<xmp class=language-cpp>
+template<typename... T> void f(T (* ...t)(int, int));
+
+int add(int, int);
+float subtract(int, int);
+
+void g() {
+  f(add, subtract);
+}
+</xmp>
+
+<aside class=issue>
+<p><strong>TODO:</strong> Settle the transition and trailing-comma wording with Jan. If reclamation is approved, remove the comma-less <code nohighlight>parameter-declaration-clause</code> alternative, terminal ellipsis disambiguation, synonymy and deprecation text in [dcl.fct], and [depr.ellipsis.comma]. Preserve standalone ellipsis and comma-separated C varargs.</p>
+</aside>
+
+<aside class=issue>
+<p><strong>TODO:</strong> Audit [temp.pre], [temp.mem], [class.virtual], and [dcl.link] for existing declaration restrictions. Resolve constructor support before generalizing which function declarations may contain homogeneous packs.</p>
+</aside>
+
+## Addresses ## {#wording-addresses}
+
+Insert after [over.over]/3:
+
+<blockquote>
+<p><ins>For a function template that declares a homogeneous function parameter pack, deduction also determines its implicit pack count ([temp.deduct.type]). A specialization is formed only if that count is determined.</ins></p>
+</blockquote>
+
+<aside class=issue>
+<p><strong>TODO:</strong> Check [temp.pre], [temp.arg.explicit], and [temp.expl.spec] for templates with no formal parameters. An empty explicit template-argument list must not imply a zero pack count.</p>
+</aside>
+
+## Variadic templates ## {#wording-variadic}
+
+In [temp.variadic], after the definition of a function parameter pack, insert:
+
+<blockquote>
+<p><ins>For a <code nohighlight>parameter-declaration</code> that declares a function parameter pack, its <em>parameter pattern</em> is the <code nohighlight>parameter-declaration</code> with the ellipsis in its declarator or <code nohighlight>abstract-declarator</code> removed. Determine the unexpanded packs in the parameter pattern after introducing any template parameter corresponding to a placeholder type in the declaration. This determination uses the rules for the pattern and nesting of pack expansions in this subclause.</ins></p>
+
+<p><ins>If the parameter pattern contains no unexpanded packs, the declaration declares a <em>homogeneous function parameter pack</em>. Otherwise, it declares a function parameter pack that is a pack expansion. This classification is determined before substituting template arguments from an enclosing templated entity and is not changed by that substitution.</ins></p>
+
+<p><ins>A homogeneous function parameter pack has an <em>implicit pack count</em>, a non-negative integer that is determined for each specialization of the function template. The count specifies the number of function parameters introduced by the pack. A homogeneous function parameter pack shall be the last parameter in its <code nohighlight>parameter-declaration-clause</code>. No other parameter in that clause shall be a function parameter pack.</ins></p>
+
+<p><ins>The type of each parameter introduced by a homogeneous function parameter pack is obtained from its parameter pattern by substitution and the parameter type adjustments specified in [dcl.fct]. Substitution into the element type is performed even when the implicit pack count is zero. The parameters so introduced are function parameters for all other purposes.</ins></p>
+</blockquote>
+
+In the list of pack expansion contexts in [temp.variadic], exclude homogeneous function parameter packs from the function parameter pack entry. The entry continues to identify the <code nohighlight>parameter-declaration</code> without its declarator ellipsis as the pattern of an ordinary function parameter pack expansion.
+
+<aside class=issue>
+<p><strong>TODO:</strong> Reconcile parameter patterns with expansion patterns for all pack kinds, including function parameter, init-capture, and structured binding packs. Preserve the separate patterns of type indexing, value indexing, folds, and fold-expanded constraints. Packs consumed there must not count as unexpanded in an enclosing parameter pattern.</p>
+</aside>
+
+<aside class=issue>
+<p><strong>TODO:</strong> Decide whether an ordinary function parameter pack may precede the trailing homogeneous pack. Preserve optional parameter names.</p>
+</aside>
+
+Replace the <code>all</code> example in [temp.variadic] with:
+
+<xmp class=language-cpp>
+bool all(bool ...args) { return (... && args); }
+bool b = all(true, true, true, false);
+</xmp>
+
+Within the instantiation of <code>all</code>, the returned expression expands to <code>((true &amp;&amp; true) &amp;&amp; true) &amp;&amp; false</code>, which evaluates to <code>false</code>.
+
+## Dependency ## {#wording-dependency}
+
+Under the proposed rules, an expression's type or value can depend on the number of elements in a homogeneous function parameter pack. A function type containing such a pack with an undetermined implicit count is dependent, including when the element type is non-dependent.
+
+<aside class=issue>
+<p><strong>TODO:</strong> Complete [temp.dep] and [temp.dep.type] for count-dependent function types, including non-dependent element types. Specify dependency and instantiation for pack expressions, <code>sizeof...</code>, indexing, and count constraints, including immediate-context substitution failure. A zero count must not skip substitution into a required indexed element type.</p>
+</aside>
+
+## Deduction ## {#wording-deduction}
+
+In [temp.deduct.general], after the requirement to determine the template arguments used to form a function template specialization, insert:
+
+<blockquote>
+<p><ins>If the function template declares a homogeneous function parameter pack, its implicit pack count shall also be determined. A <code nohighlight>template-id</code> does not by itself determine this count. After deduction, the homogeneous function parameter pack introduces the number of parameters specified by the count, each formed from its parameter pattern.</ins></p>
+</blockquote>
+
+<aside class=issue>
+<p><strong>TODO:</strong> Specify when count deduction occurs relative to explicit argument substitution, deduction, substitution into the template parameter list, constraint satisfaction, and function-type substitution. Preserve lexical substitution order and distinguish immediate-context failure from instantiation errors.</p>
+</aside>
+
+In the examples accompanying [temp.deduct.general], provide the declarations used by the examples and add a homogeneous call:
+
+<xmp class=language-cpp>
+template<class T> class Array { /* ... */ };
+template<class T> void sort(Array<T>& v);
+
+void f(Array<dcomplex>& cv, Array<int>& ci) {
+  sort(cv); // calls sort(Array<dcomplex>&)
+  sort(ci); // calls sort(Array<int>&)
+}
+
+template<class U, class V> U convert(V v);
+
+void g(double d) {
+  int i = convert<int>(d);  // calls convert<int,double>(double)
+  int c = convert<char>(d); // calls convert<char,double>(double)
+}
+
+int sum(int... n) { return (0 + ... + n); }
+
+void h(int x, int y, int z) {
+  int i = sum(x, y, z); // calls sum<>(int,int,int)
+}
+</xmp>
+
+In the deduction failure examples, add:
+
+<xmp class=language-cpp>
+template <class T> void f(T... v);
+auto p = &f<int>; // error: homogeneous pack count is undetermined
+</xmp>
+
+The initialization is ill-formed. The explicit template argument determines the element type but does not determine the homogeneous pack's count.
+
+### Function calls ### {#wording-call-deduction}
+
+In [temp.deduct.call], add after the provisions for a trailing function parameter pack:
+
+<blockquote>
+<p><ins>For a trailing homogeneous function parameter pack, its implicit pack count is the number of call arguments remaining after those associated with the preceding parameters. Deduction from the parameter pattern is performed for each such argument. Deductions for the same template parameter are combined under the ordinary deduction rules. If no call arguments remain, the implicit pack count is zero and the homogeneous function parameter pack makes no deductions for template parameters.</ins></p>
+</blockquote>
+
+<aside class=issue>
+<p><strong>TODO:</strong> Cover default arguments on preceding parameters, explicit object parameters, and pack-expansion arguments. Verify ordinary conversions after deduction for non-dependent element types and that an empty pack cannot deduce its element type.</p>
+</aside>
+
+In [temp.deduct.call], qualify the statement that each deduction deduces template arguments for subsequent positions in the template parameter packs expanded by the function parameter pack with <ins>(if any)</ins>.
+
+Retain the existing [temp.deduct.call] example alongside the homogeneous count rule:
+
+<xmp class=language-cpp>
+template<class ... Types> void f(Types& ...);
+template<class T1, class ... Types> void g(T1, Types ...);
+template<class T1, class ... Types> void g1(Types ..., T1);
+
+void h(int x, float& y) {
+  const int z = x;
+  f(x, y, z);                   // Types is deduced to int, float, const int
+  g(x, y, z);                   // T1 is deduced to int; Types is deduced to float, int
+  g1(x, y, z);                  // error: Types is not deduced
+  g1<int, int, int>(x, y, z);   // OK, no deduction occurs
+}
+</xmp>
+
+### Function types ### {#wording-type-deduction}
+
+In [temp.deduct.type], add to the provisions for deduction from a function type:
+
+<blockquote>
+<p><ins>When a function parameter list containing a trailing homogeneous function parameter pack is matched against a function parameter list of known length, its implicit pack count is the number of parameters remaining after matching the preceding parameters. Match the parameter pattern against each remaining parameter using the applicable deduction rules. If no parameters remain, the count is zero and the homogeneous function parameter pack makes no deductions for template parameters.</ins></p>
+</blockquote>
+
+<aside class=issue>
+<p><strong>TODO:</strong> Complete matching and adjustments in [temp.deduct.type] and [temp.deduct.decl] for target function types, explicit specializations, and instantiations. Specify behavior for undetermined lengths and exclude call-site conversions.</p>
+</aside>
+
+In [temp.deduct.type], qualify the statement that each comparison deduces template arguments for subsequent positions in the template parameter packs expanded by the function parameter pack with <ins>(if any)</ins>.
+
+### Partial ordering and constraints ### {#wording-partial-ordering}
+
+In [temp.deduct.partial], qualify the statement that each comparison deduces template arguments for subsequent positions in the template parameter packs expanded by the function parameter pack with <ins>(if any)</ins>.
+
+<aside class=issue>
+<p><strong>TODO:</strong> Complete [temp.func.order], [temp.deduct.partial], and [temp.constr] for homogeneous and ordinary packs. Specify whether and how the count participates in template transformation and deduction. Cover different element patterns, fixed-arity overloads, constraints on <code>sizeof...</code>, and fold-expanded constraints. Repeated element types alone must not determine ordering.</p>
+</aside>
+
+## Declarations ## {#wording-correspondence}
+
+<aside class=issue>
+<p><strong>TODO:</strong> Specify correspondence and equivalence in [basic.scope.scope] and [temp.over.link], requiring matching homogeneous packs regardless of parameter names. Check specialization, instantiation, module ownership, reachability, serialization, and cross-translation-unit identity separately from ABI representation. Unseen specializations require reachable definitions or appropriate explicit instantiations. <a href="https://timsong-cpp.github.io/cppwp/n5050/module.reach">[module.reach]</a></p>
+</aside>
+
+<aside class=issue>
+<p><strong>TODO:</strong> Check <code>std::meta::template_of</code> and <code>std::meta::template_arguments_of</code> for specializations whose implicit count is not a template argument. Check <code>std::meta::parameters_of</code> for the resulting parameters, including a zero count. <a href="https://timsong-cpp.github.io/cppwp/n5050/meta.reflection.queries">[meta.reflection.queries]</a></p>
+</aside>
+
+## Feature-test macro ## {#wording-feature-test}
+
+<aside class=issue>
+<p><strong>TODO:</strong> Agree with SG10 whether to update <code>__cpp_variadic_templates</code> or add a macro. Choose a new revision value after settling feature scope and compatibility.</p>
+</aside>
+
+# Acknowledgments # {#acknowledgments}
+
+Thanks to Richard Smith, David Vandevoorde, and John Spicer for providing some valuable impromptu feedback. Thanks also to Zhihao Yuan for pointing out an issue with the <code>make_array</code> example.
+
+<pre class=biblio>
+{
+  "N5050": {
+    "title": "Working Draft, Programming Languages - C++",
+    "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/n5050.pdf",
+    "authors": [
+      "Thomas K\u00f6ppe"
+    ],
+    "date": "1 June 2026"
+  },
+  "P1219-CLANG": {
+    "title": "Clang prototype for homogeneous variadic function parameters",
+    "href": "https://github.com/Bekenn/clang/tree/func-parm-packs",
+    "authors": [
+      "James Touton"
+    ]
+  },
+  "CXX-DEDUCTION-CALL": {
+    "title": "C++26 draft N5050: Deducing template arguments from a function call [temp.deduct.call]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.call"
+  },
+  "CXX-EXPLICIT-ARGS": {
+    "title": "C++26 draft N5050: Explicit template argument specification [temp.arg.explicit]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/temp.arg.explicit#7"
+  },
+  "CXX-INITIALIZER-LIST": {
+    "title": "C++26 draft N5050: Initializer lists [support.initlist]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/support.initlist"
+  },
+  "CXX-INSTANTIATION": {
+    "title": "C++26 draft N5050: Explicit instantiation [temp.explicit]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/temp.explicit"
+  },
+  "P1219R2": {
+    "title": "Homogeneous variadic function parameters",
+    "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1219r2.html",
+    "authors": [
+      "James Touton"
+    ],
+    "date": "5 October 2019",
+    "publisher": "ISO/IEC JTC 1/SC 22/WG 21"
+  },
+  "CXX-FUNCTIONS": {
+    "title": "C++26 draft N5050: Functions [dcl.fct]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/dcl.fct"
+  },
+  "CXX-VARARGS-DEPRECATION": {
+    "title": "C++26 draft N5050: Non-comma-separated ellipsis parameters [depr.ellipsis.comma]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/depr.ellipsis.comma"
+  },
+  "CXX-AUTO": {
+    "title": "C++26 draft N5050: Placeholder type specifiers [dcl.spec.auto.general]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/dcl.spec.auto.general"
+  },
+  "CXX-PACK-INDEX": {
+    "title": "C++26 draft N5050: Pack indexing specifier [dcl.type.pack.index]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/dcl.type.pack.index"
+  },
+  "CXX-SPECIALIZATION": {
+    "title": "C++26 draft N5050: Explicit specialization [temp.expl.spec]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/temp.expl.spec"
+  },
+  "P3176R1": {
+    "title": "The Oxford variadic comma",
+    "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3176r1.html",
+    "authors": [
+      "Jan Schultke"
+    ],
+    "date": "22 November 2024"
+  },
+  "P3776R1": {
+    "title": "More trailing commas",
+    "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3776r1.html",
+    "authors": [
+      "Jan Schultke",
+      "Murat Can \u00c7a\u011fr\u0131"
+    ],
+    "date": "9 September 2025"
+  },
+  "P2662R3": {
+    "title": "Pack Indexing",
+    "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2662r3.pdf",
+    "authors": [
+      "Corentin Jabot",
+      "Pablo Halpern"
+    ],
+    "date": "8 November 2023"
+  },
+  "CXX-VARIADIC": {
+    "title": "C++26 draft N5050: Variadic templates [temp.variadic]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/temp.variadic"
+  },
+  "CXX-VALUE-PACK-INDEX": {
+    "title": "C++26 draft N5050: Pack indexing [expr.prim.pack.index]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/expr.prim.pack.index"
+  },
+  "CXX-FOLDS": {
+    "title": "C++26 draft N5050: Fold expressions [expr.prim.fold]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/expr.prim.fold"
+  },
+  "CXX-DECLARATORS": {
+    "title": "C++26 draft N5050: Type names [dcl.name]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/dcl.name"
+  },
+  "CXX-ARRAYS": {
+    "title": "C++26 draft N5050: Arrays [dcl.array]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/dcl.array"
+  },
+  "CXX-LAMBDA": {
+    "title": "C++26 draft N5050: Lambda expressions, general [expr.prim.lambda.general]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/expr.prim.lambda.general"
+  },
+  "CXX-CAPTURES": {
+    "title": "C++26 draft N5050: Captures [expr.prim.lambda.capture]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/expr.prim.lambda.capture"
+  },
+  "CXX-LIST-OVERLOAD": {
+    "title": "C++26 draft N5050: Initialization by list-initialization [over.match.list]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/over.match.list"
+  },
+  "CXX-LIST-INIT": {
+    "title": "C++26 draft N5050: List-initialization [dcl.init.list]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/dcl.init.list"
+  },
+  "CXX-TEMPORARIES": {
+    "title": "C++26 draft N5050: Temporary objects [class.temporary]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/class.temporary"
+  },
+  "CXX-OVERLOAD": {
+    "title": "C++26 draft N5050: Best viable function [over.match.best.general]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/over.match.best.general"
+  },
+  "SD10": {
+    "title": "SD-10: Language Evolution Principles",
+    "href": "https://isocpp.org/std/standing-documents/sd-10-language-evolution-principles"
+  },
+  "SO-1": {
+    "title": "Specifying one type for all arguments passed to variadic function or variadic template function w/out using array, vector, structs, etc?",
+    "href": "https://stackoverflow.com/questions/3703658/"
+  },
+  "SO-2": {
+    "title": "C++ parameter pack, constrained to have instances of a single type?",
+    "href": "https://stackoverflow.com/questions/38528801/"
+  },
+  "SO-3": {
+    "title": "Variadic template parameters of one specific type",
+    "href": "https://stackoverflow.com/questions/30773216/"
+  },
+  "SO-4": {
+    "title": "C++ parameter pack with single type enforced in arguments",
+    "href": "https://stackoverflow.com/questions/47470874/"
+  },
+  "SO-5": {
+    "title": "C++11 variable number of arguments, same specific type",
+    "href": "https://stackoverflow.com/questions/18017543/"
+  },
+  "SO-6": {
+    "title": "Enforce variadic template of certain type",
+    "href": "https://stackoverflow.com/questions/30346652/"
+  },
+  "SO-7": {
+    "title": "variadic template of a specific type",
+    "href": "https://stackoverflow.com/questions/13636290/"
+  },
+  "SO-8": {
+    "title": "C++11: Variadic Homogeneous Non-POD Template Function Arguments?",
+    "href": "https://stackoverflow.com/questions/9762531/"
+  },
+  "SO-9": {
+    "title": "Why must C++ function parameter packs be placeholders or pack expansions?",
+    "href": "https://stackoverflow.com/questions/72420722/",
+    "date": "29 May 2022"
+  },
+  "SO-10": {
+    "title": "Correct syntax for function template with an even number of int arguments?",
+    "href": "https://stackoverflow.com/questions/79872247/",
+    "date": "20 January 2026"
+  },
+  "P1141R2": {
+    "title": "Yet another approach for constrained declarations",
+    "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p1141r2.html",
+    "authors": [
+      "Ville Voutilainen",
+      "Thomas K\u00f6ppe",
+      "Andrew Sutton",
+      "Herb Sutter",
+      "Gabriel Dos Reis",
+      "Bjarne Stroustrup",
+      "Jason Merrill",
+      "Hubert Tong",
+      "Eric Niebler",
+      "Casey Carter",
+      "Tom Honermann",
+      "Erich Keane",
+      "Walter E. Brown",
+      "Michael Spertus",
+      "Richard Smith"
+    ],
+    "date": "9 November 2018"
+  },
+  "LFTS2-ARRAY-CREATION": {
+    "title": "Library Fundamentals TS v2: Array creation functions [container.array.creation]",
+    "href": "https://cplusplus.github.io/fundamentals-ts/v2.html#container.array.creation"
+  },
+  "CXX-MIN-MAX": {
+    "title": "C++26 draft N5050: Minimum and maximum [alg.min.max]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/alg.min.max"
+  },
+  "CXX-ARRAY-DEDUCTION": {
+    "title": "C++26 draft N5050: Array constructors and deduction guides [array.cons]",
+    "href": "https://timsong-cpp.github.io/cppwp/n5050/array.cons"
+  },
+  "N3096": {
+    "title": "Programming languages - C (working draft)",
+    "href": "https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3096.pdf",
+    "date": "1 April 2023"
+  },
+  "P0684R2": {
+    "title": "C++ Stability, Velocity, and Deployment Plans [R2]",
+    "href": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/p0684r2.pdf",
+    "authors": [
+      "Titus Winters"
+    ],
+    "date": "10 February 2018"
+  },
+  "CODESEARCH-FAQ": {
+    "title": "codesearch.isocpp.org FAQ",
+    "href": "https://web.archive.org/web/20241203061836id_/https://codesearch.isocpp.org/faq.html",
+    "authors": [
+      "Andrew Tomazos"
+    ]
+  }
+}
+</pre>

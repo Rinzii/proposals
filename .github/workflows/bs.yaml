@@ -14,25 +14,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
       - name: prerequisites
-        run: |
-          sudo apt-get install pipx
-          pipx install bikeshed
-      - name: render
-        run: |
-          changes=$(git diff --name-only HEAD HEAD~1 -- cpp drafts/cpp)
-          for path in cpp drafts/cpp;
-          do
-            for f in "$path"/*.bs;
-            do
-              [[ -e $f ]] || continue
-              if [[ $changes == *"$f"* ]];
-              then
-                bikeshed spec "$f"
-              fi
-            done
-          done
+        env:
+          PYTHON: python
+        run: make setup
+      - name: update reference data
+        run: make update
+      - name: render and validate
+        run: make check-all
       - name: upload renders
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           message=$(git show -s --format=%s)
           mkdir /tmp/renders
@@ -40,24 +34,25 @@ jobs:
           for path in cpp drafts/cpp;
           do
             mkdir -p "/tmp/renders/$path"
-            if compgen -G "$path/*.html" > /dev/null; then
-              mv -v "$path"/*.html "/tmp/renders/$path"
+            if compgen -G "out/$path/*.html" > /dev/null; then
+              cp -v "out/$path"/*.html "/tmp/renders/$path"
             fi
           done
           git checkout gh-pages
           cp /tmp/renders/index.html index.html
+          git add -- index.html
           for path in cpp drafts/cpp;
           do
             if compgen -G "/tmp/renders/$path/*" > /dev/null; then
               mkdir -p "$path"
               mv -v "/tmp/renders/$path"/* "$path"
+              git add -- "$path"/*.html
             fi
           done
           git config user.name github-actions
           git config user.email github-actions@github.com
-          if [[ -n "$(git status -s)" ]];
+          if ! git diff --cached --quiet;
           then
-            git add .
             git commit -m "[Bikeshed]: $message"
             git push
           fi

@@ -12,14 +12,12 @@ scratch/                  Local scratch space
 scripts/                  setup, build, and watch helpers
 ```
 
-`out/` and `scratch/` are gitignored. A paper starts in `drafts/cpp/` and moves
-to `cpp/` once it has a P number.
 
 ## Quick start
 
 ```sh
-./scripts/setup.sh
-source .venv/bin/activate
+make setup
+make update
 make build
 ```
 
@@ -28,16 +26,22 @@ make build
 ```sh
 make build      # Build the default paper
 make build-all  # Build everything in cpp/ and drafts/cpp/
-make check      # Build and fail if output is empty
+make check      # Build the default paper and require nonempty output
+make check-all  # Build every paper and require nonempty output
 make list-specs # List paper sources
-make watch      # Rebuild on change (needs watchexec or entr)
-make clean      # Remove generated output
+make watch      # Rebuild the selected paper on change
 make update     # Update Bikeshed data files (needs network)
 ```
 
 Build a single paper from either tree:
 
 ```sh
-make build SPEC=drafts/cpp/invoking_annotations_r0.bs
-make build SPEC=cpp/P1234.bs
+make build SPEC=drafts/cpp/P1219R3.bs
 ```
+
+```sh
+.venv/bin/bikeshed --no-update --die-on=warning --dry-run spec drafts/cpp/homogeneous_packs_r0.bs
+```
+
+See the [Bikeshed documentation](https://speced.github.io/bikeshed/) for
+metadata, code blocks, references, and tables.
