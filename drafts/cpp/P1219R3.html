@@ -1563,7 +1563,7 @@ Possible extra rowspan handling
   </style>
   <meta content="Bikeshed version ac92c2f0d, updated Fri Aug 21 16:01:29 2026 -0700" name="generator">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="0d12463d3a1c913774b3a937e269a524649e2e09" name="revision">
+  <meta content="e5add2c4a1ac2be1350bd653f67c013cd62b4875" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 :root {
@@ -2472,10 +2472,10 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>A homogeneous function parameter pack’s parameter pattern contains no unexpanded pack after placeholder processing. An ordinary expansion remains an ordinary expansion even when every resulting parameter type is the same.</p>
    <h2 class="heading settled" data-level="5" id="implementation"><span class="secno">5. </span><span class="content">Implementation Experience</span><a class="self-link" href="#implementation"></a></h2>
    <p>An implementation of the R2 proposal based on Clang can be found in <a href="https://github.com/Bekenn/clang/tree/func-parm-packs">the prototype repository</a>. <a data-link-type="biblio" href="#biblio-p1219r2" title="Homogeneous variadic function parameters">[P1219R2]</a> <a data-link-type="biblio" href="#biblio-p1219-clang" title="Clang prototype for homogeneous variadic function parameters">[P1219-CLANG]</a></p>
-   <aside class="issue" id="issue-10a876ee">
-    <a class="self-link" href="#issue-10a876ee"></a>
+   <aside class="issue" id="issue-ded247b4">
+    <a class="self-link" href="#issue-ded247b4"></a>
 
-    <p><strong>TODO:</strong> Update the R2 prototype to a current Clang release and test this revision in modern C++ language modes.</p>
+    <p>Update the R2 prototype to a current Clang release and test this revision in modern C++ language modes.</p>
    </aside>
    <h2 class="heading settled" data-level="6" id="motivation"><span class="secno">6. </span><span class="content">Motivation and Scope</span><a class="self-link" href="#motivation"></a></h2>
    <h3 class="heading settled" data-level="6.1" id="symmetry"><span class="secno">6.1. </span><span class="content">Meeting user expectations</span><a class="self-link" href="#symmetry"></a></h3>
@@ -2602,10 +2602,10 @@ In the <code class="highlight"><c- n>min</c-></code> example above, the precondi
     <c- k>return</c-> <c- n>sum</c-><c- p>(</c-><c- n>runtime_value</c-><c- p>,</c-> <c- mf>2.5</c-><c- p>);</c->
 <c- p>}</c->
 </pre>
-   <aside class="issue" id="issue-ede49e79">
-    <a class="self-link" href="#issue-ede49e79"></a>
+   <aside class="issue" id="issue-80346c43">
+    <a class="self-link" href="#issue-80346c43"></a>
 
-    <p><strong>TODO:</strong> Develop and test braced-initializer calls for a known aggregate type without CTAD or repeated argument types. Compare constrained packs and initializer lists, covering deduction, empty calls and initializers, designated initializers, and narrowing. Unnamed packs require committee approval to reclaim the comma-less syntax. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.init.aggr">[dcl.init.aggr]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.call">[temp.deduct.call]</a></p>
+    <p>Develop and test braced-initializer calls for a known aggregate type without CTAD or repeated argument types. Compare constrained packs and initializer lists, covering deduction, empty calls and initializers, designated initializers, and narrowing. Unnamed packs require committee approval to reclaim the comma-less syntax. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.init.aggr">[dcl.init.aggr]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.call">[temp.deduct.call]</a></p>
    </aside>
    <p>The earlier workarounds can be found in the Library Fundamentals TS v2 in the form of <code class="highlight"><c- n>make_array</c-></code>, and even in the standard for <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>min</c-></code> and <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>max</c-></code> and the deduction guide for <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>array</c-></code>.
 All of these could arguably be written more naturally with homogeneous parameter packs. <a data-link-type="biblio" href="#biblio-lfts2-array-creation" title="Library Fundamentals TS v2: Array creation functions [container.array.creation]">[LFTS2-ARRAY-CREATION]</a> <a data-link-type="biblio" href="#biblio-cxx-min-max" title="C++26 draft N5050: Minimum and maximum [alg.min.max]">[CXX-MIN-MAX]</a> <a data-link-type="biblio" href="#biblio-cxx-array-deduction" title="C++26 draft N5050: Array constructors and deduction guides [array.cons]">[CXX-ARRAY-DEDUCTION]</a></p>
@@ -2653,10 +2653,10 @@ All of these could arguably be written more naturally with homogeneous parameter
 </pre>
    </table>
    <p>The proposed <code class="highlight"><c- n>make_array</c-></code> is not a replacement with identical deduction semantics. The TS can find a common type for mixed arguments when <code class="highlight"><c- n>D</c-></code> is omitted. The proposed <code class="highlight"><c- n>T</c-><c- p>...</c-> <c- n>t</c-></code> uses ordinary deduction for one <code class="highlight"><c- n>T</c-></code>, so inconsistent deductions fail. Explicitly supplying <code class="highlight"><c- n>T</c-></code> permits ordinary parameter conversions. An empty call cannot deduce <code class="highlight"><c- n>T</c-></code>, but an explicitly supplied <code class="highlight"><c- n>T</c-></code> permits an empty pack. The TS also permits an empty call when <code class="highlight"><c- n>D</c-></code> is supplied. <a data-link-type="biblio" href="#biblio-lfts2-array-creation" title="Library Fundamentals TS v2: Array creation functions [container.array.creation]">[LFTS2-ARRAY-CREATION]</a> <a data-link-type="biblio" href="#biblio-cxx-deduction-call" title="C++26 draft N5050: Deducing template arguments from a function call [temp.deduct.call]">[CXX-DEDUCTION-CALL]</a> <a data-link-type="biblio" href="#biblio-cxx-explicit-args" title="C++26 draft N5050: Explicit template argument specification [temp.arg.explicit]">[CXX-EXPLICIT-ARGS]</a></p>
-   <aside class="issue" id="issue-50c66a7c">
-    <a class="self-link" href="#issue-50c66a7c"></a>
+   <aside class="issue" id="issue-fe3ff470">
+    <a class="self-link" href="#issue-fe3ff470"></a>
 
-    <p><strong>TODO:</strong> Decide whether to support homogeneous packs in deduction guides and, if so, specify deduction and return-type rules.</p>
+    <p>Decide whether to support homogeneous packs in deduction guides and, if so, specify deduction and return-type rules.</p>
    </aside>
    <h3 class="heading settled" data-level="6.3" id="initializer-lists"><span class="secno">6.3. </span><span class="content">Initializer lists</span><a class="self-link" href="#initializer-lists"></a></h3>
    <table class="data">
@@ -2703,10 +2703,10 @@ Consider the case of container initialization:</p>
 <pre class="highlight language-cpp"><c- n>MyContainer</c-><c- o>&lt;</c-><c- b>int</c-><c- o>></c-> <c- n>cont</c-> <c- o>=</c-> <c- p>{</c-> <c- mi>5</c-><c- p>,</c-> <c- mi>10</c-> <c- p>};</c->  <c- c1>// invokes MyContainer&lt;int>::MyContainer(std::initializer_list&lt;int>)</c->
 </pre>
    <p>The corresponding homogeneous constructor would permit the same initialization:</p>
-   <aside class="issue" id="issue-a05bb9be">
-    <a class="self-link" href="#issue-a05bb9be"></a>
+   <aside class="issue" id="issue-4349e5c3">
+    <a class="self-link" href="#issue-4349e5c3"></a>
 
-    <p><strong>TODO:</strong> Decide whether to permit homogeneous packs in constructors and test the examples under R2’s overload model, treating the constructor as an implicit template.</p>
+    <p>Decide whether to permit homogeneous packs in constructors and test the examples under R2’s overload model, treating the constructor as an implicit template.</p>
    </aside>
 <pre class="highlight language-cpp"><c- k>template</c-> <c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c->
 <c- k>class</c-> <c- nc>MyContainer</c->
@@ -2716,7 +2716,8 @@ Consider the case of container initialization:</p>
     <c- c1>// ...</c->
 <c- p>};</c->
 
-<c- n>MyContainer</c-><c- o>&lt;</c-><c- b>int</c-><c- o>></c-> <c- n>cont</c-> <c- o>=</c-> <c- p>{</c-> <c- mi>5</c-><c- p>,</c-> <c- mi>10</c-> <c- p>};</c->  <c- c1>// invokes MyContainer&lt;int>::MyContainer(const int&amp;, const int&amp;)</c->
+<c- c1>// invokes MyContainer&lt;int>::MyContainer(const int&amp;, const int&amp;)</c->
+<c- n>MyContainer</c-><c- o>&lt;</c-><c- b>int</c-><c- o>></c-> <c- n>cont</c-> <c- o>=</c-> <c- p>{</c-> <c- mi>5</c-><c- p>,</c-> <c- mi>10</c-> <c- p>};</c->  
 </pre>
    <p><em>...unless</em> there is a competing constructor that is a better match:</p>
 <pre class="highlight language-cpp"><c- k>template</c-> <c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c->
@@ -2808,46 +2809,50 @@ In contrast, the constructor with <code class="highlight"><c- n>std</c-><c- o>::
 Homogeneous packs are likely the better option outside of constructors, where initializer lists must be separately enclosed in curly braces.
 One possible exception to this is when the API designer wishes to <em>move</em> or <em>forward</em> variadic constructor arguments rather than <em>copy</em> them.
 Frustratingly, the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>initializer_list</c-></code> template permits access to its elements only via references to <code class="highlight"><c- k>const</c-></code>, whereas packs do not have this limitation. <a data-link-type="biblio" href="#biblio-cxx-initializer-list" title="C++26 draft N5050: Initializer lists [support.initlist]">[CXX-INITIALIZER-LIST]</a></p>
-   <aside class="issue" id="issue-80edff1b">
-    <a class="self-link" href="#issue-80edff1b"></a>
+   <aside class="issue" id="issue-11fae385">
+    <a class="self-link" href="#issue-11fae385"></a>
 
-    <p><strong>TODO:</strong> Agree with Jan and Eczbek which maintained interface to use as an example. Compare homogeneous packs with constrained packs, initializer lists, ranges, and bounded overloads.</p>
+    <p>Agree with Jan and Eczbek which maintained interface to use as an example. Compare homogeneous packs with constrained packs, initializer lists, ranges, and bounded overloads.</p>
    </aside>
-   <aside class="issue" id="issue-a340c2be">
-    <a class="self-link" href="#issue-a340c2be"></a>
+   <aside class="issue" id="issue-abb294c8">
+    <a class="self-link" href="#issue-abb294c8"></a>
 
-    <p><strong>TODO:</strong> Compare typed runtime variadics and checked C varargs, including D’s variadics and GCC’s argument-count builtin. Distinguish count from type checks and account for default promotions. <a href="https://dlang.org/spec/function.html#typesafe_variadic_functions">D variadics</a> <a href="https://gcc.gnu.org/onlinedocs/gcc/Constructing-Calls.html">GCC argument-count builtin</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.call">[expr.call]</a></p>
+    <p>Compare typed runtime variadics and checked C varargs, including D’s variadics and GCC’s argument-count builtin. Distinguish count from type checks and account for default promotions. <a href="https://dlang.org/spec/function.html#typesafe_variadic_functions">D variadics</a> <a href="https://gcc.gnu.org/onlinedocs/gcc/Constructing-Calls.html">GCC argument-count builtin</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.call">[expr.call]</a></p>
    </aside>
    <h3 class="heading settled" data-level="6.4" id="interpolated-logging"><span class="secno">6.4. </span><span class="content">Interpolated logging arguments</span><a class="self-link" href="#interpolated-logging"></a></h3>
-   <aside class="issue" id="issue-e4c275ce">
-    <a class="self-link" href="#issue-e4c275ce"></a>
+   <aside class="issue" id="issue-f126b944">
+    <a class="self-link" href="#issue-f126b944"></a>
 
-    <p><strong>TODO:</strong> Develop a logging example with a message and separately interpolated fields, each retaining its format string and arguments. Decide whether to add class-template placeholders to function parameters here or in a separate proposal, or use one concrete wrapper type. Deducing a wrapper specialization per field would make the pack heterogeneous and is distinct from permitting homogeneous packs in deduction guides. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.type.class.deduct">[dcl.type.class.deduct]</a></p>
+    <p>Develop a logging example with a message and separately interpolated fields, each retaining its format string and arguments. Decide whether to add class-template placeholders to function parameters here or in a separate proposal, or use one concrete wrapper type. Deducing a wrapper specialization per field would make the pack heterogeneous and is distinct from permitting homogeneous packs in deduction guides. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.type.class.deduct">[dcl.type.class.deduct]</a></p>
    </aside>
-   <aside class="issue" id="issue-d5551667">
-    <a class="self-link" href="#issue-d5551667"></a>
+   <aside class="issue" id="issue-706518e6">
+    <a class="self-link" href="#issue-706518e6"></a>
 
-    <p><strong>TODO:</strong> Specify the order of rewriting, CTAD, and overload resolution for the logging example, including constrained <code class="highlight"><c- k>auto</c-></code>. Determine whether wrappers can be constructed before default formatting and what changes each proposal needs for multiple fields under P3412R3’s rule that only the last interpolated literal can be expanded. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3412r3.pdf">P3412R3</a></p>
+    <p>Specify the order of rewriting, CTAD, and overload resolution for the logging example, including constrained <code class="highlight"><c- k>auto</c-></code>. Determine whether wrappers can be constructed before default formatting and what changes each proposal needs for multiple fields under P3412R3’s rule that only the last interpolated literal can be expanded. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3412r3.pdf">P3412R3</a></p>
    </aside>
-   <aside class="issue" id="issue-8057fa73">
-    <a class="self-link" href="#issue-8057fa73"></a>
+   <aside class="issue" id="issue-9847c13b">
+    <a class="self-link" href="#issue-9847c13b"></a>
 
-    <p><strong>TODO:</strong> Compare the logging interface with P3951R2’s interpolation objects and with a formatter result implicitly convertible to a string, which P3951R2 does not propose. Identify what homogeneous packs add without replacing the program’s default formatter. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/p3951r2.html">P3951R2</a></p>
+    <p>Compare the logging interface with P3951R2’s interpolation objects and with a formatter result implicitly convertible to a string, which P3951R2 does not propose. Identify what homogeneous packs add without replacing the program’s default formatter. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/p3951r2.html">P3951R2</a></p>
    </aside>
    <h2 class="heading settled" data-level="7" id="design-decisions"><span class="secno">7. </span><span class="content">Design Decisions</span><a class="self-link" href="#design-decisions"></a></h2>
    <h3 class="heading settled" data-level="7.1" id="implicit-template"><span class="secno">7.1. </span><span class="content">Pack declarations</span><a class="self-link" href="#implicit-template"></a></h3>
    <p>A homogeneous function parameter pack is declared in exactly the same way as any other function parameter pack. The difference is that its parameter pattern contains no unexpanded pack after placeholder processing:</p>
-<pre class="highlight language-cpp"><c- k>template</c-> <c- o>&lt;</c-><c- k>class</c-><c- p>...</c-> <c- n>T</c-><c- o>></c-> <c- b>void</c-> <c- n>f</c-><c- p>(</c-><c- n>T</c-><c- p>...</c-> <c- n>v</c-><c- p>);</c-> <c- c1>// heterogeneous function parameter pack</c->
-<c- k>template</c-> <c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c->    <c- b>void</c-> <c- n>f</c-><c- p>(</c-><c- n>T</c-><c- p>...</c-> <c- n>v</c-><c- p>);</c-> <c- c1>// homogeneous function parameter pack</c->
+<pre class="highlight language-cpp"><c- c1>// heterogeneous function parameter pack</c->
+<c- k>template</c-> <c- o>&lt;</c-><c- k>class</c-><c- p>...</c-> <c- n>T</c-><c- o>></c-> <c- b>void</c-> <c- n>f</c-><c- p>(</c-><c- n>T</c-><c- p>...</c-> <c- n>v</c-><c- p>);</c->
+
+<c- c1>// homogeneous function parameter pack</c->
+<c- k>template</c-> <c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c->    <c- b>void</c-> <c- n>f</c-><c- p>(</c-><c- n>T</c-><c- p>...</c-> <c- n>v</c-><c- p>);</c->
 </pre>
    <p>In fact, the pattern does not have to mention any template parameters at all:</p>
-<pre class="highlight language-cpp"><c- b>void</c-> <c- nf>f</c-><c- p>(</c-><c- b>int</c-><c- p>...</c-> <c- n>v</c-><c- p>);</c-> <c- c1>// homogeneous function parameter pack</c->
+<pre class="highlight language-cpp"><c- c1>// homogeneous function parameter pack</c->
+<c- b>void</c-> <c- nf>f</c-><c- p>(</c-><c- b>int</c-><c- p>...</c-> <c- n>v</c-><c- p>);</c->
 </pre>
    <p>Any function declaration that includes a homogeneous function parameter pack implicitly declares a function template.</p>
-   <aside class="issue" id="issue-b857960a">
-    <a class="self-link" href="#issue-b857960a"></a>
+   <aside class="issue" id="issue-b143c707">
+    <a class="self-link" href="#issue-b143c707"></a>
 
-    <p><strong>TODO:</strong> Confirm and address the objection to implicit templates, then decide whether an explicit template introducer is needed.</p>
+    <p>Confirm and address the objection to implicit templates, then decide whether an explicit template introducer is needed.</p>
    </aside>
    <p>The size of a homogeneous function parameter pack is deduced from function arguments at the call site. This requires the pack to be placed in a deduced context, which means that a function template can have at most one homogeneous function parameter pack, and the pack must appear at the end of the function parameter list. Once its parameters have been formed, a homogeneous function parameter pack behaves no differently from any other function parameter pack.</p>
    <h4 class="heading settled" data-level="7.1.1" id="abbreviated-syntax"><span class="secno">7.1.1. </span><span class="content">Abbreviated syntax</span><a class="self-link" href="#abbreviated-syntax"></a></h4>
@@ -2872,7 +2877,7 @@ Frustratingly, the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>init
    </blockquote>
    <p>Since C++20, a function template that needs no template parameter names can use abbreviated syntax, with placeholders such as <code class="highlight"><c- k>auto</c-></code> in its parameter list. <a data-link-type="biblio" href="#biblio-p1141r2" title="Yet another approach for constrained declarations">[P1141R2]</a> <a data-link-type="biblio" href="#biblio-cxx-functions" title="C++26 draft N5050: Functions [dcl.fct]">[CXX-FUNCTIONS]</a></p>
    <p>Under this proposal, the presence of a homogeneous parameter pack in a function signature also indicates that a function declaration is an abbreviated function template declaration:</p>
-<pre class="highlight language-cpp"><c- b>void</c-> <c- nf>foo</c-><c- p>(</c-><c- b>int</c-><c- p>...</c-> <c- n>v</c-><c- p>);</c-> <c- c1>// OK, declares a template with an empty template parameter list</c->
+<pre class="highlight language-cpp"><c- b>void</c-> <c- nf>foo</c-><c- p>(</c-><c- b>int</c-><c- p>...</c-> <c- n>v</c-><c- p>);</c-> \
 </pre>
    <p>If the parameter pack is the only part of the function declaration requiring it to be a template and the pattern of the parameter pack does not contain any dependent names, then the template has no formal template parameters and the <code>template-head</code> must be omitted. To avoid confusion with explicit specializations, this proposal does not allow an empty <code>template-head</code> on a template declaration, even though the syntax is unambiguous in the presence of a function parameter pack declaration:</p>
 <pre class="highlight language-cpp"><c- k>template</c-> <c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-> <c- b>void</c-> <c- n>foo</c-><c- p>(</c-><c- n>T</c-><c- p>...</c-> <c- n>v</c-><c- p>);</c->     <c- c1>// #1 OK</c->
@@ -2934,10 +2939,10 @@ Frustratingly, the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>init
       <td>Length zero with a known element type.
    </table>
    <p>Ordinary reference binding, list-initialization, parameter adjustment, and lifetime rules apply. <a data-link-type="biblio" href="#biblio-cxx-functions" title="C++26 draft N5050: Functions [dcl.fct]">[CXX-FUNCTIONS]</a> <a data-link-type="biblio" href="#biblio-cxx-list-init" title="C++26 draft N5050: List-initialization [dcl.init.list]">[CXX-LIST-INIT]</a> <a data-link-type="biblio" href="#biblio-cxx-temporaries" title="C++26 draft N5050: Temporary objects [class.temporary]">[CXX-TEMPORARIES]</a></p>
-   <aside class="issue" id="issue-987550b7">
-    <a class="self-link" href="#issue-987550b7"></a>
+   <aside class="issue" id="issue-ef14a8a0">
+    <a class="self-link" href="#issue-ef14a8a0"></a>
 
-    <p><strong>TODO:</strong> Test deduction and initialization in a compiler implementation with move-only arguments, forwarding references, overloaded function names, braced arguments, constraints, exception specifications, and constant evaluation.</p>
+    <p>Test deduction and initialization in a compiler implementation with move-only arguments, forwarding references, overloaded function names, braced arguments, constraints, exception specifications, and constant evaluation.</p>
    </aside>
    <h4 class="heading settled" data-level="7.1.3" id="addresses"><span class="secno">7.1.3. </span><span class="content">Address-taking</span><a class="self-link" href="#addresses"></a></h4>
    <p>The count is deduced from the target function type when taking the function’s address. Explicit specialization and instantiation declarations use the same deduction. A template-id alone leaves the count undetermined.</p>
@@ -2974,15 +2979,15 @@ Frustratingly, the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>init
 <c- k>template</c-> <c- b>int</c-> <c- n>sum</c-><c- o>&lt;></c-><c- p>(</c-><c- b>int</c-><c- p>,</c-> <c- b>int</c-><c- p>);</c->
 </pre>
    <p>Ordinary overload ranking applies after forming viable specializations, including partial ordering and constraints for template candidates. <a data-link-type="biblio" href="#biblio-cxx-overload" title="C++26 draft N5050: Best viable function [over.match.best.general]">[CXX-OVERLOAD]</a></p>
-   <aside class="issue" id="issue-a25f38c7">
-    <a class="self-link" href="#issue-a25f38c7"></a>
+   <aside class="issue" id="issue-cb5c5576">
+    <a class="self-link" href="#issue-cb5c5576"></a>
 
-    <p><strong>TODO:</strong> Update R2’s partial-ordering rules for C++26 and specify how homogeneous and heterogeneous packs compare. Cover constrained candidates, empty calls, and fold-expanded constraints without preferring one fixed element type automatically. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.constr.fold">[temp.constr.fold]</a></p>
+    <p>Update R2’s partial-ordering rules for C++26 and specify how homogeneous and heterogeneous packs compare. Cover constrained candidates, empty calls, and fold-expanded constraints without preferring one fixed element type automatically. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.constr.fold">[temp.constr.fold]</a></p>
    </aside>
-   <aside class="issue" id="issue-6755572a">
-    <a class="self-link" href="#issue-6755572a"></a>
+   <aside class="issue" id="issue-137158cf">
+    <a class="self-link" href="#issue-137158cf"></a>
 
-    <p><strong>TODO:</strong> Specify count deduction and call-operator selection for generic-lambda conversion to a function pointer. A typed target should work, while unary plus should fail when the count is undetermined. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.lambda.closure">[expr.prim.lambda.closure]</a></p>
+    <p>Specify count deduction and call-operator selection for generic-lambda conversion to a function pointer. A typed target should work, while unary plus should fail when the count is undetermined. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.lambda.closure">[expr.prim.lambda.closure]</a></p>
    </aside>
    <p>The count identifies the same specialization whether the function is called or its address is taken. It does not provide a C-varargs function type or one compiled function that accepts any number of arguments.</p>
    <h3 class="heading settled" data-level="7.2" id="lambdas"><span class="secno">7.2. </span><span class="content">Lambdas</span><a class="self-link" href="#lambdas"></a></h3>
@@ -3058,10 +3063,10 @@ Frustratingly, the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>init
       <td>Unchanged.
    </table>
    <p>The varying-index form with a second ellipsis leaves no unexpanded pack for an enclosing fold, because the parameter declaration already expands <code class="highlight"><c- n>Is</c-></code>. <a data-link-type="biblio" href="#biblio-cxx-folds" title="C++26 draft N5050: Fold expressions [expr.prim.fold]">[CXX-FOLDS]</a> <a data-link-type="biblio" href="#biblio-cxx-variadic" title="C++26 draft N5050: Variadic templates [temp.variadic]">[CXX-VARIADIC]</a></p>
-   <aside class="issue" id="issue-4f0efdcc">
-    <a class="self-link" href="#issue-4f0efdcc"></a>
+   <aside class="issue" id="issue-ba03bf34">
+    <a class="self-link" href="#issue-ba03bf34"></a>
 
-    <p><strong>TODO:</strong> Confirm whether C++26 [dcl.fct] treats unnamed <code class="highlight"><c- n>Ts</c-><c- p>...[</c-><c- mi>1</c-><c- p>]...</c-></code> as C varargs after indexing expands <code class="highlight"><c- n>Ts</c-></code>. Coordinate the transition with Jan. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct">[dcl.fct]</a></p>
+    <p>Confirm whether C++26 [dcl.fct] treats unnamed <code class="highlight"><c- n>Ts</c-><c- p>...[</c-><c- mi>1</c-><c- p>]...</c-></code> as C varargs after indexing expands <code class="highlight"><c- n>Ts</c-></code>. Coordinate the transition with Jan. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct">[dcl.fct]</a></p>
    </aside>
    <h4 class="heading settled" data-level="7.3.1" id="multiple-packs"><span class="secno">7.3.1. </span><span class="content">Pairwise and Cartesian expansion</span><a class="self-link" href="#multiple-packs"></a></h4>
    <p>Pairwise expansion places both packs in one expansion pattern. The following current-language fragment pairs each type with one index constant and requires equal pack lengths:</p>
@@ -3195,10 +3200,10 @@ Frustratingly, the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>init
     <p>P1141R2, adopted in San Diego, adds support for function template declarations that lack a template head entirely; in this case, the presence of the <code class="highlight"><c- k>auto</c-></code> keyword in the function parameter list indicates that the function declaration declares a function template. Any implementation that can handle these new declarations should also be able to handle homogeneous packs without added syntax. In a follow-up conversation with Richard over e-mail, he agreed with this conclusion. <a data-link-type="biblio" href="#biblio-p1141r2" title="Yet another approach for constrained declarations">[P1141R2]</a></p>
    </blockquote>
    <p>The corresponding lambda form would be <code class="highlight"><c- p>[]</c-><c- o>&lt;</c-><c- p>...</c-><c- o>></c-><c- p>(</c-><c- b>int</c-><c- p>...</c-> <c- n>values</c-><c- p>)</c-> <c- p>{}</c-></code>. A marker could declare the independent count and opt into revised unnamed-ellipsis parsing. Those are separate effects. Making a lambda generic alone does not change indexing or move <code class="highlight"><c- n>Is</c-></code> between expansions.</p>
-   <aside class="issue" id="issue-8c8664f6">
-    <a class="self-link" href="#issue-8c8664f6"></a>
+   <aside class="issue" id="issue-e766c319">
+    <a class="self-link" href="#issue-e766c319"></a>
 
-    <p><strong>TODO:</strong> If retained, specify the marker’s grammar, count deduction, and ellipsis disambiguation. Neither <code class="highlight"><c- p>[]</c-><c- o>&lt;</c-><c- p>...</c-><c- o>></c-><c- p>(...){}</c-></code> nor <code class="highlight"><c- k>template</c-><c- o>&lt;</c-><c- b>void</c-><c- o>></c-></code> is an existing marker for this feature and the former does not declare a typed homogeneous parameter.</p>
+    <p>If retained, specify the marker’s grammar, count deduction, and ellipsis disambiguation. Neither <code class="highlight"><c- p>[]</c-><c- o>&lt;</c-><c- p>...</c-><c- o>></c-><c- p>(...){}</c-></code> nor <code class="highlight"><c- k>template</c-><c- o>&lt;</c-><c- b>void</c-><c- o>></c-></code> is an existing marker for this feature and the former does not declare a typed homogeneous parameter.</p>
    </aside>
    <h4 class="heading settled" data-level="7.5.4" id="bare-template-introducer"><span class="secno">7.5.4. </span><span class="content">Bare template introducer</span><a class="self-link" href="#bare-template-introducer"></a></h4>
    <p>An alternative is to allow the angle brackets to be omitted when no template parameters are needed:</p>
@@ -3274,10 +3279,10 @@ Frustratingly, the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>init
    </blockquote>
    <p>Jan Schultke’s P3176R1, <em>The Oxford variadic comma</em>, continued the comma-separation work from P1219R2. It deprecated the comma-less spelling while retaining its meaning and standalone ellipsis parameters. If the committee approves reclamation, this proposal would use the comma-less spelling for homogeneous packs while preserving optional parameter names. Deprecation alone does not change its meaning. Reuse is a source and link compatibility change under SD-10. <a data-link-type="biblio" href="#biblio-p3176r1" title="The Oxford variadic comma">[P3176R1]</a> <a data-link-type="biblio" href="#biblio-p1219r2" title="Homogeneous variadic function parameters">[P1219R2]</a> <a data-link-type="biblio" href="#biblio-cxx-varargs-deprecation" title="C++26 draft N5050: Non-comma-separated ellipsis parameters [depr.ellipsis.comma]">[CXX-VARARGS-DEPRECATION]</a> <a data-link-type="biblio" href="#biblio-sd10" title="SD-10: Language Evolution Principles">[SD10]</a></p>
    <p>P3776R1, <em>More trailing commas</em>, proposes trailing commas in function parameter lists but excludes them after C ellipsis parameters. This preserves a grammar distinction between function parameter packs and C ellipsis parameters. <a data-link-type="biblio" href="#biblio-p3776r1" title="More trailing commas">[P3776R1]</a></p>
-   <aside class="issue" id="issue-de1ca7bd">
-    <a class="self-link" href="#issue-de1ca7bd"></a>
+   <aside class="issue" id="issue-e530472b">
+    <a class="self-link" href="#issue-e530472b"></a>
 
-    <p><strong>TODO:</strong> Agree with Jan on language modes, migration, and trailing-comma wording. Decide whether to remove the old meaning before or alongside homogeneous packs, or use different syntax. Check shared C/C++ headers, macros, and address-taking code. If reclamation is declined, specify a consistent explicit alternative. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3776r1.html">P3776R1</a></p>
+    <p>Agree with Jan on language modes, migration, and trailing-comma wording. Decide whether to remove the old meaning before or alongside homogeneous packs, or use different syntax. Check shared C/C++ headers, macros, and address-taking code. If reclamation is declined, specify a consistent explicit alternative. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/p3776r1.html">P3776R1</a></p>
    </aside>
    <p>If the committee approves reclamation, the named comma-less form <code class="highlight"><c- b>void</c-> <c- n>send</c-><c- p>(</c-><c- b>int</c-> <c- n>value</c-><c- p>...)</c-></code> would require migration to <code class="highlight"><c- b>void</c-> <c- n>send</c-><c- p>(</c-><c- b>int</c-> <c- n>value</c-><c- p>,</c-> <c- p>...)</c-></code>. The name cannot be moved across the ellipsis as an implicit reinterpretation. Preserving every existing declaration is therefore incompatible with reclamation.</p>
    <h4 class="heading settled" data-level="7.6.1" id="compatibility-survey"><span class="secno">7.6.1. </span><span class="content">The impact of a breaking change</span><a class="self-link" href="#compatibility-survey"></a></h4>
@@ -3317,18 +3322,18 @@ Frustratingly, the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>init
    </table>
    <p>Of the 6,318 confirmed varargs declarations without a preceding comma, 6,182 come from a single source: the boost library. Boost is a very popular general-purpose library in the C++ ecosystem, and several of the open-source projects in the dataset contain their own independent copies. In total, the dataset contains seventeen separate complete or partial copies of various versions of boost. After deduplication, the 6,182 results found in boost are reduced to 879.</p>
    <p>The 879 unique hits in boost tend to follow a generic pattern; nearly half (416 hits) come from <code class="highlight"><c- n>type_traits</c-><c- o>/</c-><c- n>detail</c-><c- o>/</c-><c- n>is_mem_fun_ptr_tester</c-><c- p>.</c-><c- n>hpp</c-></code>. This one file defines a family of function templates (all named <code class="highlight"><c- n>is_mem_fun_pointer_tester</c-></code>), each taking a function pointer of progressively higher arity, from 0 to 24, in every possible combination of qualifiers and calling convention, all both with and without a varargs ellipsis. The intent is to allow generic code to detect at compile time whether or not a given type is a member function pointer type. In modern C++, using variadic templates with class template partial specialization, this 2,759 line file can be reduced to just a small handful of lines. Most of the other hits in boost follow a similar pattern, and are intended to facilitate generic programming in pre-C++11 modes.</p>
-   <aside class="issue" id="issue-99cf31ad">
-    <a class="self-link" href="#issue-99cf31ad"></a>
+   <aside class="issue" id="issue-40110108">
+    <a class="self-link" href="#issue-40110108"></a>
 
-    <p><strong>TODO:</strong> Update the code-search survey and Boost analysis using recent data, documenting the dataset and methodology.</p>
+    <p>Update the code-search survey and Boost analysis using recent data, documenting the dataset and methodology.</p>
    </aside>
    <h2 class="heading settled" data-level="8" id="candidate-rules"><span class="secno">8. </span><span class="content">Wording</span><a class="self-link" href="#candidate-rules"></a></h2>
    <p>All modifications are presented relative to the C++26 working draft N5050. <a data-link-type="biblio" href="#biblio-n5050" title="Working Draft, Programming Languages - C++">[N5050]</a></p>
    <p>The wording below is conditional on committee approval to reclaim the comma-less spelling. If that reuse is not approved, the syntax and affected clauses will need to be revised.</p>
-   <aside class="issue" id="issue-778e7fe9">
-    <a class="self-link" href="#issue-778e7fe9"></a>
+   <aside class="issue" id="issue-d3d8ce86">
+    <a class="self-link" href="#issue-d3d8ce86"></a>
 
-    <p><strong>TODO:</strong> Resolve the TODOs below before proposing this wording for adoption.</p>
+    <p>Resolve the TODOs below before proposing this wording for adoption.</p>
    </aside>
    <h3 class="heading settled" data-level="8.1" id="wording-signatures"><span class="secno">8.1. </span><span class="content">Signatures</span><a class="self-link" href="#wording-signatures"></a></h3>
    <p>Modify [defns.signature.spec]:</p>
@@ -3371,10 +3376,10 @@ Frustratingly, the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>init
      <ins>If the <code>lambda-expression</code> declares a homogeneous function parameter pack, its function call operator template has an implicit pack count ([temp.variadic]). This count is independent of the template parameters of that operator template.</ins>
     </p>
    </blockquote>
-   <aside class="issue" id="issue-f4103912">
-    <a class="self-link" href="#issue-f4103912"></a>
+   <aside class="issue" id="issue-060e0c77">
+    <a class="self-link" href="#issue-060e0c77"></a>
 
-    <p><strong>TODO:</strong> Complete [expr.prim.lambda.closure] wording for deducing the count from a target function-pointer type, including closures without type or constant template parameters. Preserve conversion restrictions for constrained, static, and explicit object call operators.</p>
+    <p>Complete [expr.prim.lambda.closure] wording for deducing the count from a target function-pointer type, including closures without type or constant template parameters. Preserve conversion restrictions for constrained, static, and explicit object call operators.</p>
    </aside>
    <h3 class="heading settled" data-level="8.3" id="wording-functions"><span class="secno">8.3. </span><span class="content">Functions</span><a class="self-link" href="#wording-functions"></a></h3>
    <p>Modify the first sentence of [dcl.fct]/22:</p>
@@ -3409,15 +3414,15 @@ Frustratingly, the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>init
   <c- n>f</c-><c- p>(</c-><c- n>add</c-><c- p>,</c-> <c- n>subtract</c-><c- p>);</c->
 <c- p>}</c->
 </pre>
-   <aside class="issue" id="issue-8ff91cb0">
-    <a class="self-link" href="#issue-8ff91cb0"></a>
+   <aside class="issue" id="issue-334d1a50">
+    <a class="self-link" href="#issue-334d1a50"></a>
 
-    <p><strong>TODO:</strong> Settle the transition and trailing-comma wording with Jan. If reclamation is approved, remove the comma-less <code>parameter-declaration-clause</code> alternative, terminal ellipsis disambiguation, synonymy and deprecation text in [dcl.fct], and [depr.ellipsis.comma]. Preserve standalone ellipsis and comma-separated C varargs.</p>
+    <p>Settle the transition and trailing-comma wording with Jan. If reclamation is approved, remove the comma-less <code>parameter-declaration-clause</code> alternative, terminal ellipsis disambiguation, synonymy and deprecation text in [dcl.fct], and [depr.ellipsis.comma]. Preserve standalone ellipsis and comma-separated C varargs.</p>
    </aside>
-   <aside class="issue" id="issue-1438df48">
-    <a class="self-link" href="#issue-1438df48"></a>
+   <aside class="issue" id="issue-714d0b3b">
+    <a class="self-link" href="#issue-714d0b3b"></a>
 
-    <p><strong>TODO:</strong> Audit [temp.pre], [temp.mem], [class.virtual], and [dcl.link] for existing declaration restrictions. Resolve constructor support before generalizing which function declarations may contain homogeneous packs.</p>
+    <p>Audit [temp.pre], [temp.mem], [class.virtual], and [dcl.link] for existing declaration restrictions. Resolve constructor support before generalizing which function declarations may contain homogeneous packs.</p>
    </aside>
    <h3 class="heading settled" data-level="8.4" id="wording-addresses"><span class="secno">8.4. </span><span class="content">Addresses</span><a class="self-link" href="#wording-addresses"></a></h3>
    <p>Insert after [over.over]/3:</p>
@@ -3426,10 +3431,10 @@ Frustratingly, the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>init
      <ins>For a function template that declares a homogeneous function parameter pack, deduction also determines its implicit pack count ([temp.deduct.type]). A specialization is formed only if that count is determined.</ins>
     </p>
    </blockquote>
-   <aside class="issue" id="issue-fe9ac438">
-    <a class="self-link" href="#issue-fe9ac438"></a>
+   <aside class="issue" id="issue-74fcfd0b">
+    <a class="self-link" href="#issue-74fcfd0b"></a>
 
-    <p><strong>TODO:</strong> Check [temp.pre], [temp.arg.explicit], and [temp.expl.spec] for templates with no formal parameters. An empty explicit template-argument list must not imply a zero pack count.</p>
+    <p>Check [temp.pre], [temp.arg.explicit], and [temp.expl.spec] for templates with no formal parameters. An empty explicit template-argument list must not imply a zero pack count.</p>
    </aside>
    <h3 class="heading settled" data-level="8.5" id="wording-variadic"><span class="secno">8.5. </span><span class="content">Variadic templates</span><a class="self-link" href="#wording-variadic"></a></h3>
    <p>In [temp.variadic], after the definition of a function parameter pack, insert:</p>
@@ -3448,15 +3453,15 @@ Frustratingly, the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>init
     </p>
    </blockquote>
    <p>In the list of pack expansion contexts in [temp.variadic], exclude homogeneous function parameter packs from the function parameter pack entry. The entry continues to identify the <code>parameter-declaration</code> without its declarator ellipsis as the pattern of an ordinary function parameter pack expansion.</p>
-   <aside class="issue" id="issue-6a99fd30">
-    <a class="self-link" href="#issue-6a99fd30"></a>
+   <aside class="issue" id="issue-465559b3">
+    <a class="self-link" href="#issue-465559b3"></a>
 
-    <p><strong>TODO:</strong> Reconcile parameter patterns with expansion patterns for all pack kinds, including function parameter, init-capture, and structured binding packs. Preserve the separate patterns of type indexing, value indexing, folds, and fold-expanded constraints. Packs consumed there must not count as unexpanded in an enclosing parameter pattern.</p>
+    <p>Reconcile parameter patterns with expansion patterns for all pack kinds, including function parameter, init-capture, and structured binding packs. Preserve the separate patterns of type indexing, value indexing, folds, and fold-expanded constraints. Packs consumed there must not count as unexpanded in an enclosing parameter pattern.</p>
    </aside>
-   <aside class="issue" id="issue-10be98e7">
-    <a class="self-link" href="#issue-10be98e7"></a>
+   <aside class="issue" id="issue-2020b579">
+    <a class="self-link" href="#issue-2020b579"></a>
 
-    <p><strong>TODO:</strong> Decide whether an ordinary function parameter pack may precede the trailing homogeneous pack. Preserve optional parameter names.</p>
+    <p>Decide whether an ordinary function parameter pack may precede the trailing homogeneous pack. Preserve optional parameter names.</p>
    </aside>
    <p>Replace the <code class="highlight"><c- n>all</c-></code> example in [temp.variadic] with:</p>
 <pre class="highlight language-cpp"><c- b>bool</c-> <c- nf>all</c-><c- p>(</c-><c- b>bool</c-> <c- p>...</c-><c- n>args</c-><c- p>)</c-> <c- p>{</c-> <c- k>return</c-> <c- p>(...</c-> <c- o>&amp;&amp;</c-> <c- n>args</c-><c- p>);</c-> <c- p>}</c->
@@ -3465,10 +3470,10 @@ Frustratingly, the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>init
    <p>Within the instantiation of <code class="highlight"><c- n>all</c-></code>, the returned expression expands to <code class="highlight"><c- p>((</c->true <c- o>&amp;&amp;</c-> true<c- p>)</c-> <c- o>&amp;&amp;</c-> true<c- p>)</c-> <c- o>&amp;&amp;</c-> false</code>, which evaluates to <code class="highlight">false</code>.</p>
    <h3 class="heading settled" data-level="8.6" id="wording-dependency"><span class="secno">8.6. </span><span class="content">Dependency</span><a class="self-link" href="#wording-dependency"></a></h3>
    <p>Under the proposed rules, an expression’s type or value can depend on the number of elements in a homogeneous function parameter pack. A function type containing such a pack with an undetermined implicit count is dependent, including when the element type is non-dependent.</p>
-   <aside class="issue" id="issue-2cf87704">
-    <a class="self-link" href="#issue-2cf87704"></a>
+   <aside class="issue" id="issue-19c22c54">
+    <a class="self-link" href="#issue-19c22c54"></a>
 
-    <p><strong>TODO:</strong> Complete [temp.dep] and [temp.dep.type] for count-dependent function types, including non-dependent element types. Specify dependency and instantiation for pack expressions, <code class="highlight"><c- k>sizeof</c-><c- p>...</c-></code>, indexing, and count constraints, including immediate-context substitution failure. A zero count must not skip substitution into a required indexed element type.</p>
+    <p>Complete [temp.dep] and [temp.dep.type] for count-dependent function types, including non-dependent element types. Specify dependency and instantiation for pack expressions, <code class="highlight"><c- k>sizeof</c-><c- p>...</c-></code>, indexing, and count constraints, including immediate-context substitution failure. A zero count must not skip substitution into a required indexed element type.</p>
    </aside>
    <h3 class="heading settled" data-level="8.7" id="wording-deduction"><span class="secno">8.7. </span><span class="content">Deduction</span><a class="self-link" href="#wording-deduction"></a></h3>
    <p>In [temp.deduct.general], after the requirement to determine the template arguments used to form a function template specialization, insert:</p>
@@ -3477,10 +3482,10 @@ Frustratingly, the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>init
      <ins>If the function template declares a homogeneous function parameter pack, its implicit pack count shall also be determined. A <code>template-id</code> does not by itself determine this count. After deduction, the homogeneous function parameter pack introduces the number of parameters specified by the count, each formed from its parameter pattern.</ins>
     </p>
    </blockquote>
-   <aside class="issue" id="issue-bbca2fe4">
-    <a class="self-link" href="#issue-bbca2fe4"></a>
+   <aside class="issue" id="issue-1720b974">
+    <a class="self-link" href="#issue-1720b974"></a>
 
-    <p><strong>TODO:</strong> Specify when count deduction occurs relative to explicit argument substitution, deduction, substitution into the template parameter list, constraint satisfaction, and function-type substitution. Preserve lexical substitution order and distinguish immediate-context failure from instantiation errors.</p>
+    <p>Specify when count deduction occurs relative to explicit argument substitution, deduction, substitution into the template parameter list, constraint satisfaction, and function-type substitution. Preserve lexical substitution order and distinguish immediate-context failure from instantiation errors.</p>
    </aside>
    <p>In the examples accompanying [temp.deduct.general], provide the declarations used by the examples and add a homogeneous call:</p>
 <pre class="highlight language-cpp"><c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-> <c- k>class</c-> <c- nc>Array</c-> <c- p>{</c-> <c- d>/* ... */</c-> <c- p>};</c->
@@ -3516,10 +3521,10 @@ Frustratingly, the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>init
      <ins>For a trailing homogeneous function parameter pack, its implicit pack count is the number of call arguments remaining after those associated with the preceding parameters. Deduction from the parameter pattern is performed for each such argument. Deductions for the same template parameter are combined under the ordinary deduction rules. If no call arguments remain, the implicit pack count is zero and the homogeneous function parameter pack makes no deductions for template parameters.</ins>
     </p>
    </blockquote>
-   <aside class="issue" id="issue-ac2cc66e">
-    <a class="self-link" href="#issue-ac2cc66e"></a>
+   <aside class="issue" id="issue-30d0dc66">
+    <a class="self-link" href="#issue-30d0dc66"></a>
 
-    <p><strong>TODO:</strong> Cover default arguments on preceding parameters, explicit object parameters, and pack-expansion arguments. Verify ordinary conversions after deduction for non-dependent element types and that an empty pack cannot deduce its element type.</p>
+    <p>Cover default arguments on preceding parameters, explicit object parameters, and pack-expansion arguments. Verify ordinary conversions after deduction for non-dependent element types and that an empty pack cannot deduce its element type.</p>
    </aside>
    <p>
     In [temp.deduct.call], qualify the statement that each deduction deduces template arguments for subsequent positions in the template parameter packs expanded by the function parameter pack with 
@@ -3546,10 +3551,10 @@ Frustratingly, the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>init
      <ins>When a function parameter list containing a trailing homogeneous function parameter pack is matched against a function parameter list of known length, its implicit pack count is the number of parameters remaining after matching the preceding parameters. Match the parameter pattern against each remaining parameter using the applicable deduction rules. If no parameters remain, the count is zero and the homogeneous function parameter pack makes no deductions for template parameters.</ins>
     </p>
    </blockquote>
-   <aside class="issue" id="issue-9ee9f502">
-    <a class="self-link" href="#issue-9ee9f502"></a>
+   <aside class="issue" id="issue-05eb07f7">
+    <a class="self-link" href="#issue-05eb07f7"></a>
 
-    <p><strong>TODO:</strong> Complete matching and adjustments in [temp.deduct.type] and [temp.deduct.decl] for target function types, explicit specializations, and instantiations. Specify behavior for undetermined lengths and exclude call-site conversions.</p>
+    <p>Complete matching and adjustments in [temp.deduct.type] and [temp.deduct.decl] for target function types, explicit specializations, and instantiations. Specify behavior for undetermined lengths and exclude call-site conversions.</p>
    </aside>
    <p>
     In [temp.deduct.type], qualify the statement that each comparison deduces template arguments for subsequent positions in the template parameter packs expanded by the function parameter pack with 
@@ -3562,27 +3567,27 @@ Frustratingly, the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>init
     <ins>(if any)</ins>
     .
    </p>
-   <aside class="issue" id="issue-b9edeb74">
-    <a class="self-link" href="#issue-b9edeb74"></a>
+   <aside class="issue" id="issue-366c475f">
+    <a class="self-link" href="#issue-366c475f"></a>
 
-    <p><strong>TODO:</strong> Complete [temp.func.order], [temp.deduct.partial], and [temp.constr] for homogeneous and ordinary packs. Specify whether and how the count participates in template transformation and deduction. Cover different element patterns, fixed-arity overloads, constraints on <code class="highlight"><c- k>sizeof</c-><c- p>...</c-></code>, and fold-expanded constraints. Repeated element types alone must not determine ordering.</p>
+    <p>Complete [temp.func.order], [temp.deduct.partial], and [temp.constr] for homogeneous and ordinary packs. Specify whether and how the count participates in template transformation and deduction. Cover different element patterns, fixed-arity overloads, constraints on <code class="highlight"><c- k>sizeof</c-><c- p>...</c-></code>, and fold-expanded constraints. Repeated element types alone must not determine ordering.</p>
    </aside>
    <h3 class="heading settled" data-level="8.8" id="wording-correspondence"><span class="secno">8.8. </span><span class="content">Declarations</span><a class="self-link" href="#wording-correspondence"></a></h3>
-   <aside class="issue" id="issue-50bcf8f3">
-    <a class="self-link" href="#issue-50bcf8f3"></a>
+   <aside class="issue" id="issue-b2004a51">
+    <a class="self-link" href="#issue-b2004a51"></a>
 
-    <p><strong>TODO:</strong> Specify correspondence and equivalence in [basic.scope.scope] and [temp.over.link], requiring matching homogeneous packs regardless of parameter names. Check specialization, instantiation, module ownership, reachability, serialization, and cross-translation-unit identity separately from ABI representation. Unseen specializations require reachable definitions or appropriate explicit instantiations. <a href="https://timsong-cpp.github.io/cppwp/n5050/module.reach">[module.reach]</a></p>
+    <p>Specify correspondence and equivalence in [basic.scope.scope] and [temp.over.link], requiring matching homogeneous packs regardless of parameter names. Check specialization, instantiation, module ownership, reachability, serialization, and cross-translation-unit identity separately from ABI representation. Unseen specializations require reachable definitions or appropriate explicit instantiations. <a href="https://timsong-cpp.github.io/cppwp/n5050/module.reach">[module.reach]</a></p>
    </aside>
-   <aside class="issue" id="issue-2e6b77e3">
-    <a class="self-link" href="#issue-2e6b77e3"></a>
+   <aside class="issue" id="issue-8182d116">
+    <a class="self-link" href="#issue-8182d116"></a>
 
-    <p><strong>TODO:</strong> Check <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>template_of</c-></code> and <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>template_arguments_of</c-></code> for specializations whose implicit count is not a template argument. Check <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>parameters_of</c-></code> for the resulting parameters, including a zero count. <a href="https://timsong-cpp.github.io/cppwp/n5050/meta.reflection.queries">[meta.reflection.queries]</a></p>
+    <p>Check <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>template_of</c-></code> and <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>template_arguments_of</c-></code> for specializations whose implicit count is not a template argument. Check <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>meta</c-><c- o>::</c-><c- n>parameters_of</c-></code> for the resulting parameters, including a zero count. <a href="https://timsong-cpp.github.io/cppwp/n5050/meta.reflection.queries">[meta.reflection.queries]</a></p>
    </aside>
    <h3 class="heading settled" data-level="8.9" id="wording-feature-test"><span class="secno">8.9. </span><span class="content">Feature-test macro</span><a class="self-link" href="#wording-feature-test"></a></h3>
-   <aside class="issue" id="issue-0d0957d0">
-    <a class="self-link" href="#issue-0d0957d0"></a>
+   <aside class="issue" id="issue-45164516">
+    <a class="self-link" href="#issue-45164516"></a>
 
-    <p><strong>TODO:</strong> Agree with SG10 whether to update <code class="highlight"><c- n>__cpp_variadic_templates</c-></code> or add a macro. Choose a new revision value after settling feature scope and compatibility.</p>
+    <p>Agree with SG10 whether to update <code class="highlight"><c- n>__cpp_variadic_templates</c-></code> or add a macro. Choose a new revision value after settling feature scope and compatibility.</p>
    </aside>
    <h2 class="heading settled" data-level="9" id="acknowledgments"><span class="secno">9. </span><span class="content">Acknowledgments</span><a class="self-link" href="#acknowledgments"></a></h2>
    <p>Thanks to Richard Smith, David Vandevoorde, and John Spicer for providing some valuable impromptu feedback. Thanks also to Zhihao Yuan for pointing out an issue with the <code class="highlight"><c- n>make_array</c-></code> example.</p>
