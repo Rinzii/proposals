@@ -7,8 +7,6 @@ Bikeshed sources for C++ proposals by Ian Pike.
 ```text
 drafts/cpp/               Papers in progress
 cpp/                      Papers that have a number and have been submitted
-out/                      Local build output, mirrors the source tree
-scratch/                  Local scratch space
 scripts/                  setup, build, and watch helpers
 ```
 

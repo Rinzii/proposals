@@ -1,4 +1,6 @@
 scratch/
+/workspace/
+.Internal/
 .venv/
 __pycache__/
 *.pyc
