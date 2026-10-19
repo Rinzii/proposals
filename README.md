@@ -38,7 +38,7 @@ make build SPEC=drafts/cpp/P1219R3.bs
 ```
 
 ```sh
-.venv/bin/bikeshed --no-update --die-on=warning --dry-run spec drafts/cpp/homogeneous_packs_r0.bs
+.venv/bin/bikeshed --no-update --die-on=warning --dry-run spec drafts/cpp/P1219R3.bs
 ```
 
 See the [Bikeshed documentation](https://speced.github.io/bikeshed/) for
