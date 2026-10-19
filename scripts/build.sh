@@ -44,18 +44,84 @@ EOF
 }
 
 normalize_path() {
-    local path="$1"
-    if [[ "${path}" = /* ]]; then
-        printf '%s\n' "${path}"
-    else
-        printf '%s\n' "${ROOT_DIR}/${path}"
+    local python_bin="${VENV_DIR}/bin/python"
+    if [[ ! -x "${python_bin}" ]]; then
+        python_bin="${PYTHON:-python3}"
     fi
+    "${python_bin}" -c 'import os, sys; print(os.path.abspath(os.path.join(sys.argv[1], sys.argv[2])))' "${ROOT_DIR}" "$1"
 }
 
 output_for() {
     local spec_file="$1"
     local relative="${spec_file#${ROOT_DIR}/}"
     printf '%s\n' "${ROOT_DIR}/out/${relative%.bs}.html"
+}
+
+write_alias() {
+    local output_file="$1"
+    local target="$2"
+    local paper="$3"
+    mkdir -p "$(dirname "${output_file}")"
+    cat > "${output_file}" <<EOF
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>${paper}: Latest revision</title>
+</head>
+<body>
+<p>Continue to the <a href="${target}">latest ${paper} draft</a>.</p>
+<script>location.replace("${target}" + location.search + location.hash);</script>
+</body>
+</html>
+EOF
+}
+
+update_latest_alias() {
+    local spec_file="$1"
+    local output_file="$2"
+    [[ "${output_file}" == "$(output_for "${spec_file}")" ]] || return 0
+
+    [[ "${spec_file}" == *.bs ]] || return 0
+    local relative_source="${spec_file#${ROOT_DIR}/}"
+    case "$(dirname "${relative_source}")" in cpp|drafts/cpp) ;; *) return 0 ;; esac
+    local stem="$(basename "${spec_file}" .bs)"
+    local paper="${stem%R*}"
+    local revision="${stem##*R}"
+    [[ "${paper}" == P* ]] || return 0
+    case "${paper#P}" in ''|*[!0-9]*) return 0 ;; esac
+    case "${revision}" in ''|*[!0-9]*) return 0 ;; esac
+
+    local latest_spec="${spec_file}"
+    local latest_revision=-1
+    local candidate_spec candidate_stem candidate_revision
+    local revision_stems=()
+    for candidate_spec in "${ROOT_DIR}/cpp/${paper}"R*.bs "${ROOT_DIR}/drafts/cpp/${paper}"R*.bs; do
+        [[ -f "${candidate_spec}" ]] || continue
+        candidate_stem="$(basename "${candidate_spec}" .bs)"
+        candidate_revision="${candidate_stem##*R}"
+        case "${candidate_revision}" in ''|*[!0-9]*) continue ;; esac
+        revision_stems+=("${candidate_stem}")
+        if (( 10#${candidate_revision} >= latest_revision )); then
+            latest_spec="${candidate_spec}"
+            latest_revision="$((10#${candidate_revision}))"
+        fi
+    done
+
+    local latest_output="$(output_for "${latest_spec}")"
+    if [[ "${latest_spec}" != "${spec_file}" && ( ! -s "${latest_output}" || "${latest_spec}" -nt "${latest_output}" ) ]]; then
+        build_one "${latest_spec}" "${latest_output}"
+        return
+    fi
+
+    local latest_relative="${latest_spec#${ROOT_DIR}/}"
+    local target="${latest_relative%.bs}.html"
+    write_alias "${ROOT_DIR}/out/cpp/${paper}.html" "../${target}" "${paper}"
+    write_alias "${ROOT_DIR}/out/drafts/cpp/${paper}.html" "../../${target}" "${paper}"
+    write_alias "${ROOT_DIR}/out/${paper}/index.html" "../${target}" "${paper}"
+    for candidate_stem in "${revision_stems[@]}"; do
+        write_alias "${ROOT_DIR}/out/${candidate_stem}/index.html" "../${paper}/" "${paper}"
+    done
 }
 
 build_one() {
@@ -72,6 +138,7 @@ build_one() {
     echo
 
     "${BIKESHED_BIN}" --no-update spec "${spec_file}" "${output_file}"
+    update_latest_alias "${spec_file}" "${output_file}"
 }
 
 cd "${ROOT_DIR}"
