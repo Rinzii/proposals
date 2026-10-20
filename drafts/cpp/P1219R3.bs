@@ -1398,8 +1398,6 @@ P1219R2 links to an experimental <a href="https://github.com/Bekenn/clang/tree/f
 
 # Wording # {#candidate-rules}
 
-All modifications are relative to the C++26 working draft N5050. [[N5050]] Prose edits are marked inline. Added text is green, removed text is red, and unchanged text is unmarked. Only inline deletions are struck through. Whole additions and removals use + and - blocks. Code and grammar changes use a single block, with unchanged lines shown once.
-
 The core wording describes the named homogeneous-pack feature. For that independently selectable feature, add to the homogeneous-pack declaration requirements below:
 
 <div class="wording-diff diff-single">
