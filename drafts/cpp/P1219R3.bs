@@ -1120,56 +1120,23 @@ A current-language <code>std::same_as&lt;int&gt; auto... values</code> pack supp
 
 ## Alternatives ## {#alternatives}
 
-We reject the alternative spellings, while deferring declaration-site lengths.
+R2 discusses alternative spellings and declaration-site lengths. [[P1219R2]] We retain its rejection of empty template heads and a bare <code>template</code> introducer.
 
 ### An additional auto marker ### {#additional-auto}
 
 In <code>int auto... values</code>, <code>auto</code> would mark template status rather than act as a placeholder and <code>int</code> is not a concept constraint. We reject this redundant marker and retain symmetry with homogeneous template packs such as <code>std::size_t... values</code>. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.spec.auto.general">[dcl.spec.auto.general]</a>
 
-### Empty template heads ### {#empty-template-heads}
-
-We retain <code>template &lt;&gt;</code> for explicit specialization, following R2. [[P1219R2]]
-
 ### Explicit template markers ### {#marker}
 
-A marker could be required in the template parameter list:
-
-<xmp class=language-cpp>
-template <...>
-void foo(int... v);
-
-template <class T, ...>
-void bar(T... v);
-</xmp>
-
-A marker could expose template status, identify the count, and permit unnamed packs without reclaiming comma-less C varargs. For lambdas it would appear as <code>[]&lt;...&gt;(int... values) {}</code>.
+The <code>template &lt;...&gt;</code> marker considered in R2 could identify the count and permit unnamed packs without reclaiming comma-less C varargs. [[P1219R2]] For lambdas the corresponding spelling would be <code>[]&lt;...&gt;(int... values) {}</code>.
 
 Named homogeneous packs already establish template status ([[#abbreviated-syntax]]). [[P1141R2]] <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/n5050.pdf#page=249">[dcl.fct]/21</a> We therefore reject a required marker for a compatibility benefit confined to unnamed packs. An unnamed-only marker avoids that burden, but we prefer requiring a name to adding syntax solely for omitting it.
 
-R2's 2019 experience did not establish a need for a marker, but covered only Clang. [[P1219R2]]
-
-### Bare template introducer ### {#bare-template-introducer}
-
-R2 considered omitting brackets with no explicit template parameters: [[P1219R2]]
-
-<xmp class=language-cpp>
-template void foo(int... v);
-</xmp>
-
-We reject this unambiguous spelling because it reuses the explicit-instantiation introducer, which abbreviated declarations do not need. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.explicit#1">[temp.explicit]/1-2</a>
-
 ### Explicit lengths ### {#explicit-lengths}
 
-Declaration-site lengths are deferred. R2's pre-indexing spelling was: [[P1219R2]]
+The invented count model covers the present use cases ([[#abbreviated-syntax]]), though declaration-site lengths would let authors name and position the count.
 
-<xmp class=language-cpp>
-template <std::size_t Len>
-void foo(int...[Len] v);
-</xmp>
-
-The invented count model covers the present use cases ([[#abbreviated-syntax]]). Declaration-site lengths would additionally let authors name and position the count.
-
-The earlier spelling conflicts with C++26 pack indexing: <code>Ts...[Len]</code> already selects one type. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.type.pack.index">[dcl.type.pack.index]</a> A marker cannot resolve this conflict, but other declaration-site length spellings remain possible.
+R2's bracketed length spelling conflicts with C++26 pack indexing: <code>Ts...[Len]</code> already selects one type. [[P1219R2]] <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.type.pack.index">[dcl.type.pack.index]</a> A marker cannot resolve this conflict, but other declaration-site length spellings remain possible.
 
 Multiple or non-trailing homogeneous packs would need rules for associating and deducing their counts. We defer these extensions and declaration-site lengths. Restoring abstract array-pack grammar also remains separate.
 
