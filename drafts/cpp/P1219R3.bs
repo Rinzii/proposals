@@ -377,14 +377,12 @@ Note: C++26 clause references use N5050. [[N5050]]
 <th scope=row>Heterogeneous</th>
 <td class=code-valid>
 <xmp class=language-cpp>
-// OK:
 template <auto... vs>
 void f();
 </xmp>
 </td>
 <td class=code-valid>
 <xmp class=language-cpp>
-// OK:
 void f(auto... vs);
 </xmp>
 </td>
@@ -599,7 +597,7 @@ Current C++ does permit arbitrary counts when the destination is explicit, such 
 
 <p>The examples in R2 and later requests for fixed-type positional interfaces show that this requirement recurs. [[P1219R2]] [[REDDIT-ENUM-PACK]] [[SO-STRING-VIEW-CONCAT]]</p>
 
-<p>These discussions concern conversions left in function bodies [[SO-TYPED-ACCUMULATOR]], ordinary conversion ranking [[LOEW-HOMOGENEOUS-OVERLOADS]], and by-value parameter initialization without additional construction in the body. [[MAZIERES-PARAM-PACK]] A homogeneous pack's count would also permit constraints, such as requiring an even number of arguments. [[SO-10]] These discussions provide solutions in current C++, including constrained packs and emulations with fixed parameter types.</p>
+<p>These discussions concern conversions left in function bodies [[SO-TYPED-ACCUMULATOR]], ordinary conversion ranking [[LOEW-HOMOGENEOUS-OVERLOADS]], and by-value parameter initialization without additional construction in the body. [[MAZIERES-PARAM-PACK]] A homogeneous pack's count would also permit constraints, such as requiring an even number of arguments. [[SO-10]] These discussions provide solutions in current C++, including constrained packs and emulations with fixed parameter types. Our proposal would simplify these interfaces by stating the element type directly in the parameter list, preserving ordinary initialization and conversion ranking without helper templates or generated overloads.</p>
 
 ## Initializer lists and vectors ## {#initializer-lists}
 
@@ -680,8 +678,6 @@ For each <em>homogeneous function parameter pack</em> (<em>homogeneous pack</em>
 
 We classify function parameter packs by their <em>parameter pattern</em>, which is the declaration without the declarator ellipsis. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#6.1">[temp.variadic]/6.1</a> Ordinary placeholder processing first invents a type parameter pack for <code>auto...</code>. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/n5050.pdf#page=249">[dcl.fct]/21</a> We then classify the declaration before substituting enclosing template arguments: it is homogeneous only if its pattern contains no unexpanded pack. An ordinary expansion therefore remains an expansion even when its resulting parameter types are identical.
 
-Each row in Table 5 is independent. <code>T</code> denotes one type, <code>Ts</code> a type pack, <code>Templates</code> a compatible template template parameter pack, <code>Is</code> an index pack, and <code>I</code> a constant index. <code>Box</code> takes a type pack and <code>C</code> is a unary type concept.
-
 The rule covers <code>xs</code> as a constant template parameter, function parameter, init-capture, or structured binding pack.
 
 Each homogeneous case gets its own count, but a zero count does not avoid substitution into the element type. Types, indices, folds, and array bounds must still be valid. Also, the last row's nested requirement determines the value of a <code>bool</code> requires-expression without constraining the function.
@@ -735,7 +731,7 @@ void f(int... v);
 
 R2 treated the pack length as an additional part of specialization identity even when the template had no formal parameters. [[P1219R2]] In this revision, a homogeneous function pack makes the declaration an abbreviated function template before body parsing, with an invented, unnamed constant template parameter representing its length. The length is therefore a template argument, whose value can be deduced or supplied explicitly where its position allows. For named packs, <code>sizeof...(values)</code> also exposes it.
 
-The count has type <code>std::size_t</code>, matching <code>sizeof...</code>. To avoid requiring either a <code>std::size_t</code> declaration or a header, the wording refers to the type of a <code>sizeof</code> expression. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.sizeof#5">[expr.sizeof]/5</a>
+The count has type <code>std::size_t</code>, matching the type of a <code>sizeof...</code> expression. To avoid requiring either a <code>std::size_t</code> declaration or a header, the wording refers to the type of a <code>sizeof</code> expression. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.sizeof#5">[expr.sizeof]/5</a>
 
 There is a related concern in [[P1061R10]] section 3.3, which removed support for structured binding packs outside templates after objections to R9's implicit template region. That region covered the rest of an ordinary function after a structured binding declaration, whereas here the signature declares the whole function a template. This distinction does not, however, establish committee agreement on the proposal.
 
@@ -1515,11 +1511,11 @@ In <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.general">[temp
 <div class="diff-pane diff-code">
 <p class="diff-label">Addition</p>
 <div class="diff-line diff-insert"><span class="diff-marker" aria-hidden="true">+</span><div><ins><code nohighlight>int sum(int... n) {</code></ins></div></div>
-<div class="diff-line diff-insert"><span class="diff-marker" aria-hidden="true">+</span><div><ins><code nohighlight>    return (0 + ... + n);</code></ins></div></div>
+<div class="diff-line diff-insert"><span class="diff-marker" aria-hidden="true">+</span><div><ins><code nohighlight>  return (0 + ... + n);</code></ins></div></div>
 <div class="diff-line diff-insert"><span class="diff-marker" aria-hidden="true">+</span><div><ins><code nohighlight>}</code></ins></div></div>
 <div class="diff-line diff-insert"><span class="diff-marker" aria-hidden="true">+</span><div><ins><code nohighlight>&#160;</code></ins></div></div>
 <div class="diff-line diff-insert"><span class="diff-marker" aria-hidden="true">+</span><div><ins><code nohighlight>void h(int x, int y, int z) {</code></ins></div></div>
-<div class="diff-line diff-insert"><span class="diff-marker" aria-hidden="true">+</span><div><ins><code nohighlight>    int i = sum(x, y, z); // calls sum&lt;3&gt;(int, int, int)</code></ins></div></div>
+<div class="diff-line diff-insert"><span class="diff-marker" aria-hidden="true">+</span><div><ins><code nohighlight>  int i = sum(x, y, z);         // selects sum&lt;3&gt;</code></ins></div></div>
 <div class="diff-line diff-insert"><span class="diff-marker" aria-hidden="true">+</span><div><ins><code nohighlight>}</code></ins></div></div>
 </div>
 </div>
@@ -1548,8 +1544,8 @@ In <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.call#1">[temp.
 <div class="diff-pane">
 <p class="diff-label">Context and changes</p>
 <div class="diff-line diff-context"><span class="diff-marker" aria-hidden="true"> </span><p>For a function parameter pack that occurs at the end of the <var class=grammar ignore>parameter-declaration-list</var>, deduction is performed for each remaining argument of the call, taking the type <em>P</em> of the <var class=grammar ignore>declarator-id</var> of the function parameter pack as the corresponding function template parameter type. Each deduction deduces template arguments for subsequent positions in the template parameter packs<ins> (if any)</ins> expanded by the function parameter pack. When a function parameter pack appears in a non-deduced context (<a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.type">[temp.deduct.type]</a>), the type of that pack is never deduced.</p></div>
-<div class="diff-line diff-insert"><span class="diff-marker" aria-hidden="true">+</span><p><ins>For a trailing homogeneous function parameter pack whose count argument has not been explicitly specified, deduce that argument as the number of call arguments remaining after those associated with the preceding parameters. If the count argument has been explicitly specified, the number of remaining call arguments shall equal it. Deduction from the parameter pattern is performed independently for each corresponding argument for template parameters whose arguments have not been explicitly specified. Deductions for the same template parameter, including those from preceding function parameters, are combined under the ordinary deduction rules. If no call arguments remain, deduce an omitted count as zero and make no element-type deductions from the pack.</ins></p></div>
-<div class="diff-line diff-insert"><span class="diff-marker" aria-hidden="true">+</span><p><ins>After deduction and substitution, each argument initializes its corresponding function parameter under the ordinary initialization rules. An explicitly supplied element type is not deduced again. An argument-count mismatch or inconsistent deduction causes template argument deduction to fail.</ins></p></div>
+<div class="diff-line diff-insert"><span class="diff-marker" aria-hidden="true">+</span><p><ins>For a trailing homogeneous function parameter pack whose count argument has not been explicitly specified, deduce that argument as the number of call arguments remaining after those associated with the preceding parameters. If an explicitly supplied count differs from that number, template argument deduction fails. Deduction from the parameter pattern is performed independently for each corresponding argument for template parameters whose arguments have not been explicitly specified. Deductions for the same template parameter, including those from preceding function parameters, are combined under the ordinary deduction rules. If no call arguments remain, deduce an omitted count as zero and make no element-type deductions from the pack.</ins></p></div>
+<div class="diff-line diff-insert"><span class="diff-marker" aria-hidden="true">+</span><p><ins>After deduction and substitution, each argument initializes its corresponding function parameter under the ordinary initialization rules. An explicitly supplied element type is not deduced again. Inconsistent deductions cause template argument deduction to fail.</ins></p></div>
 </div>
 </div>
 
