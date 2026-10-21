@@ -2,7 +2,7 @@
  <head>
   <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
   <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
-  <title>D1219R3: Homogeneous variadic function parameters</title>
+  <title>P1219R3: Homogeneous variadic function parameters</title>
 <style data-fill-with="stylesheet">/******************************************************************************
  *                   Style sheet for the W3C specifications                   *
  *
@@ -1563,7 +1563,7 @@ Possible extra rowspan handling
   </style>
   <meta content="Bikeshed version ac92c2f0d, updated Fri Aug 21 16:01:29 2026 -0700" name="generator">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="d55bf50f722111bafb2231c0120854add909a3a9" name="revision">
+  <meta content="bbc8be0b817acb9e271d8d22101a7d651472668e" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 :root {
@@ -1779,11 +1779,11 @@ figure.table {
 }
 
 #pack-matrix col:first-child {
-    width: 24%;
+    width: 20%;
 }
 
 #pack-matrix col:not(:first-child) {
-    width: 38%;
+    width: 40%;
 }
 
 #overload-ordering-cases col:nth-child(2) {
@@ -1844,6 +1844,15 @@ table.example-comparison td, table.example-comparison th {
 table.constructor-comparison pre, table.example-comparison pre {
     font-size: 0.9em;
     padding: 0.5em;
+}
+
+table.example-comparison pre.line-numbered {
+    grid-template-columns: min-content minmax(0, 1fr);
+}
+
+table.example-comparison c-[c1] {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
 var.grammar {
@@ -2471,9 +2480,9 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
  <body class="h-entry">
   <div class="head">
    <p data-fill-with="logo"></p>
-   <h1 class="no-ref p-name" id="title">D1219R3<br>Homogeneous variadic function parameters</h1>
-   <h2 class="heading no-num no-ref no-toc settled" id="profile-and-date"><span class="content">Draft Proposal,
-    <time class="dt-updated" datetime="2026-10-12">2026-10-12</time></span></h2>
+   <h1 class="no-ref p-name" id="title">P1219R3<br>Homogeneous variadic function parameters</h1>
+   <h2 class="heading no-num no-ref no-toc settled" id="profile-and-date"><span class="content">Published Proposal,
+    <time class="dt-updated" datetime="2026-10-21">2026-10-21</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt class="editor">Authors:
@@ -2491,13 +2500,18 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <div data-fill-with="warning"></div>
    <hr title="Separator for header">
   </div>
+  <div class="p-summary" data-fill-with="abstract">
+   <h2 class="heading no-num no-ref no-toc settled" id="abstract"><span class="content">Abstract</span></h2>
+   <p>This paper proposes homogeneous function parameter packs for C++29: a variable number of parameters of one declared type. They would replace fixed-arity overload families with one declaration while retaining ordinary parameter initialization, conversion ranking, and a compile-time count.</p>
+   <p>We seek Evolution Working Group direction on further work toward named packs and, separately, on reclaiming deprecated comma-less C varargs for unnamed packs. Reclamation changes existing meanings.</p>
+  </div>
   <nav data-fill-with="table-of-contents" id="toc">
    <h2 class="no-num no-ref no-toc" id="contents">Table of Contents</h2>
    <ol class="toc">
     <li>
      <a href="#revision-history"><span class="secno">1</span> <span class="content">Revision history</span></a>
      <ol class="toc">
-      <li><a href="#revision-r3"><span class="secno">1.1</span> <span class="content">R3 (TODO)</span></a>
+      <li><a href="#revision-r3"><span class="secno">1.1</span> <span class="content">R3 (2026-10-21)</span></a>
       <li><a href="#revision-r2"><span class="secno">1.2</span> <span class="content">R2 (2019-10-05)</span></a>
       <li><a href="#revision-r1"><span class="secno">1.3</span> <span class="content">R1 (2019-03-11)</span></a>
       <li><a href="#revision-r0"><span class="secno">1.4</span> <span class="content">R0 (2018-10-08)</span></a>
@@ -2538,13 +2552,12 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
         <li><a href="#arrays"><span class="secno">5.4.2</span> <span class="content">Array parameters</span></a>
         <li><a href="#empty-and-return"><span class="secno">5.4.3</span> <span class="content">Empty packs</span></a>
        </ol>
-      <li><a href="#captures"><span class="secno">5.5</span> <span class="content">Captures</span></a>
       <li>
-       <a href="#alternatives"><span class="secno">5.6</span> <span class="content">Alternatives</span></a>
+       <a href="#alternatives"><span class="secno">5.5</span> <span class="content">Alternatives</span></a>
        <ol class="toc">
-        <li><a href="#additional-auto"><span class="secno">5.6.1</span> <span class="content">An additional auto marker</span></a>
-        <li><a href="#marker"><span class="secno">5.6.2</span> <span class="content">Explicit template markers</span></a>
-        <li><a href="#explicit-lengths"><span class="secno">5.6.3</span> <span class="content">Explicit lengths</span></a>
+        <li><a href="#additional-auto"><span class="secno">5.5.1</span> <span class="content">An additional auto marker</span></a>
+        <li><a href="#marker"><span class="secno">5.5.2</span> <span class="content">Explicit template markers</span></a>
+        <li><a href="#explicit-lengths"><span class="secno">5.5.3</span> <span class="content">Explicit lengths</span></a>
        </ol>
      </ol>
     <li>
@@ -2584,6 +2597,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
        </ol>
       <li><a href="#wording-correspondence"><span class="secno">9.9</span> <span class="content">Declarations</span></a>
       <li><a href="#wording-feature-test"><span class="secno">9.10</span> <span class="content">Feature-test macro</span></a>
+      <li><a href="#wording-compatibility"><span class="secno">9.11</span> <span class="content">Compatibility with C++26</span></a>
      </ol>
     <li><a href="#conclusion"><span class="secno">10</span> <span class="content">Conclusion</span></a>
     <li><a href="#acknowledgments"><span class="secno">11</span> <span class="content">Acknowledgments</span></a>
@@ -2596,12 +2610,19 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   </nav>
   <main>
    <h2 class="heading settled" data-level="1" id="revision-history"><span class="secno">1. </span><span class="content">Revision history</span><a class="self-link" href="#revision-history"></a></h2>
-   <h3 class="heading settled" data-level="1.1" id="revision-r3"><span class="secno">1.1. </span><span class="content">R3 (TODO)</span><a class="self-link" href="#revision-r3"></a></h3>
-   <aside class="issue" id="issue-07e1bb64">
-    <a class="self-link" href="#issue-07e1bb64"></a>
-
-    <p><strong>Ian: writing.</strong> Write the R3 revision history once the drafting phase is finished.</p>
-   </aside>
+   <h3 class="heading settled" data-level="1.1" id="revision-r3"><span class="secno">1.1. </span><span class="content">R3 (2026-10-21)</span><a class="self-link" href="#revision-r3"></a></h3>
+   <ul>
+    <li data-md>
+     <p>Retargeted the proposal to C++29 and rebased the wording on N5050.</p>
+    <li data-md>
+     <p>Replaced the separate pack-length component of specialization identity with an invented constant template parameter for the count.</p>
+    <li data-md>
+     <p>Added Abseil and CasADi use cases with comparisons to current C++ alternatives.</p>
+    <li data-md>
+     <p>Updated pack classification, deduction, initialization, address-taking, and lambda rules for the count model and C++26 pack indexing.</p>
+    <li data-md>
+     <p>Separated named homogeneous packs from optional reclamation of deprecated comma-less C varargs, with independent EWG direction polls.</p>
+   </ul>
    <h3 class="heading settled" data-level="1.2" id="revision-r2"><span class="secno">1.2. </span><span class="content">R2 (2019-10-05)</span><a class="self-link" href="#revision-r2"></a></h3>
    <ul>
     <li data-md>
@@ -2622,7 +2643,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
     <li data-md>
      <p>Added discussion of alternative designs to address or avoid confusion with explicit specializations.</p>
     <li data-md>
-     <p>Added straw polls from EWGI in Kona.</p>
+     <p>Added straw polls from the Evolution Working Group Incubator (EWGI) in Kona.</p>
     <li data-md>
      <p>Added acknowledgments.</p>
     <li data-md>
@@ -2667,13 +2688,11 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    </figure>
    <p>As Table 1 shows, the symmetry between template and function parameter packs is incomplete: C++26 lacks the homogeneous function form. In the lower-right declaration, <code class="highlight"><c- n>T</c-></code> names one type, leaving <code class="highlight"><c- n>T</c-><c- p>...</c-> <c- n>vs</c-></code> with no pack to expand. The declaration is therefore ill-formed in current C++. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#8">[temp.variadic]/8</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.spec.auto.general#2">[dcl.spec.auto.general]/2</a> <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/n5050.pdf#page=250">[dcl.fct]/24</a> Under our proposal, <code class="highlight"><c- n>vs</c-></code> would instead be a pack of parameters, each of type <code class="highlight"><c- n>T</c-></code>.</p>
    <p>For fixed or explicitly supplied <code class="highlight"><c- n>T</c-></code>, ordinary conversions can initialize parameters from different source types. Deduced <code class="highlight"><c- n>T</c-></code> requires consistent deductions across applicable arguments. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.type#2">[temp.deduct.type]/2</a> The pack’s length is known at compile time even when its arguments are runtime values, unlike the constant template arguments of homogeneous template packs. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#9">[temp.variadic]/9</a></p>
-   <p>For example, the <a href="#examples">library comparisons</a> examine Abseil’s need for count-dependent results and call-site diagnostics alongside CasADi’s need to preserve conversion ranking.</p>
    <p>The proposal allows one trailing homogeneous pack, making an abbreviated function template whose specializations have ordinary fixed-arity function types. Existing pack expansions retain their meanings.</p>
    <p>Earlier revisions received EWGI support, though the EWG poll to accept P1219 for C++23 failed in Belfast in 2019. <a data-link-type="biblio" href="#biblio-p1219-ewg-record" title="P1219 Homogeneous variadic function parameters">[P1219-EWG-RECORD]</a> Since then, C++26 has deprecated the comma-less C-varargs spelling that conflicts with unnamed homogeneous packs. <a href="https://timsong-cpp.github.io/cppwp/n5050/depr.ellipsis.comma">[depr.ellipsis.comma]</a> We return with concrete library comparisons, further evidence of programmer demand, and a revised model for the pack count.</p>
-   <p>A single trailing pack covers the library use cases and lets the remaining arguments determine its length. We defer declaration-site lengths, which need new syntax, and multiple packs, which need argument-partitioning rules (<a href="#explicit-lengths">§ 5.6.3 Explicit lengths</a>).</p>
+   <p>A single trailing pack covers the library use cases and lets the remaining arguments determine its length. We defer declaration-site lengths, which need new syntax, and multiple packs, which need argument-partitioning rules (<a href="#explicit-lengths">§ 5.5.3 Explicit lengths</a>).</p>
    <p>Unambiguous named packs such as <code class="highlight"><c- b>int</c-><c- p>...</c-> <c- n>values</c-></code> can proceed independently of <a href="#compatibility">reclaiming comma-less C varargs</a> for unnamed packs such as <code class="highlight"><c- b>int</c-><c- p>...</c-></code>. We therefore propose <a href="#proposed-polls">separate EWG polls</a>. Deprecation alone does not establish safe reclamation. A separate removal paper remains a fallback if EWG feedback warrants it.</p>
    <h2 class="heading settled" data-level="3" id="examples"><span class="secno">3. </span><span class="content">Library use cases</span><a class="self-link" href="#examples"></a></h2>
-   <p>The current and proposed definitions in Tables 2 and 3 are independent alternatives.</p>
    <h3 class="heading settled" data-level="3.1" id="example-count"><span class="secno">3.1. </span><span class="content">Combine call-site diagnostics with count-dependent results</span><a class="self-link" href="#example-count"></a></h3>
    <p>Abseil’s internal <code class="highlight"><c- n>Layout</c-><c- o>&lt;</c-><c- n>Ts</c-><c- p>...</c-><c- o>></c-></code> describes one array per element type in a single allocation. <code class="highlight"><c- n>Partial</c-></code> records how many leading array sizes are supplied in its result type <code class="highlight"><c- n>PartialType</c-><c- o>&lt;</c-><c- n>N</c-><c- o>></c-></code>, though the sizes may be runtime values. <a data-link-type="biblio" href="#biblio-absl-layout" title="Abseil: layout.h (d522178)">[ABSL-LAYOUT]</a></p>
    <p>With runtime <code class="highlight"><c- b>size_t</c-></code> values <code class="highlight"><c- n>int_count</c-></code> and <code class="highlight"><c- n>double_count</c-></code>:</p>
@@ -2701,20 +2720,20 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    </figure>
    <p>For <code class="highlight"><c- b>int</c-> <c- n>signed_count</c-></code>, Abseil’s authors want warnings for <code class="highlight"><c- n>ArrayLayout</c-><c- o>::</c-><c- n>Partial</c-><c- p>(</c-><c- n>signed_count</c-><c- p>)</c-></code> but not <code class="highlight"><c- n>ArrayLayout</c-><c- o>::</c-><c- n>Partial</c-><c- p>(</c-><c- mi>3</c-><c- p>)</c-></code>. Their <a href="https://github.com/abseil/abseil-cpp/blob/d522178b54087d2c3855484c1899ce99ad278169/absl/container/internal/layout.h#L760-L780">comment</a> explains that explicit casts suppress both warnings, while implicit forwarding-body conversions can warn for both.</p>
    <p>Fixed <code class="highlight"><c- b>size_t</c-></code> parameters make this distinction available by exposing the original argument expression to conversion diagnostics at the call. A <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>convertible_to</c-><c- o>&lt;</c-><c- b>size_t</c-><c- o>></c-></code> constraint, however, leaves conversions in the body. <a href="https://timsong-cpp.github.io/cppwp/n5050/concept.convertible#1">[concept.convertible]/1</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.call#6">[expr.call]/6</a></p>
-   <p>The warnings still depend on the implementation and options. Negative integers remain well-formed and convert to unsigned values. Also, ordinary parameter initialization rejects explicit-only conversions, such as an explicit <code class="highlight"><c- k>operator</c-> <c- b>size_t</c-><c- p>()</c-></code>, that the shipped <code class="highlight"><c- k>static_cast</c-></code> accepts. <a href="https://timsong-cpp.github.io/cppwp/n5050/conv.integral#3">[conv.integral]/3</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/over.match.conv#1">[over.match.conv]/1</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.static.cast#5">[expr.static.cast]/5</a></p>
+   <p>Whether these conversions produce warnings depends on the compiler and enabled warning options. Negative integers remain well-formed and convert to unsigned values. Also, ordinary parameter initialization rejects explicit-only conversions, such as an explicit <code class="highlight"><c- k>operator</c-> <c- b>size_t</c-><c- p>()</c-></code>, that the shipped <code class="highlight"><c- k>static_cast</c-></code> accepts. <a href="https://timsong-cpp.github.io/cppwp/n5050/conv.integral#3">[conv.integral]/3</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/over.match.conv#1">[over.match.conv]/1</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.static.cast#5">[expr.static.cast]/5</a></p>
    <p>For plain <code class="highlight"><c- n>Layout</c-><c- o>&lt;</c-><c- n>Ts</c-><c- p>...</c-><c- o>></c-></code> without static sizes, current C++ can preserve the conversions and result types with overloads for arities zero through <code class="highlight"><c- k>sizeof</c-><c- p>...(</c-><c- n>Ts</c-><c- p>)</c-></code>. The header’s <a href="https://github.com/abseil/abseil-cpp/blob/d522178b54087d2c3855484c1899ce99ad278169/absl/container/internal/layout.h#L399-L400">constructor</a> already expands an index pack through <code class="highlight"><c- n>IntToSize</c-></code> to obtain <code class="highlight"><c- b>size_t</c-></code> parameters. Here <code class="highlight"><c- n>LayoutType</c-><c- o>&lt;</c-><c- n>N</c-><c- p>,</c-> <c- n>Ts</c-><c- p>...</c-><c- o>></c-></code> stands for <code class="highlight"><c- n>PartialType</c-><c- o>&lt;</c-><c- n>N</c-><c- o>></c-></code>:</p>
 <pre class="highlight language-cpp line-numbered"><span class="line-no" data-line="1"></span><span class="line"><c- k>template</c-> <c- o>&lt;</c-><c- b>size_t</c-><c- o>></c-></span><span class="line-no" data-line="2"></span><span class="line"><c- k>using</c-> <c- n>IntToSize</c-> <c- o>=</c-> <c- b>size_t</c-><c- p>;</c-></span><span class="line-no" data-line="3"></span><span class="line"></span><span class="line-no" data-line="4"></span><span class="line"><c- k>template</c-> <c- o>&lt;</c-><c- k>class</c-> <c- nc>Seq</c-><c- p>,</c-> <c- k>class</c-><c- p>...</c-> <c- n>Ts</c-><c- o>></c-></span><span class="line-no" data-line="5"></span><span class="line"><c- k>struct</c-> <c- nc>PartialOverload</c-><c- p>;</c-></span><span class="line-no" data-line="6"></span><span class="line"></span><span class="line-no" data-line="7"></span><span class="line"><c- k>template</c-> <c- o>&lt;</c-><c- b>size_t</c-><c- p>...</c-> <c- n>Is</c-><c- p>,</c-> <c- k>class</c-><c- p>...</c-> <c- n>Ts</c-><c- o>></c-></span><span class="line-no" data-line="8"></span><span class="line"><c- k>struct</c-> <c- nc>PartialOverload</c-><c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- n>index_sequence</c-><c- o>&lt;</c-><c- n>Is</c-><c- p>...</c-><c- o>></c-><c- p>,</c-> <c- n>Ts</c-><c- p>...</c-><c- o>></c-> <c- p>{</c-></span><span class="line-no" data-line="9"></span><span class="line">  <c- k>static</c-> <c- k>constexpr</c-> <c- n>LayoutType</c-><c- o>&lt;</c-><c- k>sizeof</c-><c- p>...(</c-><c- n>Is</c-><c- p>),</c-> <c- n>Ts</c-><c- p>...</c-><c- o>></c-></span><span class="line-no" data-line="10"></span><span class="line">  <c- n>Partial</c-><c- p>(</c-><c- n>IntToSize</c-><c- o>&lt;</c-><c- n>Is</c-><c- o>></c-><c- p>...</c-> <c- n>sizes</c-><c- p>)</c-> <c- p>{</c-></span><span class="line-no" data-line="11"></span><span class="line">    <c- k>return</c-> <c- n>LayoutType</c-><c- o>&lt;</c-><c- k>sizeof</c-><c- p>...(</c-><c- n>Is</c-><c- p>),</c-> <c- n>Ts</c-><c- p>...</c-><c- o>></c-><c- p>(</c-><c- n>sizes</c-><c- p>...);</c-></span><span class="line-no" data-line="12"></span><span class="line">  <c- p>}</c-></span><span class="line-no" data-line="13"></span><span class="line"><c- p>};</c-></span><span class="line-no" data-line="14"></span><span class="line"></span><span class="line-no" data-line="15"></span><span class="line"><c- k>template</c-> <c- o>&lt;</c-><c- k>class</c-> <c- nc>Seq</c-><c- p>,</c-> <c- k>class</c-><c- p>...</c-> <c- n>Ts</c-><c- o>></c-></span><span class="line-no" data-line="16"></span><span class="line"><c- k>struct</c-> <c- nc>PartialOverloads</c-><c- p>;</c-></span><span class="line-no" data-line="17"></span><span class="line"></span><span class="line-no" data-line="18"></span><span class="line"><c- k>template</c-> <c- o>&lt;</c-><c- b>size_t</c-><c- p>...</c-> <c- n>Ns</c-><c- p>,</c-> <c- k>class</c-><c- p>...</c-> <c- n>Ts</c-><c- o>></c-></span><span class="line-no" data-line="19"></span><span class="line"><c- k>struct</c-> <c- nc>PartialOverloads</c-><c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- n>index_sequence</c-><c- o>&lt;</c-><c- n>Ns</c-><c- p>...</c-><c- o>></c-><c- p>,</c-> <c- n>Ts</c-><c- p>...</c-><c- o>></c-></span><span class="line-no" data-line="20"></span><span class="line">    <c- o>:</c-> <c- n>PartialOverload</c-><c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- n>make_index_sequence</c-><c- o>&lt;</c-><c- n>Ns</c-><c- o>></c-><c- p>,</c-> <c- n>Ts</c-><c- p>...</c-><c- o>></c-><c- p>...</c-> <c- p>{</c-></span><span class="line-no" data-line="21"></span><span class="line">  <c- k>using</c-> <c- n>PartialOverload</c-><c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- n>make_index_sequence</c-><c- o>&lt;</c-><c- n>Ns</c-><c- o>></c-><c- p>,</c-> <c- n>Ts</c-><c- p>...</c-><c- o>>::</c-><c- n>Partial</c-><c- p>...;</c-></span><span class="line-no" data-line="22"></span><span class="line"><c- p>};</c-></span></pre>
    <p>To expose the overload set, <code class="highlight"><c- n>Layout</c-></code> inherits <code class="highlight"><c- n>PartialOverloads</c-><c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- n>make_index_sequence</c-><c- o>&lt;</c-><c- k>sizeof</c-><c- p>...(</c-><c- n>Ts</c-><c- p>)</c-> <c- o>+</c-> <c- mi>1</c-><c- o>></c-><c- p>,</c-> <c- n>Ts</c-><c- p>...</c-><c- o>></c-></code>.</p>
    <p>A homogeneous pack replaces this generation and combination with one declaration.</p>
    <h3 class="heading settled" data-level="3.2" id="example-casadi"><span class="secno">3.2. </span><span class="content">Preserve conversion ranking without fixed-arity wrappers</span><a class="self-link" href="#example-casadi"></a></h3>
-   <p>CasADi builds symbolic matrix expressions, with <code class="highlight"><c- n>horzcat</c-></code>, <code class="highlight"><c- n>vertcat</c-></code>, and <code class="highlight"><c- n>diagcat</c-></code> providing horizontal, vertical, and diagonal concatenation. At d30fbc4, these operations have fifteen positional wrappers covering arities two through six. Their <code class="highlight"><c- k>const</c-> <c- n>MatType</c-><c- o>&amp;</c-></code> parameter types are fixed by the enclosing <code class="highlight"><c- n>SparsityInterface</c-></code> specialization. <a data-link-type="biblio" href="#biblio-casadi-concat" title="CasADi: concatenation overloads (d30fbc4)">[CASADI-CONCAT]</a> For example, the library call <a href="https://github.com/casadi/casadi/blob/d30fbc46a6cc7ca18b6e63f63d586069beaacd11/casadi/core/integration_tools.cpp#L930-L936"><code class="highlight"><c- n>vertcat</c-><c- p>(</c-><c- n>dx_cat</c-><c- p>,</c-> <c- mi>1</c-><c- p>)</c-></code></a> relies on scalar conversion to that matrix type.</p>
+   <p>CasADi builds symbolic matrix expressions, with <code class="highlight"><c- n>horzcat</c-></code>, <code class="highlight"><c- n>vertcat</c-></code>, and <code class="highlight"><c- n>diagcat</c-></code> providing horizontal, vertical, and diagonal concatenation. At <a href="https://github.com/casadi/casadi/commit/d30fbc46a6cc7ca18b6e63f63d586069beaacd11">d30fbc4</a>, these operations have fifteen positional wrappers covering arities two through six. Their <code class="highlight"><c- k>const</c-> <c- n>MatType</c-><c- o>&amp;</c-></code> parameter types are fixed by the enclosing <code class="highlight"><c- n>SparsityInterface</c-></code> specialization. <a data-link-type="biblio" href="#biblio-casadi-concat" title="CasADi: concatenation overloads (d30fbc4)">[CASADI-CONCAT]</a> For example, the library call <a href="https://github.com/casadi/casadi/blob/d30fbc46a6cc7ca18b6e63f63d586069beaacd11/casadi/core/integration_tools.cpp#L930-L936"><code class="highlight"><c- n>vertcat</c-><c- p>(</c-><c- n>dx_cat</c-><c- p>,</c-> <c- mi>1</c-><c- p>)</c-></code></a> relies on scalar conversion to that matrix type.</p>
    <figure class="table" id="casadi-comparison">
     <figcaption id="casadi-comparison-caption">CasADi’s vertical concatenation wrappers, with two arities shown, and a proposed replacement for the family. Both initialize references to a fixed matrix type.</figcaption>
     <div class="overlarge" tabindex="0">
      <table aria-labelledby="casadi-comparison-caption" class="data example-comparison">
       <thead>
        <tr>
-        <th scope="col">CasADi at d30fbc4
+        <th scope="col">CasADi at <a href="https://github.com/casadi/casadi/commit/d30fbc46a6cc7ca18b6e63f63d586069beaacd11">d30fbc4</a>
         <th scope="col">With homogeneous packs
       <tbody>
        <tr>
@@ -2733,12 +2752,14 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>Argument-dependent lookup finds concatenation functions for <code class="highlight"><c- n>SX</c-></code> and the proxy’s <code class="highlight"><c- n>IM</c-></code> template argument. <a href="https://timsong-cpp.github.io/cppwp/n5050/basic.lookup.argdep#3">[basic.lookup.argdep]/3</a> Fixed parameters select <code class="highlight"><c- n>SX</c-></code> in both calls because binding the proxy to its base outranks conversion to <code class="highlight"><c- n>IM</c-></code>. <a href="https://timsong-cpp.github.io/cppwp/n5050/over.ics.rank#2.1">[over.ics.rank]/2.1</a> If we consider a deduced pack instead, both candidates bind the deduced types directly and satisfy the constraints. Neither wins. Therefore, both calls are ambiguous. <a href="https://timsong-cpp.github.io/cppwp/n5050/over.match.best.general#2">[over.match.best.general]/2</a> The homogeneous declaration retains the fixed destinations for conversion ranking.</p>
    <p>Fixing only the first parameter as <code class="highlight"><c- k>const</c-> <c- n>MatType</c-><c- o>&amp;</c-></code> still leaves the second call ambiguous. Even two fixed parameters leave <code class="highlight"><c- n>vertcat</c-><c- p>(</c-><c- mi>1</c-><c- p>,</c-> <c- mi>1</c-><c- p>,</c-> <c- n>symbolic</c-><c- p>(</c-><c- n>indices</c-><c- p>))</c-></code> ambiguous because the distinguishing operand is in the deduced tail.</p>
    <p>Grouped calls to competing <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>initializer_list</c-><c- o>&lt;</c-><c- n>SX</c-><c- o>></c-></code> and <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>initializer_list</c-><c- o>&lt;</c-><c- n>IM</c-><c- o>></c-></code> overloads are also ambiguous. List ranking uses the worst element conversion, so the scalar’s user-defined conversion to either destination erases the indexed operand’s distinction. <a href="https://timsong-cpp.github.io/cppwp/n5050/over.ics.list#5">[over.ics.list]/5</a></p>
-   <p>Current C++ does permit arbitrary counts when the destination is explicit, such as in <code class="highlight"><c- n>SX</c-><c- o>::</c-><c- n>vertcat</c-><c- p>({</c-><c- n>symbolic</c-><c- p>(</c-><c- n>indices</c-><c- p>),</c-> <c- mi>1</c-><c- p>})</c-></code>. Existing or generated fixed-arity wrappers also preserve positional calls. A homogeneous pack would express those wrappers' conversions with one declaration per operation and no fixed upper bound.</p>
+   <p>Current C++ does permit arbitrary counts when the destination is explicit, such as in <code class="highlight"><c- n>SX</c-><c- o>::</c-><c- n>vertcat</c-><c- p>({</c-><c- n>symbolic</c-><c- p>(</c-><c- n>indices</c-><c- p>),</c-> <c- mi>1</c-><c- p>})</c-></code>. Existing or generated fixed-arity wrappers also preserve positional calls, but a homogeneous pack would express the intended interface directly: two or more parameters of type <code class="highlight"><c- k>const</c-> <c- n>MatType</c-><c- o>&amp;</c-></code>. One declaration per operation would preserve the wrappers' conversion ranking while removing their fixed upper bound and the need to maintain separate overloads.</p>
    <h2 class="heading settled" data-level="4" id="motivation"><span class="secno">4. </span><span class="content">Motivation and existing alternatives</span><a class="self-link" href="#motivation"></a></h2>
    <h3 class="heading settled" data-level="4.1" id="expressivity"><span class="secno">4.1. </span><span class="content">Demand for fixed-type variadic interfaces</span><a class="self-link" href="#expressivity"></a></h3>
    <p>The examples in R2 and later requests for fixed-type positional interfaces show that this requirement recurs. <a data-link-type="biblio" href="#biblio-p1219r2" title="Homogeneous variadic function parameters">[P1219R2]</a> <a data-link-type="biblio" href="#biblio-reddit-enum-pack" title="How can I create a variadic function that involves a parameter pack and takes only 1 type of argument?">[REDDIT-ENUM-PACK]</a> <a data-link-type="biblio" href="#biblio-so-string-view-concat" title="Fold-expression to concatenate string_views">[SO-STRING-VIEW-CONCAT]</a></p>
-   <p>These discussions concern conversions left in function bodies <a data-link-type="biblio" href="#biblio-so-typed-accumulator" title="Variadic template function doesn&apos;t infer the correct type of the template argument">[SO-TYPED-ACCUMULATOR]</a>, ordinary conversion ranking <a data-link-type="biblio" href="#biblio-loew-homogeneous-overloads" title="How to Define A Variadic Number of Arguments of the Same Type - Part 4">[LOEW-HOMOGENEOUS-OVERLOADS]</a>, and by-value parameter initialization without additional construction in the body. <a data-link-type="biblio" href="#biblio-mazieres-param-pack" title="C++20 idioms for parameter packs">[MAZIERES-PARAM-PACK]</a> A homogeneous pack’s count would also permit constraints, such as requiring an even number of arguments. <a data-link-type="biblio" href="#biblio-so-10" title="Correct syntax for function template with an even number of int arguments?">[SO-10]</a> These discussions provide solutions in current C++, including constrained packs and emulations with fixed parameter types. Our proposal would simplify these interfaces by stating the element type directly in the parameter list, preserving ordinary initialization and conversion ranking without helper templates or generated overloads.</p>
+   <p>These discussions concern conversions left in function bodies <a data-link-type="biblio" href="#biblio-so-typed-accumulator" title="Variadic template function doesn&apos;t infer the correct type of the template argument">[SO-TYPED-ACCUMULATOR]</a>, ordinary conversion ranking <a data-link-type="biblio" href="#biblio-loew-homogeneous-overloads" title="How to Define A Variadic Number of Arguments of the Same Type - Part 4">[LOEW-HOMOGENEOUS-OVERLOADS]</a>, and by-value parameter initialization without additional construction in the body. <a data-link-type="biblio" href="#biblio-mazieres-param-pack" title="C++20 idioms for parameter packs">[MAZIERES-PARAM-PACK]</a> A homogeneous pack’s count would also permit constraints, such as requiring an even number of arguments. <a data-link-type="biblio" href="#biblio-so-10" title="Correct syntax for function template with an even number of int arguments?">[SO-10]</a></p>
+   <p>These discussions provide solutions in current C++, including constrained packs and emulations with fixed parameter types. We consider them inferior for these interfaces because they make a simple parameter-type requirement depend on constraints, helper templates, or generated overloads. Our proposal would state the element type directly in the parameter list, making the code substantially easier to write and reason about while preserving ordinary initialization and conversion ranking.</p>
    <h3 class="heading settled" data-level="4.2" id="initializer-lists"><span class="secno">4.2. </span><span class="content">Initializer lists and vectors</span><a class="self-link" href="#initializer-lists"></a></h3>
+   <p>Initializer lists and vectors also accept elements of a fixed type, but they expose a sequence rather than separate function parameters. <a href="https://timsong-cpp.github.io/cppwp/n5050/support.initlist">[support.initlist]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/vector.overview">[vector.overview]</a></p>
    <figure class="table" id="homogeneous-interfaces">
     <figcaption id="homogeneous-interfaces-caption">Homogeneous interfaces, each permitting a fixed element type. The vector column excludes <code class="highlight"><c- b>bool</c-></code>.</figcaption>
     <div class="overlarge" tabindex="0">
@@ -2793,33 +2814,21 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      </table>
     </div>
    </figure>
-   <p>For Abseil’s <code class="highlight"><c- n>PartialType</c-></code>, the count must be independent of runtime parameter values (<a href="#example-count">§ 3.1 Combine call-site diagnostics with count-dependent results</a>). Constant-evaluable container sizes still cannot make an ordinary parameter’s value select a return type or specialization. <a href="https://timsong-cpp.github.io/cppwp/n5050/support.initlist">[support.initlist]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#10">[temp.variadic]/10</a></p>
-   <p>Initializer lists also lose CasADi’s per-parameter conversion ranking (<a href="#example-casadi">§ 3.2 Preserve conversion ranking without fixed-arity wrappers</a>) and differ in constructor selection (<a href="#constructors">§ 5.2.6 Constructors</a>).</p>
-   <p>For existing vector inputs, runtime-only lengths, ownership, iteration, or growth, vectors remain preferable. <a href="https://timsong-cpp.github.io/cppwp/n5050/vector.overview">[vector.overview]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/container.reqmts">[container.reqmts]</a></p>
-   <p>A vector’s initializer-list constructor uses const T references, generally preventing <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>vector</c-><c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- n>unique_ptr</c-><c- o>&lt;</c-><c- n>T</c-><c- o>>></c-></code> construction from braced owning pointers. Suitable insertion or range construction supports move-only elements. Homogeneous value parameters could move-initialize them and reference parameters could borrow them. Initializer lists can contain move-only objects, but const access prevents ordinary moves out. <a href="https://timsong-cpp.github.io/cppwp/n5050/sequence.reqmts">[sequence.reqmts]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/initializer.list.syn">[initializer.list.syn]</a></p>
-   <p>Lists of <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>reference_wrapper</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-></code> can mutate caller-owned objects. User-defined wrappers with <code class="highlight"><c- k>mutable</c-></code> members also permit ownership transfer, though list copies share those members and observe moved-from state after consumption through another copy. Neither technique changes backing-array constness or makes the count a template argument. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.stc#9">[dcl.stc]/9</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.init.list#5">[dcl.init.list]/5</a></p>
-   <p>These interface differences alone do not establish a general performance advantage. Parameter initialization can copy or move, bodies can allocate, and vectors can reuse storage. Count specializations can increase instantiation work and code size despite possible sharing. These costs need measurement for the intended use.</p>
-   <aside class="issue" id="issue-93636b66">
-    <a class="self-link" href="#issue-93636b66"></a>
-
-    <p><strong>Ian: research. Jan: review.</strong> Compare typed runtime variadics and checked C varargs, including D’s variadics and GCC’s argument-count builtin. Separate count and type checks, accounting for default promotions. <a href="https://dlang.org/spec/function.html#typesafe_variadic_functions">D typesafe variadics</a> <a href="https://gcc.gnu.org/onlinedocs/gcc/Constructing-Calls.html#index-_005f_005fbuiltin_005fva_005farg_005fpack_005flen">GCC <code class="highlight"><c- n>__builtin_va_arg_pack_len</c-></code></a> <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.call#12">[expr.call]/12</a></p>
-   </aside>
    <h3 class="heading settled" data-level="4.3" id="range-alternatives"><span class="secno">4.3. </span><span class="content">Spans, arrays, and constrained ranges</span><a class="self-link" href="#range-alternatives"></a></h3>
-   <p>Spans and array references suit existing contiguous storage. Homogeneous packs would retain individual initialization and overload ranking without requiring a common buffer.</p>
-   <p><code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>span</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-></code> borrows contiguous, runtime-sized input for ordinary iteration without allocation, copying, ownership, or lifetime extension. <a href="https://timsong-cpp.github.io/cppwp/n5050/span.overview">[span.overview]</a></p>
-   <p>Unlike dynamic spans, <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>span</c-><c- o>&lt;</c-><c- n>T</c-><c- p>,</c-> <c- n>N</c-><c- o>></c-></code> encodes its length so that a deduced <code class="highlight"><c- n>N</c-></code> can be used in a return type or constraint. Runtime-sized input must still have length <code class="highlight"><c- n>N</c-></code> and cannot deduce it. <a href="https://timsong-cpp.github.io/cppwp/n5050/span.cons#18">[span.cons]/18</a> <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>array</c-><c- o>&lt;</c-><c- n>T</c-><c- p>,</c-> <c- n>N</c-><c- o>></c-></code> and references to <code class="highlight"><c- n>T</c-><c- p>[</c-><c- n>N</c-><c- p>]</c-></code> also supply compile-time counts, supporting Abseil’s <code class="highlight"><c- n>PartialType</c-><c- o>&lt;</c-><c- n>N</c-><c- o>></c-></code> today. The following calls deduce the extent: <a href="https://timsong-cpp.github.io/cppwp/n5050/span.overview">[span.overview]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/array#overview">[array.overview]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.call#1">[temp.deduct.call]/1</a></p>
+   <p>Static spans, arrays, and array references can already supply the compile-time count needed by Abseil’s <code class="highlight"><c- n>PartialType</c-><c- o>&lt;</c-><c- n>N</c-><c- o>></c-></code>. The count comes from the input type, so the elements can still be runtime values. Our proposal would obtain the same count from separate positional arguments while retaining ordinary parameter initialization. For comparison, these existing-C++ functions deduce the count from a static span or array reference: <a href="https://timsong-cpp.github.io/cppwp/n5050/span.overview">[span.overview]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/array#overview">[array.overview]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.call#1">[temp.deduct.call]/1</a></p>
 <pre class="highlight language-cpp line-numbered"><span class="line-no" data-line="1"></span><span class="line"><c- k>template</c-> <c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- b>size_t</c-> <c- n>N</c-><c- o>></c-></span><span class="line-no" data-line="2"></span><span class="line"><c- k>auto</c-> <c- n>span_count</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>span</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>std</c-><c- o>::</c-><c- b>size_t</c-><c- p>,</c-> <c- n>N</c-><c- o>></c-><c- p>)</c-> <c- p>{</c-></span><span class="line-no" data-line="3"></span><span class="line">    <c- k>return</c-> <c- n>std</c-><c- o>::</c-><c- n>integral_constant</c-><c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- b>size_t</c-><c- p>,</c-> <c- n>N</c-><c- o>></c-><c- p>{};</c-></span><span class="line-no" data-line="4"></span><span class="line"><c- p>}</c-></span><span class="line-no" data-line="5"></span><span class="line"></span><span class="line-no" data-line="6"></span><span class="line"><c- k>template</c-> <c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- b>size_t</c-> <c- n>N</c-><c- o>></c-></span><span class="line-no" data-line="7"></span><span class="line"><c- k>auto</c-> <c- n>array_count</c-><c- p>(</c-><c- k>const</c-> <c- n>std</c-><c- o>::</c-><c- b>size_t</c-> <c- p>(</c-><c- o>&amp;</c-><c- p>)[</c-><c- n>N</c-><c- p>])</c-> <c- p>{</c-></span><span class="line-no" data-line="8"></span><span class="line">    <c- k>return</c-> <c- n>std</c-><c- o>::</c-><c- n>integral_constant</c-><c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- b>size_t</c-><c- p>,</c-> <c- n>N</c-><c- o>></c-><c- p>{};</c-></span><span class="line-no" data-line="9"></span><span class="line"><c- p>}</c-></span><span class="line-no" data-line="10"></span><span class="line"></span><span class="line-no" data-line="11"></span><span class="line"><c- k>const</c-> <c- n>std</c-><c- o>::</c-><c- b>size_t</c-> <c- n>sizes</c-><c- p>[]{</c-><c- mi>3</c-><c- p>,</c-> <c- mi>5</c-><c- p>};</c-></span><span class="line-no" data-line="12"></span><span class="line"><c- k>auto</c-> <c- n>from_span</c-> <c- o>=</c-> <c- n>span_count</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>span</c-><c- p>{</c-><c- n>sizes</c-><c- p>});</c-></span><span class="line-no" data-line="13"></span><span class="line"><c- k>auto</c-> <c- n>from_array</c-> <c- o>=</c-> <c- n>array_count</c-><c- p>(</c-><c- n>sizes</c-><c- p>);</c-></span><span class="line-no" data-line="14"></span><span class="line"><c- k>auto</c-> <c- n>from_braces</c-> <c- o>=</c-> <c- n>array_count</c-><c- p>({</c-><c- mi>3</c-><c- p>,</c-> <c- mi>5</c-><c- p>});</c-></span></pre>
-   <p>All three results are <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>integral_constant</c-><c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- b>size_t</c-><c- p>,</c-> <c- mi>2</c-><c- o>></c-></code>. In particular, <code class="highlight"><c- n>array_count</c-><c- p>({</c-><c- mi>3</c-><c- p>,</c-> <c- mi>5</c-><c- p>})</c-></code> deduces the bound and initializes a temporary array. An analogous array-reference <code class="highlight"><c- n>Partial</c-><c- p>({</c-><c- n>int_count</c-><c- p>,</c-> <c- n>double_count</c-><c- p>})</c-></code> could therefore return <code class="highlight"><c- n>PartialType</c-><c- o>&lt;</c-><c- mi>2</c-><c- o>></c-></code> without named storage or explicit extent. This would change Abseil’s signed-variable case, though, because list-initialization rejects narrowing permitted by ordinary <code class="highlight"><c- b>size_t</c-></code> parameters (<a href="#example-count">§ 3.1 Combine call-site diagnostics with count-dependent results</a>). Binding an existing array does not extend its lifetime. Zero extent is another distinction: static spans and <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>array</c-></code> permit it, whereas built-in arrays require positive bounds. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.call#1">[temp.deduct.call]/1</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.init.list">[dcl.init.list]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/class.temporary#6.10">[class.temporary]/6.10</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.array#1">[dcl.array]/1</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/array.zero">[array.zero]</a></p>
-   <p>Conversions also depend on how the input is supplied. Span construction from existing arrays or ranges permits qualification conversions but no numeric or user-defined element conversions. For example, an <code class="highlight"><c- b>int</c-></code> array cannot initialize <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>span</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>std</c-><c- o>::</c-><c- b>size_t</c-><c- o>></c-></code> despite individual integer conversion to <code class="highlight"><c- b>size_t</c-></code>. Constructing a typed array or vector chooses the destination first. A fixed const-element span also accepts double braces such as <code class="highlight"><c- p>{{</c-><c- mi>1</c-><c- p>,</c-> <c- mi>2</c-><c- p>}}</c-></code>. This initializes a temporary array with numeric or user-defined conversions while rejecting narrowing. The array survives through the call’s full-expression. These grouped forms still retain neither positional syntax nor CasADi’s per-parameter ranking (<a href="#example-casadi">§ 3.2 Preserve conversion ranking without fixed-arity wrappers</a>). <a href="https://timsong-cpp.github.io/cppwp/n5050/span.cons#13">[span.cons]/13</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/span.cons#16">[span.cons]/16</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.init.list">[dcl.init.list]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/class.temporary#6.10">[class.temporary]/6.10</a></p>
-   <p>With <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>array</c-><c- o>&lt;</c-><c- n>T</c-><c- p>,</c-> <c- n>N</c-><c- o>></c-></code>, an explicit <code class="highlight"><c- n>T</c-></code> supplies list-element destinations with narrowing checks, whereas class template argument deduction requires identical element types. This therefore retains the count and fixed type but requires a grouped object. <a href="https://timsong-cpp.github.io/cppwp/n5050/array#overview">[array.overview]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/array.cons">[array.cons]</a></p>
-   <p>For runtime-sized or non-contiguous iteration, a constrained <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>ranges</c-><c- o>::</c-><c- n>input_range</c-></code> guarantees neither contiguity, a size operation, mutation, ownership, nor static extent. A forwarding reference can borrow without element copies, while deduction can preserve type-carried static extent as in static spans and arrays. Convertibility constraints still leave element conversions in the iteration body rather than at the original positional call (<a href="#example-count">§ 3.1 Combine call-site diagnostics with count-dependent results</a>). <a href="https://timsong-cpp.github.io/cppwp/n5050/range.refinements">[range.refinements]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/range.sized">[range.sized]</a></p>
+   <p>All three results are <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>integral_constant</c-><c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- b>size_t</c-><c- p>,</c-> <c- mi>2</c-><c- o>></c-></code>. In particular, <code class="highlight"><c- n>array_count</c-><c- p>({</c-><c- mi>3</c-><c- p>,</c-> <c- mi>5</c-><c- p>})</c-></code> deduces the bound and initializes a temporary array. An analogous array-reference <code class="highlight"><c- n>Partial</c-><c- p>({</c-><c- n>int_count</c-><c- p>,</c-> <c- n>double_count</c-><c- p>})</c-></code> could therefore return <code class="highlight"><c- n>PartialType</c-><c- o>&lt;</c-><c- mi>2</c-><c- o>></c-></code> without named storage or an explicit extent. This meets the count requirement in current C++. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.call#1">[temp.deduct.call]/1</a></p>
+   <p>The difference is argument initialization. The braced array uses list-initialization, which rejects the narrowing conversions that ordinary <code class="highlight"><c- b>size_t</c-></code> parameters permit in Abseil’s signed-variable case (<a href="#example-count">§ 3.1 Combine call-site diagnostics with count-dependent results</a>). The array-reference form also cannot accept an empty list, because built-in arrays require positive bounds. Static spans and <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>array</c-></code> can represent zero extent, but still require the arguments to be grouped. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.init.list">[dcl.init.list]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.array#1">[dcl.array]/1</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/span.overview">[span.overview]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/array.zero">[array.zero]</a> A homogeneous <code class="highlight"><c- b>size_t</c-></code> pack would permit that signed-variable conversion and a zero-argument call while retaining positional syntax.</p>
+   <p>Passing an existing array through a span avoids constructing a new array at the call, but the element types must match apart from permitted qualification conversions. An <code class="highlight"><c- b>int</c-></code> array therefore cannot initialize <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>span</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>std</c-><c- o>::</c-><c- b>size_t</c-><c- o>></c-></code>, even though ordinary <code class="highlight"><c- b>size_t</c-></code> parameters could accept its elements individually. <a href="https://timsong-cpp.github.io/cppwp/n5050/span.cons#13">[span.cons]/13</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/span.cons#16">[span.cons]/16</a></p>
+   <p>To convert the elements, callers can instead construct an explicitly typed <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>array</c-><c- o>&lt;</c-><c- n>T</c-><c- p>,</c-> <c- n>N</c-><c- o>></c-></code> or vector from a braced list. A const-element span can also accept a temporary array through double braces such as <code class="highlight"><c- p>{{</c-><c- mi>1</c-><c- p>,</c-> <c- mi>2</c-><c- p>}}</c-></code>. Both approaches allow element conversions, but retain the list-initialization restrictions described above. The temporary array lasts through the call’s full-expression. <a href="https://timsong-cpp.github.io/cppwp/n5050/array#overview">[array.overview]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/span.cons#13">[span.cons]/13</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.init.list">[dcl.init.list]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/class.temporary#6.10">[class.temporary]/6.10</a> Under our proposal, callers could pass the values directly, with each initializing its own parameter of the declared type.</p>
+   <p>Choosing a container’s element type also settles the conversion destination before the call. CasADi’s positional interface instead lets overload resolution choose that destination by ranking each argument’s conversion (<a href="#example-casadi">§ 3.2 Preserve conversion ranking without fixed-arity wrappers</a>). Homogeneous packs would preserve this selection without requiring callers to choose the matrix type or group their arguments.</p>
+   <p>A constrained <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>ranges</c-><c- o>::</c-><c- n>input_range</c-></code> is useful when the intended input is a sequence, particularly one that is runtime-sized or non-contiguous. The concept itself supplies no compile-time count, though deduction can retain one carried by an array or static-span type. Constraining element convertibility does not itself perform conversions or provide a separate parameter for each original argument. It therefore does not reproduce Abseil’s call-site conversion diagnostics (<a href="#example-count">§ 3.1 Combine call-site diagnostics with count-dependent results</a>). <a href="https://timsong-cpp.github.io/cppwp/n5050/range.refinements">[range.refinements]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/concept.convertible">[concept.convertible]</a> Homogeneous packs would expose each original argument to conversion diagnostics at the call while deducing a compile-time count from the argument list.</p>
    <h2 class="heading settled" data-level="5" id="design-decisions"><span class="secno">5. </span><span class="content">Design decisions</span><a class="self-link" href="#design-decisions"></a></h2>
    <h3 class="heading settled" data-level="5.1" id="definitions"><span class="secno">5.1. </span><span class="content">Definitions</span><a class="self-link" href="#definitions"></a></h3>
    <p>For each <em>homogeneous function parameter pack</em> (<em>homogeneous pack</em>), the proposal invents a constant template parameter for its length.</p>
    <p>We classify function parameter packs by their <em>parameter pattern</em>, which is the declaration without the declarator ellipsis. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#6.1">[temp.variadic]/6.1</a> Ordinary placeholder processing first invents a type parameter pack for <code class="highlight"><c- k>auto</c-><c- p>...</c-></code>. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/n5050.pdf#page=249">[dcl.fct]/21</a> We then classify the declaration before substituting enclosing template arguments: it is homogeneous only if its pattern contains no unexpanded pack. An ordinary expansion therefore remains an expansion even when its resulting parameter types are identical.</p>
-   <p>The rule covers <code class="highlight"><c- n>xs</c-></code> as a constant template parameter, function parameter, init-capture, or structured binding pack.</p>
-   <p>Each homogeneous case gets its own count, but a zero count does not avoid substitution into the element type. Types, indices, folds, and array bounds must still be valid. Also, the last row’s nested requirement determines the value of a <code class="highlight"><c- b>bool</c-></code> requires-expression without constraining the function.</p>
    <p>For this classification, an occurrence is unexpanded unless it is inside a nested expansion’s pattern. Indexing consumes the indexed pack name, but leaves unexpanded packs in the index for an enclosing expansion. Neither <code class="highlight"><c- k>decltype</c-></code> nor ordinary <code class="highlight"><c- k>sizeof</c-></code> consumes packs. These cases follow the existing expansion boundaries <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#6">[temp.variadic]/6</a> and constraint rules <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.constr.fold">[temp.constr.fold]</a>.</p>
+   <p>In the following table, <code class="highlight"><c- n>xs</c-></code> can denote a constant template parameter pack, function parameter pack, init-capture pack, or structured binding pack.</p>
    <figure class="table" id="pack-classification">
     <figcaption id="pack-classification-caption">Parameter-pack classification under this proposal.</figcaption>
     <div class="overlarge" tabindex="0">
@@ -2827,7 +2836,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
       <thead>
        <tr>
         <th scope="col">Parameter declaration
-        <th scope="col">What’s still unexpanded
+        <th scope="col">Unexpanded packs
         <th scope="col">Meaning under the proposal
       <tbody>
        <tr>
@@ -2901,6 +2910,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      </table>
     </div>
    </figure>
+   <p>Each homogeneous case gets its own count, but a zero count does not avoid substitution into the element type. Types, indices, folds, and array bounds must still be valid. Also, the last row’s nested requirement determines the value of a <code class="highlight"><c- b>bool</c-></code> requires-expression without constraining the function.</p>
    <h3 class="heading settled" data-level="5.2" id="implicit-template"><span class="secno">5.2. </span><span class="content">Pack declarations</span><a class="self-link" href="#implicit-template"></a></h3>
    <p>The same declarator syntax covers ordinary expansions and homogeneous packs, whose patterns need not mention template parameters:</p>
 <pre class="highlight language-cpp line-numbered"><span class="line-no" data-line="1"></span><span class="line"><c- c1>// heterogeneous function parameter pack</c-></span><span class="line-no" data-line="2"></span><span class="line"><c- k>template</c-> <c- o>&lt;</c-><c- k>class</c-><c- p>...</c-> <c- n>T</c-><c- o>></c-></span><span class="line-no" data-line="3"></span><span class="line"><c- b>void</c-> <c- n>f</c-><c- p>(</c-><c- n>T</c-><c- p>...</c-> <c- n>v</c-><c- p>);</c-></span><span class="line-no" data-line="4"></span><span class="line"></span><span class="line-no" data-line="5"></span><span class="line"><c- c1>// homogeneous function parameter pack</c-></span><span class="line-no" data-line="6"></span><span class="line"><c- k>template</c-> <c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-></span><span class="line-no" data-line="7"></span><span class="line"><c- b>void</c-> <c- n>f</c-><c- p>(</c-><c- n>T</c-><c- p>...</c-> <c- n>v</c-><c- p>);</c-></span><span class="line-no" data-line="8"></span><span class="line"></span><span class="line-no" data-line="9"></span><span class="line"><c- c1>// homogeneous function parameter pack</c-></span><span class="line-no" data-line="10"></span><span class="line"><c- b>void</c-> <c- nf>f</c-><c- p>(</c-><c- b>int</c-><c- p>...</c-> <c- n>v</c-><c- p>);</c-></span></pre>
@@ -2920,10 +2930,11 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>The count follows all explicit template parameters and invented <code class="highlight"><c- k>auto</c-></code> type parameters without changing their positions:</p>
 <pre class="highlight language-cpp line-numbered"><span class="line-no" data-line="1"></span><span class="line"><c- k>template</c-> <c- o>&lt;</c-><c- k>class</c-> <c- nc>Tag</c-><c- o>></c-></span><span class="line-no" data-line="2"></span><span class="line"><c- b>void</c-> <c- n>tagged</c-><c- p>(</c-><c- k>auto</c-> <c- n>tag</c-><c- p>,</c-> <c- b>int</c-><c- p>...</c-> <c- n>values</c-><c- p>);</c-></span><span class="line-no" data-line="3"></span><span class="line"><c- k>auto</c-><c- o>*</c-> <c- n>tagged_pair</c-> <c- o>=</c-> <c- o>&amp;</c-><c- n>tagged</c-><c- o>&lt;</c-><c- b>void</c-><c- p>,</c-> <c- b>char</c-><c- p>,</c-> <c- mi>2</c-><c- o>></c-><c- p>;</c-></span></pre>
    <p>Here the arguments supply <code class="highlight"><c- n>Tag</c-></code>, the invented <code class="highlight"><c- n>tag</c-></code> type, and then the count, yielding pointer type <code class="highlight"><c- b>void</c-> <c- p>(</c-><c- o>*</c-><c- p>)(</c-><c- b>char</c-><c- p>,</c-> <c- b>int</c-><c- p>,</c-> <c- b>int</c-><c- p>)</c-></code>. The same order applies to lambda call operator templates.</p>
-   <aside class="issue" id="issue-0f12fdab">
-    <a class="self-link" href="#issue-0f12fdab"></a>
+   <p>Because the homogeneous pack must be last, this also follows the order of the corresponding function parameters. Supporting non-trailing homogeneous packs is outside the scope of this paper and would require revisiting the ordering rule (<a href="#explicit-lengths">§ 5.5.3 Explicit lengths</a>).</p>
+   <aside class="issue" id="issue-c523fe58">
+    <a class="self-link" href="#issue-c523fe58"></a>
 
-    <p><strong>Ian: wording. Jan: review. Eczbek: implementation.</strong> Specify explicit-argument assignment when template parameter packs precede the count, including constant packs and <code class="highlight"><c- k>auto</c-></code> parameters. Keep count last. Test call and target-type deduction where it cannot be explicit.</p>
+    <p>Explicit-argument assignment remains to be specified when template parameter packs precede the count, including constant packs and <code class="highlight"><c- k>auto</c-></code> parameters. The count remains last.</p>
    </aside>
    <h4 class="heading settled" data-level="5.2.2" id="deduction"><span class="secno">5.2.2. </span><span class="content">Type deduction</span><a class="self-link" href="#deduction"></a></h4>
    <p>To see how type deduction interacts with the count, consider these proposed functions. <code class="highlight"><c- n>sum</c-></code> fixes the element type to <code class="highlight"><c- b>int</c-></code>, whereas <code class="highlight"><c- n>total</c-></code> uses the ordinary template parameter <code class="highlight"><c- n>T</c-></code>.</p>
@@ -2968,14 +2979,9 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    </figure>
    <p>The template and its arguments, including the count converted to the count parameter’s type, identify each specialization. The homogeneous pack’s original argument types do not affect that identity when its element type is fixed. Therefore, <code class="highlight"><c- n>sum</c-><c- p>(</c-><c- mi>1</c-><c- p>,</c-> <c- mi>2</c-><c- p>)</c-></code>, <code class="highlight"><c- n>sum</c-><c- p>(</c-><c- mf>1.0</c-><c- p>,</c-> <c- mf>2.0</c-><c- p>)</c-></code>, and <code class="highlight"><c- n>sum</c-><c- o>&lt;</c-><c- mi>2</c-><c- o>></c-><c- p>(</c-><c- mi>1</c-><c- p>,</c-> <c- mi>2</c-><c- p>)</c-></code> all select <code class="highlight"><c- n>sum</c-><c- o>&lt;</c-><c- mi>2</c-><c- o>></c-></code>, whether the count is explicit or deduced.</p>
    <p>Equal function types alone do not, however, identify specializations, because different template arguments may produce the same adjusted function type. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.general#3">[temp.deduct.general]/3-4</a></p>
-   <p>An explicit count must match the number of remaining call arguments. Thus <code class="highlight"><c- n>sum</c-><c- o>&lt;</c-><c- mi>3</c-><c- o>></c-><c- p>(</c-><c- mi>1</c-><c- p>,</c-> <c- mi>2</c-><c- p>,</c-> <c- mi>3</c-><c- p>)</c-></code> and <code class="highlight"><c- n>sum</c-><c- o>&lt;</c-><c- mi>0</c-><c- o>></c-><c- p>()</c-></code> are valid, while <code class="highlight"><c- n>sum</c-><c- o>&lt;</c-><c- mi>3</c-><c- o>></c-><c- p>(</c-><c- mi>1</c-><c- p>,</c-> <c- mi>2</c-><c- p>)</c-></code>, <code class="highlight"><c- n>sum</c-><c- o>&lt;</c-><c- mi>2</c-><c- o>></c-><c- p>(</c-><c- mi>1</c-><c- p>,</c-> <c- mi>2</c-><c- p>,</c-> <c- mi>3</c-><c- p>)</c-></code>, and <code class="highlight"><c- n>sum</c-><c- o>&lt;</c-><c- mi>0</c-><c- o>></c-><c- p>(</c-><c- mi>1</c-><c- p>)</c-></code> are rejected. Counts follow ordinary constant template argument rules for the invented unsigned type. With no explicit count, <code class="highlight"><c- n>sum</c-><c- o>&lt;></c-><c- p>()</c-></code> deduces zero and <code class="highlight"><c- o>&amp;</c-><c- n>sum</c-><c- o>&lt;></c-></code> needs a target type. The invented parameter does not make every body expression dependent.</p>
+   <p>An explicit count must match the number of remaining call arguments. Thus <code class="highlight"><c- n>sum</c-><c- o>&lt;</c-><c- mi>3</c-><c- o>></c-><c- p>(</c-><c- mi>1</c-><c- p>,</c-> <c- mi>2</c-><c- p>,</c-> <c- mi>3</c-><c- p>)</c-></code> and <code class="highlight"><c- n>sum</c-><c- o>&lt;</c-><c- mi>0</c-><c- o>></c-><c- p>()</c-></code> are valid, while <code class="highlight"><c- n>sum</c-><c- o>&lt;</c-><c- mi>3</c-><c- o>></c-><c- p>(</c-><c- mi>1</c-><c- p>,</c-> <c- mi>2</c-><c- p>)</c-></code>, <code class="highlight"><c- n>sum</c-><c- o>&lt;</c-><c- mi>2</c-><c- o>></c-><c- p>(</c-><c- mi>1</c-><c- p>,</c-> <c- mi>2</c-><c- p>,</c-> <c- mi>3</c-><c- p>)</c-></code>, and <code class="highlight"><c- n>sum</c-><c- o>&lt;</c-><c- mi>0</c-><c- o>></c-><c- p>(</c-><c- mi>1</c-><c- p>)</c-></code> are rejected. Counts follow ordinary constant template argument rules for the invented unsigned type. With no explicit count, <code class="highlight"><c- n>sum</c-><c- o>&lt;></c-><c- p>()</c-></code> deduces zero. The invented parameter does not make every body expression dependent.</p>
    <p>With zero count, the element type must be explicit, deduced elsewhere, or defaulted. Substitution into its pattern still applies.</p>
    <p>Ordinary reference binding and parameter adjustment apply. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct">[dcl.fct]</a> Braced arguments retain list-initialization and narrowing checks. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.init.list">[dcl.init.list]</a> A temporary bound to a reference parameter lasts through the call’s full-expression. <a href="https://timsong-cpp.github.io/cppwp/n5050/class.temporary#6.10">[class.temporary]/6.10</a> Packs neither extend this lifetime nor change argument-initialization evaluation order. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.call#6">[expr.call]/6-7</a></p>
-   <aside class="issue" id="issue-c6694572">
-    <a class="self-link" href="#issue-c6694572"></a>
-
-    <p><strong>Eczbek: implementation.</strong> Test deduction and initialization with move-only arguments, forwarding references, overloaded function names, braced arguments, constraints, exception specifications, and constant evaluation.</p>
-   </aside>
    <h4 class="heading settled" data-level="5.2.3" id="parameter-initialization"><span class="secno">5.2.3. </span><span class="content">Target types for initialization</span><a class="self-link" href="#parameter-initialization"></a></h4>
    <p>A fixed parameter type also provides a target when an argument is a braced initializer or an overloaded function name. Consider these proposed declarations:</p>
 <pre class="highlight language-cpp line-numbered"><span class="line-no" data-line="1"></span><span class="line"><c- k>struct</c-> <c- nc>Point</c-> <c- p>{</c-></span><span class="line-no" data-line="2"></span><span class="line">    <c- b>int</c-> <c- n>x</c-><c- p>;</c-></span><span class="line-no" data-line="3"></span><span class="line">    <c- b>int</c-> <c- n>y</c-><c- p>;</c-></span><span class="line-no" data-line="4"></span><span class="line"><c- p>};</c-></span><span class="line-no" data-line="5"></span><span class="line"></span><span class="line-no" data-line="6"></span><span class="line"><c- b>void</c-> <c- nf>plot</c-><c- p>(</c-><c- k>const</c-> <c- n>Point</c-><c- o>&amp;</c-><c- p>...</c-> <c- n>points</c-><c- p>);</c-></span><span class="line-no" data-line="7"></span><span class="line"></span><span class="line-no" data-line="8"></span><span class="line"><c- k>using</c-> <c- n>Step</c-> <c- o>=</c-> <c- b>void</c-> <c- p>(</c-><c- o>*</c-><c- p>)();</c-></span><span class="line-no" data-line="9"></span><span class="line"><c- b>void</c-> <c- nf>start</c-><c- p>();</c-></span><span class="line-no" data-line="10"></span><span class="line"><c- k>template</c-> <c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-> <c- b>void</c-> <c- n>start</c-><c- p>(</c-><c- n>T</c-> <c- n>mode</c-><c- p>);</c-></span><span class="line-no" data-line="11"></span><span class="line"><c- b>void</c-> <c- nf>stop</c-><c- p>();</c-></span><span class="line-no" data-line="12"></span><span class="line"></span><span class="line-no" data-line="13"></span><span class="line"><c- b>void</c-> <c- nf>run_all</c-><c- p>(</c-><c- n>Step</c-><c- p>...</c-> <c- n>steps</c-><c- p>);</c-></span></pre>
@@ -3001,15 +3007,10 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
     </div>
    </figure>
    <p>With <code class="highlight"><c- k>auto</c-><c- p>...</c-></code> parameters instead, deduction cannot infer types from bare braces or the <code class="highlight"><c- n>start</c-></code> overload set containing a function template. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.type#5">[temp.deduct.type]/5.8-5.9</a> Current C++ can still supply targets through <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>initializer_list</c-><c- o>&lt;</c-><c- n>Point</c-><c- o>></c-></code> and <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>initializer_list</c-><c- o>&lt;</c-><c- n>Step</c-><c- o>></c-></code> parameters, called as <code class="highlight"><c- n>plot</c-><c- p>({{</c-><c- mi>0</c-><c- p>,</c-> <c- mi>0</c-><c- p>},</c-> <c- p>{</c-><c- mi>4</c-><c- p>,</c-> <c- mi>5</c-><c- p>}})</c-></code> and <code class="highlight"><c- n>run_all</c-><c- p>({</c-><c- n>start</c-><c- p>,</c-> <c- n>stop</c-><c- p>})</c-></code>. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.init.list">[dcl.init.list]</a> Alternatively, callers can use explicit <code class="highlight"><c- n>Point</c-></code> objects and <code class="highlight"><c- k>static_cast</c-><c- o>&lt;</c-><c- n>Step</c-><c- o>></c-><c- p>(</c-><c- n>start</c-><c- p>)</c-></code> with deduced packs. <a href="https://timsong-cpp.github.io/cppwp/n5050/over.over#1">[over.over]/1-3</a></p>
-   <aside class="issue" id="issue-7bcfc1e3">
-    <a class="self-link" href="#issue-7bcfc1e3"></a>
+   <aside class="issue" id="issue-3fe6e4e9">
+    <a class="self-link" href="#issue-3fe6e4e9"></a>
 
-    <p><strong>Eczbek: implementation.</strong> Test braced initializers with constrained packs and initializer lists: deduction, empty calls and initializers, designated initializers, and narrowing.</p>
-   </aside>
-   <aside class="issue" id="issue-1b85168c">
-    <a class="self-link" href="#issue-1b85168c"></a>
-
-    <p><strong>Everyone: decision. Eczbek: input.</strong> Advise on deduction-guide deduction and return types before deciding support.</p>
+    <p>Deduction-guide support remains undecided pending analysis of deduction and return types.</p>
    </aside>
    <h4 class="heading settled" data-level="5.2.4" id="addresses"><span class="secno">5.2.4. </span><span class="content">Address-taking</span><a class="self-link" href="#addresses"></a></h4>
    <p>The count can also be deduced when taking the address of <code class="highlight"><c- n>sum</c-></code> or <code class="highlight"><c- n>total</c-></code>. Here the target function type supplies the count, with a length-two <code class="highlight"><c- n>sum</c-></code> specialization having the ordinary type <code class="highlight"><c- b>int</c-><c- p>(</c-><c- b>int</c-><c- p>,</c-> <c- b>int</c-><c- p>)</c-></code>.</p>
@@ -3054,7 +3055,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    </figure>
    <p>The proposal also retains existing explicit-specialization and explicit-instantiation syntax. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.expl.spec#1">[temp.expl.spec]/1</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.explicit#2">[temp.explicit]/2</a> For these declarations, omitted counts are deduced from the ordinary parameter lists:</p>
 <pre class="highlight language-cpp line-numbered"><span class="line-no" data-line="1"></span><span class="line"><c- k>template</c-> <c- o>&lt;></c-></span><span class="line-no" data-line="2"></span><span class="line"><c- b>int</c-> <c- n>sum</c-><c- o>&lt;></c-><c- p>(</c-><c- b>int</c-> <c- n>value</c-><c- p>)</c-> <c- p>{</c-></span><span class="line-no" data-line="3"></span><span class="line">    <c- k>return</c-> <c- n>value</c-> <c- o>+</c-> <c- mi>10</c-><c- p>;</c-></span><span class="line-no" data-line="4"></span><span class="line"><c- p>}</c-></span><span class="line-no" data-line="5"></span><span class="line"></span><span class="line-no" data-line="6"></span><span class="line"><c- k>template</c-> <c- b>int</c-> <c- n>sum</c-><c- o>&lt;></c-><c- p>(</c-><c- b>int</c-><c- p>,</c-> <c- b>int</c-><c- p>);</c-></span></pre>
-   <p>Supplying the counts explicitly as <code class="highlight"><c- k>template</c-> <c- o>&lt;></c-> <c- b>int</c-> <c- n>sum</c-><c- o>&lt;</c-><c- mi>1</c-><c- o>></c-><c- p>(</c-><c- b>int</c-> <c- n>value</c-><c- p>)</c-></code> and <code class="highlight"><c- k>template</c-> <c- b>int</c-> <c- n>sum</c-><c- o>&lt;</c-><c- mi>2</c-><c- o>></c-><c- p>(</c-><c- b>int</c-><c- p>,</c-> <c- b>int</c-><c- p>)</c-></code> identifies the same specialization and instantiation as above. The count must still match the parameter list. Whether the count is deduced or supplied through explicit substitution, ordinary target-type matching follows.</p>
+   <p>Supplying the counts explicitly as <code class="highlight"><c- k>template</c-> <c- o>&lt;></c-> <c- b>int</c-> <c- n>sum</c-><c- o>&lt;</c-><c- mi>1</c-><c- o>></c-><c- p>(</c-><c- b>int</c-> <c- n>value</c-><c- p>)</c-></code> and <code class="highlight"><c- k>template</c-> <c- b>int</c-> <c- n>sum</c-><c- o>&lt;</c-><c- mi>2</c-><c- o>></c-><c- p>(</c-><c- b>int</c-><c- p>,</c-> <c- b>int</c-><c- p>)</c-></code> identifies the same specialization and instantiation as above. The count must still match the parameter list.</p>
    <h4 class="heading settled" data-level="5.2.5" id="overload-ordering"><span class="secno">5.2.5. </span><span class="content">Overload ordering</span><a class="self-link" href="#overload-ordering"></a></h4>
    <p>The proposal retains ordinary conversion ranking, partial ordering, constraint subsumption, and element-type comparisons. Under these rules, unordered candidates remain ambiguous, without preference for homogeneous syntax. Partial ordering, in particular, compares declarations, preserving which parameters came from packs. <a href="https://timsong-cpp.github.io/cppwp/n5050/over.match.best.general#2">[over.match.best.general]/2</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.partial#8">[temp.deduct.partial]/8</a> It therefore does not compare only resulting fixed-arity specializations. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.func.order#3">[temp.func.order]/3-6</a></p>
    <p>Calls without pack arguments contribute no element-type comparisons to partial ordering. Default template arguments can establish viability without making dependent patterns fixed types for ordering.</p>
@@ -3119,10 +3120,10 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    </figure>
    <p>For length-dependent associated constraints, count determination comes first. Satisfaction then substitutes ordinary template arguments, including the count and enclosing specializations' arguments, without separate count bindings. If the same atomic constraint is checked again with the same arguments, the existing consistency requirement still applies. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.constr.atomic#3">[temp.constr.atomic]/3</a></p>
    <p>The count adds no atomic-identity or subsumption test. For example, separate predicates <code class="highlight"><c- k>sizeof</c-><c- p>...(</c-><c- n>values</c-><c- p>)</c-> <c- o>>=</c-> <c- mi>1</c-></code> and <code class="highlight"><c- k>sizeof</c-><c- p>...(</c-><c- n>values</c-><c- p>)</c-> <c- o>>=</c-> <c- mi>2</c-></code> gain no arithmetic implication rule. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.constr.atomic#2">[temp.constr.atomic]/2</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.constr.order#1.2">[temp.constr.order]/1.2</a></p>
-   <aside class="issue" id="issue-cf9355a2">
-    <a class="self-link" href="#issue-cf9355a2"></a>
+   <aside class="issue" id="issue-b1db891e">
+    <a class="self-link" href="#issue-b1db891e"></a>
 
-    <p><strong>Ian: wording. Jan: review. Eczbek: implementation.</strong> Test these overload outcomes with the invented count. Complete rules for matching corresponding packs in atomic and fold-expanded constraints.</p>
+    <p>The rules for matching corresponding packs in atomic and fold-expanded constraints remain incomplete.</p>
    </aside>
    <h4 class="heading settled" data-level="5.2.6" id="constructors"><span class="secno">5.2.6. </span><span class="content">Constructors</span><a class="self-link" href="#constructors"></a></h4>
    <p>If supported, homogeneous constructors would be implicit templates in ordinary overload selection. <a href="https://timsong-cpp.github.io/cppwp/n5050/over.match.best.general#2.4">[over.match.best.general]/2.4</a> Initializer-list constructors, however, have priority under <a href="https://timsong-cpp.github.io/cppwp/n5050/over.match.list#1">[over.match.list]/1</a>.</p>
@@ -3168,10 +3169,10 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      </table>
     </div>
    </figure>
-   <aside class="issue" id="issue-7164f4e1">
-    <a class="self-link" href="#issue-7164f4e1"></a>
+   <aside class="issue" id="issue-ffba3b12">
+    <a class="self-link" href="#issue-ffba3b12"></a>
 
-    <p><strong>Everyone: decision. Eczbek: input.</strong> Advise on constructor support and check these examples as implicit templates. Inclusion remains undecided.</p>
+    <p>Constructor support remains undecided. The examples above still need validation with homogeneous constructors treated as implicit templates.</p>
    </aside>
    <h3 class="heading settled" data-level="5.3" id="lambdas"><span class="secno">5.3. </span><span class="content">Lambdas</span><a class="self-link" href="#lambdas"></a></h3>
    <p>The same count model also applies to lambdas. This proposed lambda’s call operator remains a template despite its fixed element type:</p>
@@ -3179,6 +3180,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>Here, <code class="highlight"><c- n>product</c-><c- p>()</c-></code> and <code class="highlight"><c- n>product</c-><c- p>(</c-><c- mf>0.5</c-><c- p>,</c-> <c- mf>0.8</c-><c- p>)</c-></code> return <code class="highlight"><c- mf>1.0</c-></code> and <code class="highlight"><c- mf>0.4</c-></code>. The invented count also lets <code class="highlight"><c- n>product</c-><c- p>.</c-><c- k>operator</c-><c- p>()</c-><c- o>&lt;</c-><c- mi>2</c-><c- o>></c-><c- p>(</c-><c- mf>0.5</c-><c- p>,</c-> <c- mf>0.8</c-><c- p>)</c-></code> select the second specialization. A current-language <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>same_as</c-><c- o>&lt;</c-><c- b>double</c-><c- o>></c-> <c- k>auto</c-><c- p>...</c-> <c- n>factors</c-></code> lambda accepts both ordinary calls, though its template arguments are element types rather than a count.</p>
    <p>For <code class="highlight"><c- b>double</c-> <c- p>(</c-><c- o>*</c-><c- n>multiply</c-><c- p>)(</c-><c- b>double</c-><c- p>,</c-> <c- b>double</c-><c- p>)</c-> <c- o>=</c-> <c- n>product</c-></code>, the captureless lambda’s generic conversion function template deduces count two from the target. Unary <code class="highlight"><c- o>+</c-><c- n>product</c-></code>, however, lacks a target type and count and is rejected. Ordinary restrictions on capture, explicit object parameters, constraints, and static call operators also remain. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.lambda.closure#12">[expr.prim.lambda.closure]/12-14</a></p>
    <p>An enclosing pack’s ordinary expansion, including indexed forms, needs no independent count and alone does not make a lambda generic. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.lambda.general#6">[expr.prim.lambda.general]/6</a></p>
+   <p id="captures">Homogeneous pack elements would follow ordinary capture and lifetime rules for function parameters. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.lambda.capture">[expr.prim.lambda.capture]</a></p>
    <h3 class="heading settled" data-level="5.4" id="indexing"><span class="secno">5.4. </span><span class="content">Pack indexing</span><a class="self-link" href="#indexing"></a></h3>
    <p>Homogeneous packs would use existing expansion, folding, and constant-index access operations. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.pack.index#2">[expr.prim.pack.index]/2-4</a></p>
    <p>For example:</p>
@@ -3188,7 +3190,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>The index pack can differ in length from <code class="highlight"><c- n>Ts</c-></code> and repeat a type.</p>
    <p>Rows in Table 12 are independent, with enclosing declarations of <code class="highlight"><c- n>Ts</c-></code> and <code class="highlight"><c- n>Is</c-></code> and valid selected indices.</p>
    <figure class="table" id="indexed-lambda-parameters">
-    <figcaption id="indexed-lambda-parameters-caption">Indexed lambda parameters. A scalar index permits a new homogeneous count. An index pack expands in the enclosing declaration or fold.</figcaption>
+    <figcaption id="indexed-lambda-parameters-caption">Indexed lambda parameters. A scalar index permits a new homogeneous count. An index pack produces an ordinary expansion.</figcaption>
     <div class="overlarge" tabindex="0">
      <table aria-labelledby="indexed-lambda-parameters-caption" class="data">
       <thead>
@@ -3198,18 +3200,6 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
         <th scope="col">Proposed interpretation
       <tbody>
        <tr>
-        <td><code class="highlight"><c- p>[](</c-><c- n>Ts</c-><c- p>...[</c-><c- mi>1</c-><c- p>])</c-> <c- p>{}</c-></code>
-        <td>One unnamed parameter of the selected type.
-        <td>Unchanged.
-       <tr>
-        <td><code class="highlight"><c- p>(...,</c-> <c- p>[](</c-><c- n>Ts</c-><c- p>...[</c-><c- mi>1</c-><c- p>])</c-> <c- p>{})</c-></code>
-        <td>Ill-formed. No unexpanded pack remains for the fold.
-        <td>Unchanged.
-       <tr>
-        <td><code class="highlight"><c- p>(...,</c-> <c- p>[](</c-><c- n>Ts</c-><c- p>...[</c-><c- n>Is</c-><c- p>])</c-> <c- p>{})</c-></code>
-        <td>The fold expands <code class="highlight"><c- n>Is</c-></code> into single-parameter lambdas.
-        <td>Unchanged.
-       <tr>
         <td><code class="highlight"><c- p>[](</c-><c- n>Ts</c-><c- p>...[</c-><c- mi>1</c-><c- p>]...</c-> <c- n>values</c-><c- p>)</c-> <c- p>{}</c-></code>
         <td>Ill-formed. No unexpanded pack.
         <td>A homogeneous pack of the selected type with its own count.
@@ -3217,21 +3207,13 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
         <td><code class="highlight"><c- p>[](</c-><c- n>Ts</c-><c- p>...[</c-><c- n>Is</c-><c- p>]...</c-> <c- n>values</c-><c- p>)</c-> <c- p>{}</c-></code>
         <td>The second ellipsis expands <code class="highlight"><c- n>Is</c-></code> into one parameter list.
         <td>Unchanged. No new count.
-       <tr>
-        <td><code class="highlight"><c- p>(...,</c-> <c- p>[](</c-><c- n>Ts</c-><c- p>...[</c-><c- n>Is</c-><c- p>]...</c-> <c- n>values</c-><c- p>)</c-> <c- p>{})</c-></code>
-        <td>Ill-formed. The inner declaration has expanded <code class="highlight"><c- n>Is</c-></code>, leaving none for the fold. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.fold#2">[expr.prim.fold]/2</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#8">[temp.variadic]/8</a>
-        <td>Unchanged.
-       <tr>
-        <td><code class="highlight"><c- p>[](</c-><c- n>Ts</c-><c- p>...</c-> <c- n>values</c-><c- p>)</c-> <c- p>{}</c-></code>
-        <td>Ordinary expansion of enclosing <code class="highlight"><c- n>Ts</c-></code>, which alone does not make the lambda generic.
-        <td>Unchanged.
      </table>
     </div>
    </figure>
-   <aside class="issue" id="issue-b4aa6e1f">
-    <a class="self-link" href="#issue-b4aa6e1f"></a>
+   <aside class="issue" id="issue-828675f0">
+    <a class="self-link" href="#issue-828675f0"></a>
 
-    <p><strong>Ian: wording. Jan: advice. Eczbek: input.</strong> Resolve whether C++26 <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/n5050.pdf#page=250">[dcl.fct]/25</a> treats unnamed <code class="highlight"><c- n>Ts</c-><c- p>...[</c-><c- mi>1</c-><c- p>]...</c-></code> as C varargs. Check Clang parsing before settling the transition.</p>
+    <p>The transition for unnamed <code class="highlight"><c- n>Ts</c-><c- p>...[</c-><c- mi>1</c-><c- p>]...</c-></code> needs further analysis of C++26 <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/n5050.pdf#page=250">[dcl.fct]/25</a> and Clang’s parsing, particularly whether the existing form denotes C varargs.</p>
    </aside>
    <h4 class="heading settled" data-level="5.4.1" id="indexed-homogeneous"><span class="secno">5.4.1. </span><span class="content">Homogeneous packs of indexed types</span><a class="self-link" href="#indexed-homogeneous"></a></h4>
    <p>Scalar indexing fixes the proposed pack’s type before count deduction:</p>
@@ -3243,31 +3225,25 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>The proposal retains this grammar. With approved reclamation, an array alias could supply an unnamed homogeneous parameter type with ordinary adjustment and an extent independent of its count. The parenthesized unnamed pack declarators tracked by <a href="https://cplusplus.github.io/CWG/issues/1488.html">CWG1488</a> remain out of scope because the alias needs no new declarator form.</p>
    <h4 class="heading settled" data-level="5.4.3" id="empty-and-return"><span class="secno">5.4.3. </span><span class="content">Empty packs</span><a class="self-link" href="#empty-and-return"></a></h4>
    <p>An empty outer <code class="highlight"><c- n>Is</c-></code> expansion need not instantiate indexed selection. A fixed index must still designate an element whenever its type is required, including homogeneous lambda declarations with zero-argument calls. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#9">[temp.variadic]/9</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.type.pack.index#2">[dcl.type.pack.index]/2</a></p>
-   <h3 class="heading settled" data-level="5.5" id="captures"><span class="secno">5.5. </span><span class="content">Captures</span><a class="self-link" href="#captures"></a></h3>
-   <p>Constant template parameter packs need no capture, but the proposed function’s parameters have finite lifetimes. For example, with runtime <code class="highlight"><c- b>int</c-> <c- n>reading</c-></code>, this callback stores copies: <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.lambda.capture">[expr.prim.lambda.capture]</a></p>
-<pre class="highlight language-cpp line-numbered"><span class="line-no" data-line="1"></span><span class="line"><c- k>auto</c-> <c- n>deferred_sum</c-><c- p>(</c-><c- b>int</c-><c- p>...</c-> <c- n>values</c-><c- p>)</c-> <c- p>{</c-></span><span class="line-no" data-line="2"></span><span class="line">    <c- k>return</c-> <c- p>[</c-><c- o>=</c-><c- p>]</c-> <c- p>{</c-> <c- k>return</c-> <c- p>(</c-><c- mi>0</c-> <c- o>+</c-> <c- p>...</c-> <c- o>+</c-> <c- n>values</c-><c- p>);</c-> <c- p>};</c-></span><span class="line-no" data-line="3"></span><span class="line"><c- p>}</c-></span><span class="line-no" data-line="4"></span><span class="line"></span><span class="line-no" data-line="5"></span><span class="line"><c- k>auto</c-> <c- n>sum_later</c-> <c- o>=</c-> <c- n>deferred_sum</c-><c- p>(</c-><c- n>reading</c-><c- p>,</c-> <c- mi>2</c-><c- p>,</c-> <c- mi>3</c-><c- p>);</c-></span><span class="line-no" data-line="6"></span><span class="line"><c- b>int</c-> <c- n>reading_sum</c-> <c- o>=</c-> <c- n>sum_later</c-><c- p>();</c-></span></pre>
-   <p>For <code class="highlight"><c- n>reading</c-> <c- o>==</c-> <c- mi>1</c-></code>, <code class="highlight"><c- n>reading_sum</c-></code> is <code class="highlight"><c- mi>6</c-></code> after <code class="highlight"><c- n>deferred_sum</c-></code> returns. Replacing <code class="highlight"><c- p>[</c-><c- o>=</c-><c- p>]</c-></code> with <code class="highlight"><c- p>[]</c-></code> makes nonempty calls ill-formed. Reference capture leaves dangling references when <code class="highlight"><c- n>sum_later</c-><c- p>()</c-></code> is called.</p>
-   <p>A current-language <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>same_as</c-><c- o>&lt;</c-><c- b>int</c-><c- o>></c-> <c- k>auto</c-><c- p>...</c-> <c- n>values</c-></code> pack supports the same callback. Capture and lifetime rules also apply through nested lambdas. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.lambda.capture#14">[expr.prim.lambda.capture]/14</a></p>
-   <h3 class="heading settled" data-level="5.6" id="alternatives"><span class="secno">5.6. </span><span class="content">Alternatives</span><a class="self-link" href="#alternatives"></a></h3>
+   <h3 class="heading settled" data-level="5.5" id="alternatives"><span class="secno">5.5. </span><span class="content">Alternatives</span><a class="self-link" href="#alternatives"></a></h3>
    <p>R2 discusses alternative spellings and declaration-site lengths. <a data-link-type="biblio" href="#biblio-p1219r2" title="Homogeneous variadic function parameters">[P1219R2]</a> We retain its rejection of empty template heads and a bare <code class="highlight"><c- k>template</c-></code> introducer.</p>
-   <h4 class="heading settled" data-level="5.6.1" id="additional-auto"><span class="secno">5.6.1. </span><span class="content">An additional auto marker</span><a class="self-link" href="#additional-auto"></a></h4>
+   <h4 class="heading settled" data-level="5.5.1" id="additional-auto"><span class="secno">5.5.1. </span><span class="content">An additional auto marker</span><a class="self-link" href="#additional-auto"></a></h4>
    <p>In <code class="highlight"><c- b>int</c-> <c- k>auto</c-><c- p>...</c-> <c- n>values</c-></code>, <code class="highlight"><c- k>auto</c-></code> would mark template status rather than act as a placeholder and <code class="highlight"><c- b>int</c-></code> is not a concept constraint. We reject this redundant marker and retain symmetry with homogeneous template packs such as <code class="highlight"><c- n>std</c-><c- o>::</c-><c- b>size_t</c-><c- p>...</c-> <c- n>values</c-></code>. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.spec.auto.general">[dcl.spec.auto.general]</a></p>
-   <h4 class="heading settled" data-level="5.6.2" id="marker"><span class="secno">5.6.2. </span><span class="content">Explicit template markers</span><a class="self-link" href="#marker"></a></h4>
+   <h4 class="heading settled" data-level="5.5.2" id="marker"><span class="secno">5.5.2. </span><span class="content">Explicit template markers</span><a class="self-link" href="#marker"></a></h4>
    <p>The <code class="highlight"><c- k>template</c-> <c- o>&lt;</c-><c- p>...</c-><c- o>></c-></code> marker considered in R2 could identify the count and permit unnamed packs without reclaiming comma-less C varargs. <a data-link-type="biblio" href="#biblio-p1219r2" title="Homogeneous variadic function parameters">[P1219R2]</a> For lambdas the corresponding spelling would be <code class="highlight"><c- p>[]</c-><c- o>&lt;</c-><c- p>...</c-><c- o>></c-><c- p>(</c-><c- b>int</c-><c- p>...</c-> <c- n>values</c-><c- p>)</c-> <c- p>{}</c-></code>.</p>
    <p>Named homogeneous packs already establish template status (<a href="#abbreviated-syntax">§ 5.2.1 Abbreviated syntax</a>). <a data-link-type="biblio" href="#biblio-p1141r2" title="Yet another approach for constrained declarations">[P1141R2]</a> <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/n5050.pdf#page=249">[dcl.fct]/21</a> We therefore reject a required marker for a compatibility benefit confined to unnamed packs. An unnamed-only marker avoids that burden, but we prefer requiring a name to adding syntax solely for omitting it.</p>
-   <h4 class="heading settled" data-level="5.6.3" id="explicit-lengths"><span class="secno">5.6.3. </span><span class="content">Explicit lengths</span><a class="self-link" href="#explicit-lengths"></a></h4>
+   <h4 class="heading settled" data-level="5.5.3" id="explicit-lengths"><span class="secno">5.5.3. </span><span class="content">Explicit lengths</span><a class="self-link" href="#explicit-lengths"></a></h4>
    <p>The invented count model covers the present use cases (<a href="#abbreviated-syntax">§ 5.2.1 Abbreviated syntax</a>), though declaration-site lengths would let authors name and position the count.</p>
    <p>R2’s bracketed length spelling conflicts with C++26 pack indexing: <code class="highlight"><c- n>Ts</c-><c- p>...[</c-><c- n>Len</c-><c- p>]</c-></code> already selects one type. <a data-link-type="biblio" href="#biblio-p1219r2" title="Homogeneous variadic function parameters">[P1219R2]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.type.pack.index">[dcl.type.pack.index]</a> A marker cannot resolve this conflict, but other declaration-site length spellings remain possible.</p>
    <p>Multiple or non-trailing homogeneous packs would need rules for associating and deducing their counts. We defer these extensions and declaration-site lengths. Restoring abstract array-pack grammar also remains separate.</p>
    <h2 class="heading settled" data-level="6" id="compatibility"><span class="secno">6. </span><span class="content">Reclaiming the deprecated comma-less spelling</span><a class="self-link" href="#compatibility"></a></h2>
    <p>Named packs can proceed in C++29 with existing unnamed disambiguation if EWG declines reclamation (<a href="#proposed-polls">§ 7.1 Proposed EWG polls</a>).</p>
    <p>Jan Schultke’s <a data-link-type="biblio" href="#biblio-p3176r1" title="The Oxford variadic comma">[P3176R1]</a>, <em>The Oxford variadic comma</em>, chose deprecation because no feature then proposed required removal (section 6.1). Our proposal supplies that reason: reclaiming the spelling would allow unnamed homogeneous function parameter packs.</p>
-   <p>N5050’s C++26 deprecation preserves old meanings and standalone ellipsis parameters. <a data-link-type="biblio" href="#biblio-n5050" title="Working Draft, Programming Languages - C++">[N5050]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/depr.ellipsis.comma">[depr.ellipsis.comma]</a> Under our proposed reclamation, <code class="highlight"><c- b>void</c-> <c- n>send</c-><c- p>(</c-><c- b>int</c-><c- p>...</c-> <c- n>values</c-><c- p>)</c-></code> and <code class="highlight"><c- b>void</c-> <c- n>send</c-><c- p>(</c-><c- b>int</c-><c- p>...)</c-></code> would instead declare the same template, while C varargs would retain <code class="highlight"><c- b>void</c-> <c- n>send</c-><c- p>(</c-><c- b>int</c-><c- p>,</c-> <c- p>...)</c-></code>.</p>
    <p>One standard cycle separates C++26 deprecation and proposed C++29 reclamation. Adding a comma preserves C varargs in earlier language modes, allowing migration before C++29. We cannot assess that migration from the 2019 open-source survey in <a data-link-type="biblio" href="#biblio-p1219r2" title="Homogeneous variadic function parameters">[P1219R2]</a>, though. It predates deprecation and therefore establishes neither users' deprecation-warning experience nor remaining migration costs in maintained and vendored code.</p>
    <p>There is a one-cycle precedent in <a data-link-type="biblio" href="#biblio-p1161r3" title="Deprecate uses of the comma operator in subscripting expressions">[P1161R3]</a>’s C++20 deprecation of unparenthesized comma subscripts and <a data-link-type="biblio" href="#biblio-p2128r6" title="Multidimensional subscript operator">[P2128R6]</a>’s proposed C++23 replacement. P2128R6 also deliberately withheld new multidimensional meaning from C arrays and existing <code class="highlight"><c- n>valarray</c-></code> interfaces, however. It therefore cannot establish that immediate reinterpretation of comma-less varargs would be harmless. If one cycle is insufficient, EWG can choose a longer migration period.</p>
    <h3 class="heading settled" data-level="6.1" id="current-comma-rules"><span class="secno">6.1. </span><span class="content">Current rules</span><a class="self-link" href="#current-comma-rules"></a></h3>
-   <p>A <em>varargs ellipsis</em> denotes C varargs rather than a parameter pack. Both C23 and C++26 permit standalone <code class="highlight"><c- p>...</c-></code>. C++26 also permits omitting the comma between a parameter list and C varargs, but deprecates that spelling. <a data-link-type="biblio" href="#biblio-n3096" title="Programming languages - C">[N3096]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct">[dcl.fct]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/depr.ellipsis.comma">[depr.ellipsis.comma]</a></p>
-   <p>A final ellipsis that could belong to an abstract (nameless) declarator declares a pack if its type names an unexpanded template parameter pack or contains <code class="highlight"><c- k>auto</c-></code>. Otherwise it denotes C varargs. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/n5050.pdf#page=250">[dcl.fct]/25</a></p>
+   <p>A <em>varargs ellipsis</em> denotes C varargs rather than a parameter pack. Both C23 and C++26 permit <code class="highlight"><c- p>...</c-></code> without preceding parameters. C++26 also permits omitting the comma between a parameter list and C varargs, but deprecates that spelling. <a data-link-type="biblio" href="#biblio-n3096" title="Programming languages - C">[N3096]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct">[dcl.fct]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/depr.ellipsis.comma">[depr.ellipsis.comma]</a></p>
+   <p>A final ellipsis that could belong to an abstract (unnamed) declarator declares a pack if its type names an unexpanded template parameter pack or contains <code class="highlight"><c- k>auto</c-></code>. Otherwise it denotes C varargs. <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/n5050.pdf#page=250">[dcl.fct]/25</a></p>
    <p>These C++26 declarations therefore differ:</p>
 <pre class="highlight language-cpp line-numbered"><span class="line-no" data-line="1"></span><span class="line"><c- c1>// declares a variadic function template with a function parameter pack</c-></span><span class="line-no" data-line="2"></span><span class="line"><c- k>template</c-> <c- o>&lt;</c-><c- k>class</c-><c- p>...</c-> <c- n>T</c-><c- o>></c-></span><span class="line-no" data-line="3"></span><span class="line"><c- b>void</c-> <c- n>f</c-><c- p>(</c-><c- n>T</c-><c- p>...);</c-></span><span class="line-no" data-line="4"></span><span class="line"></span><span class="line-no" data-line="5"></span><span class="line"><c- c1>// same as void f(T, ...)</c-></span><span class="line-no" data-line="6"></span><span class="line"><c- k>template</c-> <c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-></span><span class="line-no" data-line="7"></span><span class="line"><c- b>void</c-> <c- n>f</c-><c- p>(</c-><c- n>T</c-><c- p>...);</c-></span></pre>
    <h3 class="heading settled" data-level="6.2" id="proposed-comma-change"><span class="secno">6.2. </span><span class="content">Proposed change</span><a class="self-link" href="#proposed-comma-change"></a></h3>
@@ -3315,12 +3291,12 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>These proposed direction polls for P1219R3 have not been taken.</p>
    <ol>
     <li data-md>
-     <p>We want named homogeneous function parameter packs for C++29: one trailing pack, ordinary parameter initialization, and an invented constant template parameter for its count, independently of unnamed-syntax reclamation.</p>
+     <p>We want named homogeneous function parameter packs for C++29, independently of reclaiming comma-less C varargs for unnamed packs.</p>
     <li data-md>
      <p>We want to remove deprecated comma-less C varargs in C++29 and reclaim the spelling for unnamed homogeneous function parameter packs.</p>
    </ol>
    <h3 class="heading settled" data-level="7.2" id="historical-polls"><span class="secno">7.2. </span><span class="content">Historical results</span><a class="self-link" href="#historical-polls"></a></h3>
-   <p>The polls in Tables 14 to 16 concern earlier revisions, before the C++26 changes addressed here.</p>
+   <p>The polls in Tables 14 to 16 concern earlier revisions, before the C++26 changes addressed here. SF, F, N, A, and SA denote strongly favor, favor, neutral, against, and strongly against.</p>
    <figure class="table" id="kona-ewgi-polls">
     <figcaption id="kona-ewgi-polls-caption"><a href="https://github.com/cplusplus/papers/issues/297#issuecomment-466713457">Kona</a> EWGI polls, February 2019. <a data-link-type="biblio" href="#biblio-p1219-ewg-record" title="P1219 Homogeneous variadic function parameters">[P1219-EWG-RECORD]</a></figcaption>
     <div class="overlarge" tabindex="0">
@@ -3414,10 +3390,10 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>The Belfast poll (Table 16) failed. Although Kona’s public record identifies objections to template-introducing syntax and explicit-specialization conflicts, it does not establish why Belfast later failed. <a data-link-type="biblio" href="#biblio-p1219-ewg-record" title="P1219 Homogeneous variadic function parameters">[P1219-EWG-RECORD]</a></p>
    <h2 class="heading settled" data-level="8" id="implementation"><span class="secno">8. </span><span class="content">Implementation experience</span><a class="self-link" href="#implementation"></a></h2>
    <p>P1219R2 links an experimental <a href="https://github.com/Bekenn/clang/tree/func-parm-packs">Clang branch</a>. <a data-link-type="biblio" href="#biblio-p1219r2" title="Homogeneous variadic function parameters">[P1219R2]</a> Its tests, however, use the earlier <code class="highlight"><c- k>template</c-> <c- o>&lt;></c-></code> primary-template syntax. <a data-link-type="biblio" href="#biblio-p1219-clang-tests" title="Historical Clang tests for homogeneous variadic function parameters">[P1219-CLANG-TESTS]</a></p>
-   <aside class="issue" id="issue-5e64f6e0">
-    <a class="self-link" href="#issue-5e64f6e0"></a>
+   <aside class="issue" id="issue-af06f696">
+    <a class="self-link" href="#issue-af06f696"></a>
 
-    <p><strong>Ian: writing. Eczbek: input.</strong> Add this revision’s implementation details once Eczbek completes it.</p>
+    <p>Complete and document an implementation of this revision’s syntax and count model.</p>
    </aside>
    <h2 class="heading settled" data-level="9" id="candidate-rules"><span class="secno">9. </span><span class="content">Wording</span><a class="self-link" href="#candidate-rules"></a></h2>
    <p>For the independently selectable named feature, add this homogeneous-pack declaration requirement:</p>
@@ -3486,11 +3462,6 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      </div>
     </div>
    </div>
-   <aside class="issue" id="issue-1e9832aa">
-    <a class="self-link" href="#issue-1e9832aa"></a>
-
-    <p><strong>Ian: wording. Jan: review. Eczbek: implementation.</strong> Test lambda-to-function-pointer conversion with the invented count, including target-type deduction. Also check captures, explicit object parameters, constraints, and static call operators against existing restrictions.</p>
-   </aside>
    <h3 class="heading settled" data-level="9.3" id="wording-functions"><span class="secno">9.3. </span><span class="content">Functions</span><a class="self-link" href="#wording-functions"></a></h3>
    <p>Modify the first sentence of <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/n5050.pdf#page=249">[dcl.fct]/21</a>:</p>
    <blockquote class="wording-inline">
@@ -3525,16 +3496,6 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
     </p>
    </blockquote>
    <p>Retain the existing <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct">[dcl.fct]</a> example of an ordinary function parameter pack expansion.</p>
-   <aside class="issue" id="issue-2ac336a0">
-    <a class="self-link" href="#issue-2ac336a0"></a>
-
-    <p><strong>Ian: wording. Jan: advice. Eczbek: input.</strong> Advise on parser separation of named-pack support from optional unnamed reclamation (<a href="#wording-reclamation">§ 9.4 Removal and reclamation, conditional on the separate decision</a>). Existing C-varargs spellings stay valid unless reclamation is approved.</p>
-   </aside>
-   <aside class="issue" id="issue-df6703c3">
-    <a class="self-link" href="#issue-df6703c3"></a>
-
-    <p><strong>Ian: wording. Jan: review. Eczbek: implementation.</strong> Check which contexts permit these function templates, including member functions, virtual functions, and C linkage. Constructor support remains undecided.</p>
-   </aside>
    <h3 class="heading settled" data-level="9.4" id="wording-reclamation"><span class="secno">9.4. </span><span class="content">Removal and reclamation, conditional on the separate decision</span><a class="self-link" href="#wording-reclamation"></a></h3>
    <p>In <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/n5050.pdf#page=246">[dcl.fct]/1</a>, remove the comma-less alternative:</p>
    <div class="diff-single wording-diff">
@@ -3649,11 +3610,6 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
     </div>
    </div>
    <p>A terminal abstract-declarator ellipsis then belongs to the parameter declaration under homogeneous-pack or existing ordinary expansion rules.</p>
-   <aside class="issue" id="issue-8be2fd3b">
-    <a class="self-link" href="#issue-8be2fd3b"></a>
-
-    <p><strong>Ian: wording. Jan: review. Eczbek: input.</strong> Check proposed reclamation grammar against trailing commas. Preserve standalone <code class="highlight"><c- p>...</c-></code>, comma-separated C varargs, and ordinary pack expansions, including the comma between a pack expansion and following C varargs.</p>
-   </aside>
    <h3 class="heading settled" data-level="9.5" id="wording-addresses"><span class="secno">9.5. </span><span class="content">Addresses</span><a class="self-link" href="#wording-addresses"></a></h3>
    <p>Insert after <a href="https://timsong-cpp.github.io/cppwp/n5050/over.over#3">[over.over]/3</a>:</p>
    <div class="diff-single wording-diff">
@@ -3671,11 +3627,6 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      </div>
     </div>
    </div>
-   <aside class="issue" id="issue-d9e4c2f5">
-    <a class="self-link" href="#issue-d9e4c2f5"></a>
-
-    <p><strong>Ian: wording. Jan: review. Eczbek: implementation.</strong> Test explicit and deduced counts in explicit specializations, explicit instantiations, and friend declarations. Empty template-argument lists must leave counts for deduction.</p>
-   </aside>
    <h3 class="heading settled" data-level="9.6" id="wording-variadic"><span class="secno">9.6. </span><span class="content">Variadic templates</span><a class="self-link" href="#wording-variadic"></a></h3>
    <p>In <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#2">[temp.variadic]/2</a>, insert after the first sentence:</p>
    <div class="diff-single wording-diff">
@@ -3806,10 +3757,10 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>In the <code class="highlight"><c- n>all</c-></code> instantiation, the return expression expands to <code class="highlight"><c- p>((</c->true <c- o>&amp;&amp;</c-> true<c- p>)</c-> <c- o>&amp;&amp;</c-> true<c- p>)</c-> <c- o>&amp;&amp;</c-> false</code> and evaluates to <code class="highlight">false</code>.</p>
    <h3 class="heading settled" data-level="9.7" id="wording-dependency"><span class="secno">9.7. </span><span class="content">Dependency</span><a class="self-link" href="#wording-dependency"></a></h3>
    <p>Under our proposal, a homogeneous-pack function type depends on its invented count until that count is determined, even when its element type is non-dependent. Until then, <code class="highlight"><c- k>sizeof</c-><c- p>...</c-></code> naming the pack is also value-dependent. Count substitution still follows ordinary template rules and declaring the pack does not make unrelated expressions dependent.</p>
-   <aside class="issue" id="issue-77c31fd9">
-    <a class="self-link" href="#issue-77c31fd9"></a>
+   <aside class="issue" id="issue-09560c96">
+    <a class="self-link" href="#issue-09560c96"></a>
 
-    <p><strong>Ian: wording. Jan: review. Eczbek: implementation.</strong> Check dependency with a fixed element type and unknown count, and substitution failure in pack expressions, indexing, and count constraints, including an invalid indexed element type at count zero.</p>
+    <p>The dependency and substitution-failure rules need further work for fixed element types with an undetermined count, pack expressions, indexing, and count constraints. This includes invalid indexed element types when the count is zero.</p>
    </aside>
    <h3 class="heading settled" data-level="9.8" id="wording-deduction"><span class="secno">9.8. </span><span class="content">Deduction</span><a class="self-link" href="#wording-deduction"></a></h3>
    <p>In <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.general#1">[temp.deduct.general]/1</a>, insert before Example 1:</p>
@@ -3828,10 +3779,10 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      </div>
     </div>
    </div>
-   <aside class="issue" id="issue-f0eba99f">
-    <a class="self-link" href="#issue-f0eba99f"></a>
+   <aside class="issue" id="issue-0ed49578">
+    <a class="self-link" href="#issue-0ed49578"></a>
 
-    <p><strong>Ian: wording. Jan: review. Eczbek: implementation.</strong> Complete substitution-order and failure-handling rules, including preceding template parameter packs. Apply explicit counts before parameter matching and deduce omitted counts before checking constraints that use them.</p>
+    <p>The wording for substitution order and failure handling is incomplete, particularly when template parameter packs precede the count. The intended order is to apply explicit counts before parameter matching and deduce omitted counts before checking constraints that use them.</p>
    </aside>
    <p>In <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.general">[temp.deduct.general]</a>, append the following to Example 1:</p>
    <div class="diff-single wording-diff">
@@ -3962,11 +3913,6 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      </div>
     </div>
    </div>
-   <aside class="issue" id="issue-48217445">
-    <a class="self-link" href="#issue-48217445"></a>
-
-    <p><strong>Ian: wording. Jan: review. Eczbek: implementation.</strong> Test deduction with preceding default arguments, explicit object parameters, pack-expansion arguments, empty packs, and conversions to fixed or explicitly supplied element types.</p>
-   </aside>
    <p>Retain the existing <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.call">[temp.deduct.call]</a> example unchanged.</p>
    <h4 class="heading settled" data-level="9.8.2" id="wording-type-deduction"><span class="secno">9.8.2. </span><span class="content">Function types</span><a class="self-link" href="#wording-type-deduction"></a></h4>
    <p>In <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.type#10">[temp.deduct.type]/10</a>, make the inline change and insert immediately after the sentence shown below:</p>
@@ -3989,11 +3935,6 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      </div>
     </div>
    </div>
-   <aside class="issue" id="issue-67e53e52">
-    <a class="self-link" href="#issue-67e53e52"></a>
-
-    <p><strong>Ian: wording. Jan: review. Eczbek: implementation.</strong> Test matching against target function types, explicit specializations, and instantiations, including parameter type adjustments. Reject undetermined counts and type mismatches requiring call-site conversions.</p>
-   </aside>
    <h4 class="heading settled" data-level="9.8.3" id="wording-partial-ordering"><span class="secno">9.8.3. </span><span class="content">Partial ordering and constraints</span><a class="self-link" href="#wording-partial-ordering"></a></h4>
    <p>This candidate wording specifies <a href="#overload-ordering">§ 5.2.5 Overload ordering</a>.</p>
    <p>Insert after <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.func.order#3">[temp.func.order]/3</a>:</p>
@@ -4035,24 +3976,43 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>Existing tie-breaks apply without a new preference for homogeneous packs.</p>
    <h3 class="heading settled" data-level="9.9" id="wording-correspondence"><span class="secno">9.9. </span><span class="content">Declarations</span><a class="self-link" href="#wording-correspondence"></a></h3>
    <p>Corresponding homogeneous packs have corresponding parameter patterns and invented count parameters in the same template parameter position. Parameter names do not distinguish declarations. An ordinary pack expansion does not correspond to a homogeneous pack solely because a specialization produces the same function type.</p>
-   <aside class="issue" id="issue-c510266a">
-    <a class="self-link" href="#issue-c510266a"></a>
-
-    <p><strong>Ian: wording. Jan: review. Eczbek: implementation.</strong> Test declaration and specialization identity across translation units, modules, and serialized ASTs, checking definition visibility and explicit instantiations separately from ABI representation.</p>
-   </aside>
-   <aside class="issue" id="issue-416eff63">
-    <a class="self-link" href="#issue-416eff63"></a>
-
-    <p><strong>Ian: wording. Jan: advice. Eczbek: input.</strong> Confirm PoC reflection support. If supported, also test count exposure in template-argument order, function-template identification, and resulting parameters, including none at count zero.</p>
-   </aside>
    <h3 class="heading settled" data-level="9.10" id="wording-feature-test"><span class="secno">9.10. </span><span class="content">Feature-test macro</span><a class="self-link" href="#wording-feature-test"></a></h3>
-   <aside class="issue" id="issue-94e960bc">
-    <a class="self-link" href="#issue-94e960bc"></a>
-
-    <p><strong>Everyone: decision. Eczbek: input.</strong> Agree the implementation’s feature-test macro and revision value with SG10 once feature scope is settled.</p>
-   </aside>
+   <p>We propose the feature-test macro <code class="highlight"><c- n>__cpp_homo_fun_packs</c-></code> in <a href="https://timsong-cpp.github.io/cppwp/n5050/cpp.predefined">[cpp.predefined]</a> for homogeneous function parameter packs. We prefer its brevity, but if the abbreviations are too terse, <code class="highlight"><c- n>__cpp_homo_function_packs</c-></code> is an alternative choice.</p>
+   <p>Another option is <code class="highlight"><c- n>__cpp_homo_parameter_packs</c-></code>, though it does not distinguish function from template parameter packs. The unabbreviated <code class="highlight"><c- n>__cpp_homogeneous_function_packs</c-></code> is unnecessarily verbose and we consider it less suitable.</p>
+   <h3 class="heading settled" data-level="9.11" id="wording-compatibility"><span class="secno">9.11. </span><span class="content">Compatibility with C++26</span><a class="self-link" href="#wording-compatibility"></a></h3>
+   <p>If the separate reclamation proposal is adopted, add the following entry under <a href="https://eel.is/c++draft/diff.cpp26">[diff.cpp26]</a> for declarations:</p>
+   <div class="diff-single wording-diff">
+    <div class="diff-pane">
+     <p class="diff-label">Addition, conditional on reclamation</p>
+     <div class="diff-insert diff-line">
+      <span aria-hidden="true" class="diff-marker">+</span>
+      <p>
+       <ins><strong>Affected subclause:</strong> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct">[dcl.fct]</a></ins>
+      </p>
+     </div>
+     <div class="diff-insert diff-line">
+      <span aria-hidden="true" class="diff-marker">+</span>
+      <p>
+       <ins><strong>Change:</strong> An ellipsis denoting C varargs following a parameter-declaration-list requires a preceding comma. An unnamed parameter declaration ending in an ellipsis can declare a homogeneous function parameter pack.</ins>
+      </p>
+     </div>
+     <div class="diff-insert diff-line">
+      <span aria-hidden="true" class="diff-marker">+</span>
+      <p>
+       <ins><strong>Rationale:</strong> Permit unnamed homogeneous function parameter packs.</ins>
+      </p>
+     </div>
+     <div class="diff-insert diff-line">
+      <span aria-hidden="true" class="diff-marker">+</span>
+      <p>
+       <ins><strong>Effect on original feature:</strong> Valid C++ 2026 code that omits the comma before an ellipsis denoting C varargs can become ill-formed or declare a function template with a homogeneous function parameter pack. Calls can change meaning because arguments initialize parameters of the declared element type instead of passing through C varargs. The resulting specializations have fixed-arity function types and do not preserve compatibility with existing C-varargs definitions. Inserting the comma preserves the original meaning.</ins>
+      </p>
+     </div>
+    </div>
+   </div>
    <h2 class="heading settled" data-level="10" id="conclusion"><span class="secno">10. </span><span class="content">Conclusion</span><a class="self-link" href="#conclusion"></a></h2>
-   <p>We seek agreement on the <a href="#proposed-polls">two C++29 proposals</a>. Given the changes to existing meanings and limited usage evidence, EWG must decide whether one standard cycle suffices for migration.</p>
+   <p>With homogeneous packs, a programmer would declare the type a variadic interface needs and let ordinary parameter initialization handle each argument. Abseil could then combine count-dependent results with conversions at the call site, while CasADi could preserve overload selection with one declaration per operation for any supported argument count. In both cases, the parameter list would express the intended behavior directly, reducing the helper code and repeated declarations that programmers must write, maintain, and reason about.</p>
+   <p>Further design and wording work remains, but these benefits are available with named packs independently of reclaiming comma-less C varargs. We therefore ask EWG to <a href="#proposed-polls">support named homogeneous packs for C++29</a> and treat reclamation as a <a href="#compatibility">separate migration decision</a>.</p>
    <h2 class="heading settled" data-level="11" id="acknowledgments"><span class="secno">11. </span><span class="content">Acknowledgments</span><a class="self-link" href="#acknowledgments"></a></h2>
    <p>Thanks to Richard Smith, David Vandevoorde, John Spicer, and Matthias Wippich for impromptu feedback, and to Zhihao Yuan for identifying an issue with an earlier <code class="highlight"><c- n>make_array</c-></code> example.</p>
   </main>
