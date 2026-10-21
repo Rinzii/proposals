@@ -413,7 +413,7 @@ void foo(T... vs);
 
 As Table 1 shows, the symmetry between template and function parameter packs is incomplete: C++26 lacks the homogeneous function form. In the lower-right declaration, <code>T</code> names one type, leaving <code>T... vs</code> with no pack to expand. The declaration is therefore ill-formed in current C++. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#8">[temp.variadic]/8</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.spec.auto.general#2">[dcl.spec.auto.general]/2</a> <a href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/n5050.pdf#page=250">[dcl.fct]/24</a> Under our proposal, <code>vs</code> would instead be a pack of parameters, each of type <code>T</code>.
 
-When an element type <code>T</code> is fixed or explicitly supplied, ordinary call-site conversions can initialize the parameters from arguments of different source types. In contrast, if <code>T</code> is deduced instead, the applicable arguments must yield consistent deductions. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.type#2">[temp.deduct.type]/2</a> In either case, the pack's length is known at compile time even when the argument values are computed at runtime. Those values initialize function parameters, whereas a homogeneous template pack takes constant template arguments. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#9">[temp.variadic]/9</a>
+For fixed or explicitly supplied <code>T</code>, ordinary conversions can initialize parameters from different source types. Deduced <code>T</code> requires consistent deductions across applicable arguments. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.type#2">[temp.deduct.type]/2</a> The pack's length is known at compile time even when its arguments are runtime values, unlike the constant template arguments of homogeneous template packs. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#9">[temp.variadic]/9</a>
 
 For example, the <a href="#examples">library comparisons</a> examine Abseil's need for count-dependent results and call-site diagnostics alongside CasADi's need to preserve conversion ranking.
 
@@ -421,9 +421,9 @@ The proposal allows one trailing homogeneous pack, making an abbreviated functio
 
 Earlier revisions received EWGI support, though the EWG poll to accept P1219 for C++23 failed in Belfast in 2019. [[P1219-EWG-RECORD]] Since then, C++26 has deprecated the comma-less C-varargs spelling that conflicts with unnamed homogeneous packs. <a href="https://timsong-cpp.github.io/cppwp/n5050/depr.ellipsis.comma">[depr.ellipsis.comma]</a> We return with concrete library comparisons, further evidence of programmer demand, and a revised model for the pack count.
 
-Our paper though does not consider declaration-site length syntax or multiple homogeneous packs. A single trailing pack covers the library use cases below and lets the remaining call arguments determine its length. Declaration-site lengths would require new syntax and multiple packs would need rules for dividing arguments between them ([[#explicit-lengths]]).
+A single trailing pack covers the library use cases and lets the remaining arguments determine its length. We defer declaration-site lengths, which need new syntax, and multiple packs, which need argument-partitioning rules ([[#explicit-lengths]]).
 
-Within this scope, the unambiguous named form <code>int... values</code> can proceed independently of the <a href="#compatibility">removal and reclamation decision</a>. Unnamed packs, however, require reclaiming <code>int...</code>, which still denotes C varargs in C++26. Deprecation alone does not establish that reclamation is safe. We therefore retain both decisions in P1219R3 with <a href="#proposed-polls">separate proposed EWG polls</a>. If EWG feedback warrants it, a separate removal paper remains a fallback.
+Unambiguous named packs such as <code>int... values</code> can proceed independently of <a href="#compatibility">reclaiming comma-less C varargs</a> for unnamed packs such as <code>int...</code>. We therefore propose <a href="#proposed-polls">separate EWG polls</a>. Deprecation alone does not establish safe reclamation. A separate removal paper remains a fallback if EWG feedback warrants it.
 
 # Library use cases # {#examples}
 
@@ -432,7 +432,7 @@ The current and proposed definitions in Tables 2 and 3 are independent alternati
 
 ## Combine call-site diagnostics with count-dependent results ## {#example-count}
 
-Abseil's internal <code>Layout&lt;Ts...&gt;</code> describes one array per element type in a single allocation. When the first arrays' element counts are supplied, <code>Partial</code> records the number of arguments in its result type <code>PartialType&lt;N&gt;</code>, while the size values themselves may be computed at runtime. [[ABSL-LAYOUT]]
+Abseil's internal <code>Layout&lt;Ts...&gt;</code> describes one array per element type in a single allocation. <code>Partial</code> records how many leading array sizes are supplied in its result type <code>PartialType&lt;N&gt;</code>, though the sizes may be runtime values. [[ABSL-LAYOUT]]
 
 With runtime <code>size_t</code> values <code>int_count</code> and <code>double_count</code>:
 
@@ -452,7 +452,7 @@ auto double_offset = ints_known.Offset<double>();
 auto char_offset = ints_and_doubles_known.Offset<char>();
 </xmp>
 
-In contrast, <code>ints_known.Offset&lt;char&gt;()</code> is rejected at compile time because the preceding <code>double</code> size is missing. A replacement must therefore retain both the count-selected result types and their available offsets, even though the offset values depend on runtime sizes. [[ABSL-LAYOUT]]
+<code>ints_known.Offset&lt;char&gt;()</code> is rejected at compile time because the preceding <code>double</code> size is missing. A replacement must preserve these count-selected result types and available offsets even when sizes are runtime values. [[ABSL-LAYOUT]]
 
 To obtain that count, the shipped declaration deduces every argument type. In the body, it casts each argument to <code>size_t</code>. A homogeneous pack would instead deduce only the count and initialize <code>size_t</code> parameters at the call:
 
@@ -495,7 +495,7 @@ Fixed <code>size_t</code> parameters make this distinction available by exposing
 
 The warnings still depend on the implementation and options. Negative integers remain well-formed and convert to unsigned values. Also, ordinary parameter initialization rejects explicit-only conversions, such as an explicit <code>operator size_t()</code>, that the shipped <code>static_cast</code> accepts. <a href="https://timsong-cpp.github.io/cppwp/n5050/conv.integral#3">[conv.integral]/3</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/over.match.conv#1">[over.match.conv]/1</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.static.cast#5">[expr.static.cast]/5</a>
 
-Current C++ can also supply the same conversions and result types through a bounded overload set. For plain <code>Layout&lt;Ts...&gt;</code> without static sizes, we can generate arities zero through <code>sizeof...(Ts)</code>. The header already uses the underlying technique, expanding an index pack through <code>IntToSize</code> to give its <a href="https://github.com/abseil/abseil-cpp/blob/d522178b54087d2c3855484c1899ce99ad278169/absl/container/internal/layout.h#L399-L400">constructor</a> <code>size_t</code> parameters. In the following example, <code>LayoutType&lt;N, Ts...&gt;</code> stands for <code>PartialType&lt;N&gt;</code>:
+For plain <code>Layout&lt;Ts...&gt;</code> without static sizes, current C++ can preserve the conversions and result types with overloads for arities zero through <code>sizeof...(Ts)</code>. The header's <a href="https://github.com/abseil/abseil-cpp/blob/d522178b54087d2c3855484c1899ce99ad278169/absl/container/internal/layout.h#L399-L400">constructor</a> already expands an index pack through <code>IntToSize</code> to obtain <code>size_t</code> parameters. Here <code>LayoutType&lt;N, Ts...&gt;</code> stands for <code>PartialType&lt;N&gt;</code>:
 
 <xmp class=language-cpp>
 template <size_t>
@@ -588,7 +588,7 @@ Argument-dependent lookup finds concatenation functions for <code>SX</code> and 
 
 Fixing only the first parameter as <code>const MatType&amp;</code> still leaves the second call ambiguous. Even two fixed parameters leave <code>vertcat(1, 1, symbolic(indices))</code> ambiguous because the distinguishing operand is in the deduced tail.
 
-Competing <code>std::initializer_list&lt;SX&gt;</code> and <code>std::initializer_list&lt;IM&gt;</code> overloads also make grouped calls ambiguous, though for a different reason. List ranking uses the worst element conversion. Here the scalar needs a user-defined conversion to either destination. This erases the indexed operand's distinction. <a href="https://timsong-cpp.github.io/cppwp/n5050/over.ics.list#5">[over.ics.list]/5</a>
+Grouped calls to competing <code>std::initializer_list&lt;SX&gt;</code> and <code>std::initializer_list&lt;IM&gt;</code> overloads are also ambiguous. List ranking uses the worst element conversion, so the scalar's user-defined conversion to either destination erases the indexed operand's distinction. <a href="https://timsong-cpp.github.io/cppwp/n5050/over.ics.list#5">[over.ics.list]/5</a>
 
 Current C++ does permit arbitrary counts when the destination is explicit, such as in <code>SX::vertcat({symbolic(indices), 1})</code>. Existing or generated fixed-arity wrappers also preserve positional calls. A homogeneous pack would express those wrappers' conversions with one declaration per operation and no fixed upper bound.
 
@@ -623,17 +623,17 @@ Current C++ does permit arbitrary counts when the destination is explicit, such 
 </figure>
 
 
-Although container sizes can be constant-evaluable, an ordinary function parameter's value still cannot supply a count-dependent return type or select a specialization. The proposed template count would instead be independent of runtime values, as Abseil's <code>PartialType</code> requires ([[#example-count]]). <a href="https://timsong-cpp.github.io/cppwp/n5050/support.initlist">[support.initlist]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#10">[temp.variadic]/10</a>
+For Abseil's <code>PartialType</code>, the count must be independent of runtime parameter values ([[#example-count]]). Constant-evaluable container sizes still cannot make an ordinary parameter's value select a return type or specialization. <a href="https://timsong-cpp.github.io/cppwp/n5050/support.initlist">[support.initlist]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#10">[temp.variadic]/10</a>
 
-There is also a difference in conversion ranking: initializer lists lose CasADi's per-parameter matrix distinction ([[#example-casadi]]). Constructor overload selection introduces a further difference, which we discuss in [[#constructors]].
+Initializer lists also lose CasADi's per-parameter conversion ranking ([[#example-casadi]]) and differ in constructor selection ([[#constructors]]).
 
 For existing vector inputs, runtime-only lengths, ownership, iteration, or growth, vectors remain preferable. <a href="https://timsong-cpp.github.io/cppwp/n5050/vector.overview">[vector.overview]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/container.reqmts">[container.reqmts]</a>
 
-The way a vector is constructed matters for move-only elements. Its initializer-list constructor uses const T references, generally preventing <code>std::vector&lt;std::unique_ptr&lt;T&gt;&gt;</code> construction from braced owning pointers. Suitable insertion or range construction still supports move-only elements. Homogeneous value parameters could instead move-initialize those elements and references could borrow them. Initializer lists themselves can contain move-only objects, but const access prevents ordinary moves out. <a href="https://timsong-cpp.github.io/cppwp/n5050/sequence.reqmts">[sequence.reqmts]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/initializer.list.syn">[initializer.list.syn]</a>
+A vector's initializer-list constructor uses const T references, generally preventing <code>std::vector&lt;std::unique_ptr&lt;T&gt;&gt;</code> construction from braced owning pointers. Suitable insertion or range construction supports move-only elements. Homogeneous value parameters could move-initialize them and reference parameters could borrow them. Initializer lists can contain move-only objects, but const access prevents ordinary moves out. <a href="https://timsong-cpp.github.io/cppwp/n5050/sequence.reqmts">[sequence.reqmts]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/initializer.list.syn">[initializer.list.syn]</a>
 
-Wrappers provide some flexibility within these restrictions. Lists of <code>std::reference_wrapper&lt;T&gt;</code> can mutate caller-owned objects. User-defined wrappers with <code>mutable</code> members also permit ownership transfer, though list copies share those members and observe moved-from state after consumption through another copy. Neither technique changes backing-array constness or makes the count a template argument. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.stc#9">[dcl.stc]/9</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.init.list#5">[dcl.init.list]/5</a>
+Lists of <code>std::reference_wrapper&lt;T&gt;</code> can mutate caller-owned objects. User-defined wrappers with <code>mutable</code> members also permit ownership transfer, though list copies share those members and observe moved-from state after consumption through another copy. Neither technique changes backing-array constness or makes the count a template argument. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.stc#9">[dcl.stc]/9</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.init.list#5">[dcl.init.list]/5</a>
 
-These interface differences do not give homogeneous packs a general performance advantage. Parameter initialization can copy or move, bodies can allocate, and vectors can reuse storage. Also, count specializations can increase instantiation work and code size despite possible code sharing. These costs therefore need to be measured for the intended use.
+These interface differences alone do not establish a general performance advantage. Parameter initialization can copy or move, bodies can allocate, and vectors can reuse storage. Count specializations can increase instantiation work and code size despite possible sharing. These costs need measurement for the intended use.
 
 <aside class=issue>
 <p><strong>Ian: research. Jan: review.</strong> Compare typed runtime variadics and checked C varargs, including D's variadics and GCC's argument-count builtin. Separate count and type checks, accounting for default promotions. <a href="https://dlang.org/spec/function.html#typesafe_variadic_functions">D typesafe variadics</a> <a href="https://gcc.gnu.org/onlinedocs/gcc/Constructing-Calls.html#index-_005f_005fbuiltin_005fva_005farg_005fpack_005flen">GCC <code>__builtin_va_arg_pack_len</code></a> <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.call#12">[expr.call]/12</a></p>
@@ -641,7 +641,7 @@ These interface differences do not give homogeneous packs a general performance 
 
 ## Spans, arrays, and constrained ranges ## {#range-alternatives}
 
-When the caller already has contiguous storage, spans and array references are suitable alternatives. Homogeneous packs would retain individual initialization and overload ranking without requiring a common buffer.
+Spans and array references suit existing contiguous storage. Homogeneous packs would retain individual initialization and overload ranking without requiring a common buffer.
 
 <code>std::span&lt;T&gt;</code> borrows contiguous, runtime-sized input for ordinary iteration without allocation, copying, ownership, or lifetime extension. <a href="https://timsong-cpp.github.io/cppwp/n5050/span.overview">[span.overview]</a>
 
@@ -670,7 +670,7 @@ Conversions also depend on how the input is supplied. Span construction from exi
 
 With <code>std::array&lt;T, N&gt;</code>, an explicit <code>T</code> supplies list-element destinations with narrowing checks, whereas class template argument deduction requires identical element types. This therefore retains the count and fixed type but requires a grouped object. <a href="https://timsong-cpp.github.io/cppwp/n5050/array#overview">[array.overview]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/array.cons">[array.cons]</a>
 
-For iteration over runtime-sized or non-contiguous sequences, a constrained <code>std::ranges::input_range</code> is another alternative. The concept guarantees neither contiguity, a size operation, mutation, ownership, nor static extent. Passing a forwarding reference can borrow without element copies. Also, deduction of the concrete type can preserve a type-carried static extent, as in static spans and arrays. Element convertibility requirements can constrain conversions, but conversions during iteration remain in the body rather than at the original positional call ([[#example-count]]). <a href="https://timsong-cpp.github.io/cppwp/n5050/range.refinements">[range.refinements]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/range.sized">[range.sized]</a>
+For runtime-sized or non-contiguous iteration, a constrained <code>std::ranges::input_range</code> guarantees neither contiguity, a size operation, mutation, ownership, nor static extent. A forwarding reference can borrow without element copies, while deduction can preserve type-carried static extent as in static spans and arrays. Convertibility constraints still leave element conversions in the iteration body rather than at the original positional call ([[#example-count]]). <a href="https://timsong-cpp.github.io/cppwp/n5050/range.refinements">[range.refinements]</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/range.sized">[range.sized]</a>
 
 # Design decisions # {#design-decisions}
 
@@ -800,7 +800,7 @@ T total(T... values) {
 }
 </xmp>
 
-Without an explicit element type, <code>total</code> must deduce <code>T</code> consistently from every applicable argument, just as it would with separate <code>T</code> parameters. It neither takes the first argument's type nor computes a common type. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.call#1">[temp.deduct.call]/1</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.type#2">[temp.deduct.type]/2</a> For <code>sum</code> or <code>total&lt;int&gt;</code>, however, the element type is already known and ordinary conversions initialize the <code>int</code> parameters. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.call#6">[expr.call]/6</a> Supplying only <code>T</code> still leaves the count to be deduced, while supplying an explicit count fixes the length, as in <code>sum&lt;2&gt;(1, 2.5)</code> or <code>total&lt;int, 2&gt;(1, 2.5)</code>.
+For <code>total</code>, deductions of <code>T</code> from all applicable arguments must agree. It neither takes the first argument's type nor computes a common type. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.call#1">[temp.deduct.call]/1</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.type#2">[temp.deduct.type]/2</a> Once the element type is fixed, as in <code>sum</code> or <code>total&lt;int&gt;</code>, ordinary conversions initialize the <code>int</code> parameters. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.call#6">[expr.call]/6</a> Supplying <code>T</code> alone leaves count deduction unchanged. Explicit counts fix the length, as in <code>sum&lt;2&gt;(1, 2.5)</code> or <code>total&lt;int, 2&gt;(1, 2.5)</code>.
 
 <figure class=table id=deduced-calls>
 <figcaption id=deduced-calls-caption>Proposed calls. Counts are omitted and deduced from arity.</figcaption>
@@ -820,15 +820,15 @@ Without an explicit element type, <code>total</code> must deduce <code>T</code> 
 </div>
 </figure>
 
-The function template and its template arguments identify the specialization so different counts select different specializations. Conversions to a fixed element type do not add the original argument types to that identity. Therefore, <code>sum(1, 2)</code>, <code>sum(1.0, 2.0)</code>, and <code>sum&lt;2&gt;(1, 2)</code> all select <code>sum&lt;2&gt;</code>. This identity is the same whether the count was explicit or deduced, after conversion to the count parameter's type.
+The template and its arguments, including the count converted to the count parameter's type, identify each specialization. The homogeneous pack's original argument types do not affect that identity when its element type is fixed. Therefore, <code>sum(1, 2)</code>, <code>sum(1.0, 2.0)</code>, and <code>sum&lt;2&gt;(1, 2)</code> all select <code>sum&lt;2&gt;</code>, whether the count is explicit or deduced.
 
 Equal function types alone do not, however, identify specializations, because different template arguments may produce the same adjusted function type. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.deduct.general#3">[temp.deduct.general]/3-4</a>
 
-For <code>sum</code>, an explicit count must agree with the call's argument count. Under the proposal, <code>sum&lt;3&gt;(1, 2, 3)</code> and <code>sum&lt;0&gt;()</code> are therefore valid, while <code>sum&lt;3&gt;(1, 2)</code>, <code>sum&lt;2&gt;(1, 2, 3)</code>, and <code>sum&lt;0&gt;(1)</code> are rejected. Counts follow ordinary constant template argument rules for the invented unsigned type. An empty template-argument list supplies no count so <code>sum&lt;&gt;()</code> deduces zero, while <code>&amp;sum&lt;&gt;</code> needs a target type. Also, the invented parameter does not make every body expression dependent.
+An explicit count must match the number of remaining call arguments. Thus <code>sum&lt;3&gt;(1, 2, 3)</code> and <code>sum&lt;0&gt;()</code> are valid, while <code>sum&lt;3&gt;(1, 2)</code>, <code>sum&lt;2&gt;(1, 2, 3)</code>, and <code>sum&lt;0&gt;(1)</code> are rejected. Counts follow ordinary constant template argument rules for the invented unsigned type. With no explicit count, <code>sum&lt;&gt;()</code> deduces zero and <code>&amp;sum&lt;&gt;</code> needs a target type. The invented parameter does not make every body expression dependent.
 
-When the count is zero, the pack provides no arguments from which to deduce template parameters. The element type must therefore be explicit, deduced elsewhere, or defaulted. Even then, substitution into the element pattern still applies.
+With zero count, the element type must be explicit, deduced elsewhere, or defaulted. Substitution into its pattern still applies.
 
-Ordinary rules also govern reference binding, parameter adjustment, and lifetimes. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct">[dcl.fct]</a> Braced arguments initialize their parameters with ordinary list-initialization and narrowing checks. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.init.list">[dcl.init.list]</a> Temporaries bound to reference parameters last through the call's full-expression. <a href="https://timsong-cpp.github.io/cppwp/n5050/class.temporary#6.10">[class.temporary]/6.10</a> The pack does not extend that lifetime, nor does it change argument-initialization evaluation order. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.call#6">[expr.call]/6-7</a>
+Ordinary reference binding and parameter adjustment apply. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct">[dcl.fct]</a> Braced arguments retain list-initialization and narrowing checks. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.init.list">[dcl.init.list]</a> A temporary bound to a reference parameter lasts through the call's full-expression. <a href="https://timsong-cpp.github.io/cppwp/n5050/class.temporary#6.10">[class.temporary]/6.10</a> Packs neither extend this lifetime nor change argument-initialization evaluation order. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.call#6">[expr.call]/6-7</a>
 
 <aside class=issue>
 <p><strong>Eczbek: implementation.</strong> Test deduction and initialization with move-only arguments, forwarding references, overloaded function names, braced arguments, constraints, exception specifications, and constant evaluation.</p>
@@ -1023,13 +1023,13 @@ Here, <code>product()</code> and <code>product(0.5, 0.8)</code> return <code>1.0
 
 For <code>double (*multiply)(double, double) = product</code>, the captureless lambda's generic conversion function template deduces count two from the target. Unary <code>+product</code>, however, lacks a target type and count and is rejected. Ordinary restrictions on capture, explicit object parameters, constraints, and static call operators also remain. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.lambda.closure#12">[expr.prim.lambda.closure]/12-14</a>
 
-If the lambda's parameters instead come from ordinary expansion of an enclosing pack, that expansion determines them even with indexing. It needs no independent count and alone does not make the lambda generic. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.lambda.general#6">[expr.prim.lambda.general]/6</a>
+An enclosing pack's ordinary expansion, including indexed forms, needs no independent count and alone does not make a lambda generic. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.lambda.general#6">[expr.prim.lambda.general]/6</a>
 
 ## Pack indexing ## {#indexing}
 
-Homogeneous packs would support expansion, folding, and indexing using the same operations as existing packs. In particular, C++26 pack indexing provides direct access to an individual parameter by a constant index. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.pack.index#2">[expr.prim.pack.index]/2-4</a>
+Homogeneous packs would use existing expansion, folding, and constant-index access operations. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.pack.index#2">[expr.prim.pack.index]/2-4</a>
 
-Count constraints and pack indexing would work alike for constrained and homogeneous packs:
+For example:
 
 <xmp class=language-cpp>
 template <std::size_t I>
@@ -1039,9 +1039,9 @@ double select_sample(double... samples)
 }
 </xmp>
 
-With runtime <code>double reading</code>, <code>select_sample&lt;1&gt;(reading, 0.5, 1.0)</code> selects the second sample with a caller-supplied index and deduced length. Index 3 for these three samples fails the constraint. A <code>std::same_as&lt;double&gt; auto... samples</code> pack gives the same results. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.pack.index#2">[expr.prim.pack.index]/2-4</a>
+With runtime <code>double reading</code>, <code>select_sample&lt;1&gt;(reading, 0.5, 1.0)</code> selects the second sample using a supplied index and deduced length. Index 3 fails the constraint. A <code>std::same_as&lt;double&gt; auto... samples</code> pack gives the same results. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.pack.index#2">[expr.prim.pack.index]/2-4</a>
 
-Indexing can also select a type: <code>Ts...[1]</code> selects the second type of <code>Ts</code>. If the index is itself a pack, <code>Ts...[Is]</code> expands <code>Ts</code> alone, leaving the index pack <code>Is</code> for an enclosing expansion. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#6.15">[temp.variadic]/6.15</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#8">[temp.variadic]/8</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.type.pack.index#2">[dcl.type.pack.index]/2-4</a>
+<code>Ts...[1]</code> selects the second type of <code>Ts</code>. As described in [[#definitions]], <code>Ts...[Is]</code> consumes <code>Ts</code> and leaves <code>Is</code> for an enclosing expansion. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#6.15">[temp.variadic]/6.15</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#8">[temp.variadic]/8</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.type.pack.index#2">[dcl.type.pack.index]/2-4</a>
 
 The index pack can differ in length from <code>Ts</code> and repeat a type.
 
@@ -1085,7 +1085,7 @@ auto selected_counter() {
 auto count_doubles = selected_counter<1, int, double, char>();
 </xmp>
 
-Here, <code>count_doubles(0.5, 1.0)</code> returns 2. The index selects <code>double</code> from three types and the call independently determines the count. Unlike <code>Ts...[Is]... values</code>, no index pack remains to expand.
+<code>count_doubles(0.5, 1.0)</code> returns 2: the index selects <code>double</code> from three types and the call independently determines the count. No index pack remains, unlike <code>Ts...[Is]... values</code>.
 
 ### Array parameters ### {#arrays}
 
@@ -1099,7 +1099,7 @@ The proposal retains this grammar. With approved reclamation, an array alias cou
 
 ### Empty packs ### {#empty-and-return}
 
-An empty outer <code>Is</code> expansion need not instantiate indexed selection. In contrast, a fixed index must designate an element whenever its type is required, including in the proposed homogeneous lambda's declaration even for zero-argument calls. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#9">[temp.variadic]/9</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.type.pack.index#2">[dcl.type.pack.index]/2</a>
+An empty outer <code>Is</code> expansion need not instantiate indexed selection. A fixed index must still designate an element whenever its type is required, including homogeneous lambda declarations with zero-argument calls. <a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#9">[temp.variadic]/9</a> <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.type.pack.index#2">[dcl.type.pack.index]/2</a>
 
 ## Captures ## {#captures}
 
@@ -1116,7 +1116,7 @@ int reading_sum = sum_later();
 
 For <code>reading == 1</code>, <code>reading_sum</code> is <code>6</code> after <code>deferred_sum</code> returns. Replacing <code>&#91;=]</code> with <code>[]</code> makes nonempty calls ill-formed. Reference capture leaves dangling references when <code>sum_later()</code> is called.
 
-A current-language <code>std::same_as&lt;int&gt; auto... values</code> pack supports the same callback. Ordinary capture and lifetime rules also apply through nested lambdas. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.lambda.capture#14">[expr.prim.lambda.capture]/14</a>
+A current-language <code>std::same_as&lt;int&gt; auto... values</code> pack supports the same callback. Capture and lifetime rules also apply through nested lambdas. <a href="https://timsong-cpp.github.io/cppwp/n5050/expr.prim.lambda.capture#14">[expr.prim.lambda.capture]/14</a>
 
 ## Alternatives ## {#alternatives}
 
@@ -1142,7 +1142,7 @@ Multiple or non-trailing homogeneous packs would need rules for associating and 
 
 # Reclaiming the deprecated comma-less spelling # {#compatibility}
 
-We propose homogeneous packs and deprecated comma-less C-varargs removal for C++29, with separate polls for the two decisions ([[#proposed-polls]]). Reclamation would permit unnamed packs, but if EWG declines it, named packs can still proceed with the existing unnamed disambiguation.
+Named packs can proceed in C++29 with existing unnamed disambiguation if EWG declines reclamation ([[#proposed-polls]]).
 
 Jan Schultke's [[P3176R1]], <em>The Oxford variadic comma</em>, chose deprecation because no feature then proposed required removal (section 6.1). Our proposal supplies that reason: reclaiming the spelling would allow unnamed homogeneous function parameter packs.
 
@@ -1621,7 +1621,7 @@ Corresponding homogeneous packs have corresponding parameter patterns and invent
 
 # Conclusion # {#conclusion}
 
-We seek agreement on named homogeneous function parameter packs for C++29 and a separate decision on reclaiming comma-less C varargs for unnamed packs. Reclamation changes existing meanings and the usage evidence remains limited. EWG must decide whether one standard cycle suffices for migration.
+We seek agreement on the <a href="#proposed-polls">two C++29 proposals</a>. Given the changes to existing meanings and limited usage evidence, EWG must decide whether one standard cycle suffices for migration.
 
 # Acknowledgments # {#acknowledgments}
 
