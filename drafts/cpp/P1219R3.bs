@@ -432,7 +432,7 @@ Earlier revisions received EWGI support, though the EWG poll to accept P1219 for
 
 A single trailing pack covers the library use cases and lets the remaining arguments determine its length. We defer declaration-site lengths, which need new syntax, and multiple packs, which need argument-partitioning rules ([[#explicit-lengths]]).
 
-Unambiguous named packs such as <code>int... values</code> can proceed independently of <a href="#compatibility">reclaiming comma-less C varargs</a> for unnamed packs such as <code>int...</code>. We therefore propose <a href="#proposed-polls">separate EWG polls</a>. Deprecation alone does not establish safe reclamation. A separate removal paper remains a fallback if EWG feedback warrants it.
+Named packs such as <code>int... values</code> can be adopted independently of the <a href="#compatibility">decision to reclaim comma-less C varargs</a> for unnamed packs. We therefore propose <a href="#proposed-polls">separate EWG polls</a>. Deprecation alone does not establish safe reclamation. A separate removal paper remains a fallback if EWG feedback warrants it.
 
 # Library use cases # {#examples}
 
