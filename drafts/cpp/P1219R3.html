@@ -1563,7 +1563,7 @@ Possible extra rowspan handling
   </style>
   <meta content="Bikeshed version ac92c2f0d, updated Fri Aug 21 16:01:29 2026 -0700" name="generator">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="bbc8be0b817acb9e271d8d22101a7d651472668e" name="revision">
+  <meta content="3d189fec9602234143ca5c1e5a89ed410c8bf285" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 :root {
@@ -2691,7 +2691,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>The proposal allows one trailing homogeneous pack, making an abbreviated function template whose specializations have ordinary fixed-arity function types. Existing pack expansions retain their meanings.</p>
    <p>Earlier revisions received EWGI support, though the EWG poll to accept P1219 for C++23 failed in Belfast in 2019. <a data-link-type="biblio" href="#biblio-p1219-ewg-record" title="P1219 Homogeneous variadic function parameters">[P1219-EWG-RECORD]</a> Since then, C++26 has deprecated the comma-less C-varargs spelling that conflicts with unnamed homogeneous packs. <a href="https://timsong-cpp.github.io/cppwp/n5050/depr.ellipsis.comma">[depr.ellipsis.comma]</a> We return with concrete library comparisons, further evidence of programmer demand, and a revised model for the pack count.</p>
    <p>A single trailing pack covers the library use cases and lets the remaining arguments determine its length. We defer declaration-site lengths, which need new syntax, and multiple packs, which need argument-partitioning rules (<a href="#explicit-lengths">§ 5.5.3 Explicit lengths</a>).</p>
-   <p>Unambiguous named packs such as <code class="highlight"><c- b>int</c-><c- p>...</c-> <c- n>values</c-></code> can proceed independently of <a href="#compatibility">reclaiming comma-less C varargs</a> for unnamed packs such as <code class="highlight"><c- b>int</c-><c- p>...</c-></code>. We therefore propose <a href="#proposed-polls">separate EWG polls</a>. Deprecation alone does not establish safe reclamation. A separate removal paper remains a fallback if EWG feedback warrants it.</p>
+   <p>Named packs such as <code class="highlight"><c- b>int</c-><c- p>...</c-> <c- n>values</c-></code> can be adopted independently of the <a href="#compatibility">decision to reclaim comma-less C varargs</a> for unnamed packs. We therefore propose <a href="#proposed-polls">separate EWG polls</a>. Deprecation alone does not establish safe reclamation. A separate removal paper remains a fallback if EWG feedback warrants it.</p>
    <h2 class="heading settled" data-level="3" id="examples"><span class="secno">3. </span><span class="content">Library use cases</span><a class="self-link" href="#examples"></a></h2>
    <h3 class="heading settled" data-level="3.1" id="example-count"><span class="secno">3.1. </span><span class="content">Combine call-site diagnostics with count-dependent results</span><a class="self-link" href="#example-count"></a></h3>
    <p>Abseil’s internal <code class="highlight"><c- n>Layout</c-><c- o>&lt;</c-><c- n>Ts</c-><c- p>...</c-><c- o>></c-></code> describes one array per element type in a single allocation. <code class="highlight"><c- n>Partial</c-></code> records how many leading array sizes are supplied in its result type <code class="highlight"><c- n>PartialType</c-><c- o>&lt;</c-><c- n>N</c-><c- o>></c-></code>, though the sizes may be runtime values. <a data-link-type="biblio" href="#biblio-absl-layout" title="Abseil: layout.h (d522178)">[ABSL-LAYOUT]</a></p>
