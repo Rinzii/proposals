@@ -3897,7 +3897,7 @@ int parameters, using an ordinary floating-integral conversion. It also
 permits empty calls and produces fixed-count specializations without C
 ellipsis. Even successful recompilation thus leaves a source and
 potential link compatibility break. Adoption includes approving these
-known source and ABI incompatibilities under <span class="citation" data-cites="SD10"><a href="https://wg21.link/sd10">[SD10]</a></span>,
+known source and link incompatibilities under <span class="citation" data-cites="SD10"><a href="https://wg21.link/sd10">[SD10]</a></span>,
 which Poll 2 (<a href="#proposed-polls">Proposed EWG polls</a>) asks
 separately.</p>
 <h3 data-number="6.2.1" id="migrating-definitions"><span class="header-section-number">6.2.1</span> Migrating definitions and
@@ -3925,7 +3925,7 @@ an additional argument cannot initialize
 <code class="sourceCode cpp"><span class="dt">int</span></code>, C
 varargs can remain viable. A missing selected-template definition can
 surface during instantiation or linking. Changing a declaration provides
-no ABI compatibility with an existing C-varargs definition.</p>
+no link compatibility with an existing C-varargs definition.</p>
 <p><span id="function-types-and-overload-resolution"></span>The alias
 <code class="sourceCode cpp"><span class="kw">using</span> <span class="va">F</span> <span class="op">=</span> <span class="dt">void</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span><span class="op">)</span></code>
 becomes ill-formed: function type aliases cannot introduce homogeneous
@@ -3957,7 +3957,7 @@ deprecated comma-less spelling</a>).</p>
 <li>We want C++29 to require a comma before C varargs and to reclaim the
 comma-less spelling for unnamed homogeneous function parameter
 packs.</li>
-<li>We accept the source and ABI incompatibilities for comma-less
+<li>We accept the source and link incompatibilities for comma-less
 C-varargs declarations that Poll 1 causes, as recorded in the <a href="#wording-compatibility">Annex C entry</a>.</li>
 <li>We want homogeneous function parameter packs for C++29.</li>
 <li>We want C++29 to permit at most one homogeneous function parameter
