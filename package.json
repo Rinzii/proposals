@@ -1,0 +1,10 @@
+{
+  "name": "ian-pike-papers",
+  "private": true,
+  "scripts": {
+    "build": "tsc --project tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2"
+  }
+}

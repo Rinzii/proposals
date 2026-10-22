@@ -1,39 +1,46 @@
 SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := build
+.NOTPARALLEL:
 
-SPEC_DIRS := cpp drafts/cpp
-OUT_DIR := out
-DEFAULT_SPEC := drafts/cpp/P1219R3.bs
-SPEC ?= $(DEFAULT_SPEC)
-OUT ?= $(OUT_DIR)/$(SPEC:.bs=.html)
-SPECS := $(sort $(foreach dir,$(SPEC_DIRS),$(wildcard $(dir)/*.bs)))
-OUTS := $(patsubst %.bs,$(OUT_DIR)/%.html,$(SPECS))
+PAPER ?= 1219_homogeneous_parameters
+PAPERS := $(sort $(notdir $(patsubst %/Makefile,%,$(wildcard papers/*/Makefile))))
+PYTHON := md/wg21/deps/python/bin/python3
+PORT ?= 8123
 
-.PHONY: build build-all check check-all clean list-specs setup update watch
+.PHONY: setup build build-all pdf pdf-all site assets serve watch update list-papers list-specs
 
 setup:
-	./scripts/setup.sh
+	./scripts/setup.sh "$(PAPER)"
 
-build:
-	./scripts/build.sh "$(SPEC)" "$(OUT)"
+build: setup
+	$(MAKE) -C "papers/$(PAPER)" html
 
-build-all:
-	./scripts/build.sh --all
+build-all: setup
+	@for paper in $(PAPERS); do $(MAKE) -C "papers/$$paper" html || exit; done
 
-check: build
-	@test -s "$(OUT)"
+pdf: setup
+	$(MAKE) -C "papers/$(PAPER)" pdf
 
-check-all: build-all
-	@for output in $(OUTS); do test -s "$$output" || exit; done
+pdf-all: setup
+	@for paper in $(PAPERS); do $(MAKE) -C "papers/$$paper" pdf || exit; done
 
-list-specs:
-	@printf '%s\n' $(SPECS)
+assets: node_modules/typescript/bin/tsc
+	npm run build
 
-update:
-	if [[ -x .venv/bin/bikeshed ]]; then .venv/bin/bikeshed update; else bikeshed update; fi
+node_modules/typescript/bin/tsc: package.json package-lock.json
+	npm ci
 
-watch:
-	./scripts/watch.sh "$(SPEC)" "$(OUT)"
+site: build-all pdf-all assets
+	$(PYTHON) scripts/site.py --output out/site $(addprefix papers/,$(PAPERS))
 
-clean:
-	rm -rf $(OUT_DIR)
+serve: site
+	$(PYTHON) scripts/serve.py --port "$(PORT)"
+
+watch: setup
+	$(MAKE) -C "papers/$(PAPER)" serve html SERVE_PORT="$(PORT)"
+
+update: setup
+	$(MAKE) -C "papers/$(PAPER)" update
+
+list-papers list-specs:
+	@printf '%s\n' $(PAPERS)

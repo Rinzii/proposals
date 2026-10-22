@@ -1,0 +1,60 @@
+diff --git a/data/templates/wg21.html b/data/templates/wg21.html
+index b2fff72..5e3fbb2 100644
+--- a/data/templates/wg21.html
++++ b/data/templates/wg21.html
+@@ -98,12 +98,12 @@ $endif$
+   </tr>
+ $if(project)$
+   <tr>
+-    <td style="vertical-align:top">Project:</td>
++    <td>Project:</td>
+     <td>$project$</td>
+   </tr>
+ $endif$
+   <tr>
+-    <td style="vertical-align:top">Audience:</td>
++    <td>Audience:</td>
+     <td>
+ $for(audience)$
+       $audience$<br>
+@@ -117,13 +117,23 @@ $if(revises)$
+   </tr>
+ $endif$
+   <tr>
+-    <td style="vertical-align:top">Reply-to:</td>
++    <td>Authors:</td>
+     <td>
+ $for(author)$
+       $author.name$<br><$author.email$><br>
+ $endfor$
+     </td>
+   </tr>
++$if(original-author)$
++  <tr>
++    <td>Original author:</td>
++    <td>
++$for(original-author)$
++      $original-author.name$<br><$original-author.email$><br>
++$endfor$
++    </td>
++  </tr>
++$endif$
+ </table>
+ </header>
+ $endif$
+diff --git a/data/templates/wg21.latex b/data/templates/wg21.latex
+index c6a0225..e372cd9 100644
+--- a/data/templates/wg21.latex
++++ b/data/templates/wg21.latex
+@@ -78,7 +78,10 @@ Audience:   $for(audience)$&$audience$\\$endfor$
+ $if(revises)$
+ Revises:    &$revises$\\
+ $endif$
+-Reply-to:   \@author
++Authors:    \@author
++$if(original-author)$
++Original author: $for(original-author)$&$original-author.name$\\$for(original-author.email)$&<$original-author.email$>\\$endfor$$endfor$
++$endif$
+     \end{tabular}
+   \end{flushright}
+ }

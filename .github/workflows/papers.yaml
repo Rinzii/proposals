@@ -1,0 +1,53 @@
+name: Papers
+on:
+  workflow_dispatch: {}
+  pull_request: {}
+  push:
+    branches: [main]
+concurrency:
+  group: papers-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y texlive-xetex fonts-texgyre
+          make setup
+      - name: Build
+        run: make site
+      - name: Upload rendered papers
+        uses: actions/upload-artifact@v4
+        with:
+          name: papers
+          path: out/site
+          include-hidden-files: true
+      - name: Publish
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          publish_dir=$(mktemp -d)
+          git worktree add --detach "$publish_dir" origin/gh-pages
+          rsync -av --delete --exclude=.git --exclude=CNAME --dry-run out/site/ "$publish_dir/"
+          rsync -av --delete --exclude=.git --exclude=CNAME out/site/ "$publish_dir/"
+          git -C "$publish_dir" config user.name github-actions
+          git -C "$publish_dir" config user.email github-actions@github.com
+          git -C "$publish_dir" add --all
+          if ! git -C "$publish_dir" diff --cached --quiet; then
+            git -C "$publish_dir" commit -m "Update rendered proposals"
+            git -C "$publish_dir" push origin HEAD:gh-pages
+          fi

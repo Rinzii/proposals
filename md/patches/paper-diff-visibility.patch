@@ -1,0 +1,13 @@
+diff --git a/data/templates/paper.css b/data/templates/paper.css
+index 1aa472a..e1c4f7b 100644
+--- a/data/templates/paper.css
++++ b/data/templates/paper.css
+@@ -53,6 +53,7 @@ body[data-syntax-highlighting="off"] code.sourceCode:not(.diff) span:not(.add, .
+   text-decoration: inherit !important;
+ }
+ 
+-body[data-deleted-text="hide"] .rm del {
++body[data-deleted-text="hide"] .rm,
++body[data-deleted-text="hide"] code.diff span.st {
+   display: none !important;
+ }

@@ -1,0 +1,40 @@
+@media screen {
+  html:root {
+    --toc-accent: var(--paper-code-keyword);
+    --toc-active-bg: var(--paper-table-head);
+    --toc-active-text: var(--paper-code-keyword);
+    --toc-border: var(--paper-table-rule);
+    --toc-heading: var(--paper-text);
+    --toc-hover-bg: var(--paper-code-bg);
+    --toc-hover-border: var(--paper-table-rule);
+    --toc-hover-text: var(--paper-text);
+    --toc-muted: var(--paper-caption);
+    --toc-rail: var(--paper-table-rule);
+    --toc-section-number: var(--paper-caption);
+    --toc-scrollbar: var(--paper-table-rule);
+    --toc-surface: color-mix(in srgb, var(--paper-background) 96%, transparent);
+    --toc-panel-shadow:
+      0 0.75rem 2.25rem color-mix(in srgb, var(--paper-text) 8%, transparent),
+      0 0.125rem 0.4rem color-mix(in srgb, var(--paper-text) 5%, transparent);
+    --view-controls-bg: color-mix(in srgb, var(--paper-background) 96%, transparent);
+    --view-controls-border: var(--paper-table-rule);
+    --view-controls-color: var(--paper-text);
+    --view-controls-hover: var(--paper-code-bg);
+    --view-controls-shadow: 0 0.2rem 0.8rem color-mix(in srgb, var(--paper-text) 12%, transparent);
+  }
+
+  .view-controls input {
+    accent-color: var(--toc-accent);
+  }
+}
+
+@media screen and (max-width: 42em) {
+  .wrapper .wording {
+    margin-inline-end: 0;
+  }
+
+  .code-comparison table,
+  .table-wrapper > table.cmptable {
+    min-width: 44em;
+  }
+}

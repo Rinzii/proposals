@@ -1,0 +1,29 @@
+diff --git a/data/filters/wg21.py b/data/filters/wg21.py
+index cdc7e56..ff4d046 100755
+--- a/data/filters/wg21.py
++++ b/data/filters/wg21.py
+@@ -508,10 +508,11 @@ def divspan(elem, doc):
+ 
+     def _diff(color, latex_tag, html_tag):
+         if isinstance(elem, pf.Span):
+-            wrap_elem(
+-                pf.RawInline(f'\\{latex_tag}{{', 'latex'),
+-                elem,
+-                pf.RawInline('}', 'latex'))
++            if latex_tag:
++                wrap_elem(
++                    pf.RawInline(f'\\{latex_tag}{{', 'latex'),
++                    elem,
++                    pf.RawInline('}', 'latex'))
+             wrap_elem(
+                 pf.RawInline(f'<{html_tag}>', 'html'),
+                 elem,
+@@ -556,7 +557,7 @@ def divspan(elem, doc):
+     # where we want to strikeout/underline **within** a highlighted code block.
+     # We could use the soul package for other cases, but keeping it consistent
+     # seems simpler at least for now.
+-    def add(): _diff('addcolor', 'uline', 'ins')
++    def add(): _diff('addcolor', None, 'ins')
+     def rm():  _diff('rmcolor', 'sout', 'del')
+ 
+     def mark():

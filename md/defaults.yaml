@@ -1,0 +1,6 @@
+css:
+  - ${.}/papers.css
+  - ${.}/papers-screen.css
+  - ${.}/papers-print.css
+metadata-files:
+  - ${.}/paper-style.yaml

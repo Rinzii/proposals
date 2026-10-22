@@ -1,0 +1,319 @@
+html body {
+  font-family: var(--paper-body-font), serif;
+  line-height: var(--paper-body-leading);
+  color: var(--paper-text);
+  background: var(--paper-background);
+}
+
+.wrapper a:not(.hidden_link):link,
+.wrapper a:not(.hidden_link):visited {
+  color: var(--paper-link);
+}
+
+.wrapper a:not(.hidden_link) {
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: calc(var(--paper-link-underline-width) * 1em);
+  text-underline-offset: calc(var(--paper-link-underline-offset) * 1em);
+}
+
+.wrapper a.self-link {
+  text-decoration: none;
+}
+
+.wrapper :is(.draftnote, .ednote) {
+  color: var(--paper-note);
+}
+
+.wrapper .draftnote {
+  background: color-mix(in srgb, var(--paper-note) 8%, transparent);
+}
+
+.wrapper div.draftnote {
+  margin-block: 1em;
+  padding: 0.65em 0.9em 0.65em 1.1em;
+  border-inline-start: 0.25em solid var(--paper-note);
+  border-radius: 0 0.4em 0.4em 0;
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 0.92em;
+}
+
+.wrapper div.draftnote > :first-child {
+  margin-block-start: 0;
+}
+
+.wrapper div.draftnote > :last-child {
+  margin-block-end: 0;
+}
+
+.wrapper span.draftnote {
+  padding-inline: 0.25em;
+  border-radius: 0.2em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.wrapper .grammar-term {
+  color: var(--paper-grammar);
+  font-style: italic;
+}
+
+#title-block-header > table td:first-child {
+  vertical-align: top;
+}
+
+.wrapper :is(h1, h2, h3, h4, h5, h6) {
+  line-height: var(--paper-heading-leading);
+}
+
+.wrapper h1 { font-size: calc(var(--paper-heading-1) * 1em); }
+.wrapper h2 { font-size: calc(var(--paper-heading-2) * 1em); }
+.wrapper h3 { font-size: calc(var(--paper-heading-3) * 1em); }
+.wrapper h4 { font-size: calc(var(--paper-heading-4) * 1em); }
+.wrapper h5 { font-size: calc(var(--paper-heading-5) * 1em); }
+.wrapper h6 { font-size: calc(var(--paper-heading-6) * 1em); }
+
+.wrapper :target {
+  background-color: transparent;
+  color: inherit;
+}
+
+html .wrapper :where(:target) :is(.codeblock, .sourceCode, ul),
+.wrapper :is(p, li):has(> span.marginalizedparent > a.marginalized:target) {
+  background-color: transparent;
+}
+
+.csl-bib-body {
+  overflow-wrap: anywhere;
+}
+
+.wrapper div.sourceCode:where(:not(:has(> pre.not_proposed))) {
+  background: var(--paper-code-bg);
+}
+
+.wrapper code.sourceCode:not(.diff) span:is(.kw, .cf) {
+  color: var(--paper-code-keyword);
+  font-weight: 700;
+}
+
+.wrapper code.sourceCode:not(.diff) span.dt {
+  color: var(--paper-code-type);
+}
+
+.wrapper code.sourceCode:not(.diff) span:is(.fu, .va, .bu, .at, .cn) {
+  color: var(--paper-code-name);
+}
+
+.wrapper code.sourceCode:not(.diff) span.im {
+  color: var(--paper-code-scope);
+}
+
+.wrapper code.sourceCode:not(.diff) span:is(.st, .ch, .sc, .ss, .vs) {
+  color: var(--paper-code-string);
+}
+
+.wrapper code.sourceCode:not(.diff) span:is(.co, .cv, .do, .in, .wa) {
+  color: var(--paper-code-comment);
+  font-style: italic;
+}
+
+.wrapper code.sourceCode:not(.diff) span.pp {
+  color: var(--paper-code-preprocessor);
+}
+
+.wrapper code.sourceCode:not(.diff) span.op {
+  color: var(--paper-code-punctuation);
+}
+
+.wrapper code.sourceCode:not(.diff) span.ex {
+  color: var(--paper-code-ellipsis);
+  font-weight: 700;
+}
+
+.wrapper code.sourceCode:not(.diff) span:is(.dv, .bn, .fl) {
+  color: var(--paper-code-number);
+}
+
+.wrapper code.sourceCode:not(.diff) span:is(.al, .er) {
+  color: var(--paper-code-error);
+}
+
+.wrapper pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.wrapper pre > code.sourceCode {
+  white-space: inherit;
+}
+
+.wrapper .add {
+  background: var(--paper-valid-bg);
+  color: var(--paper-add);
+}
+
+.wrapper .add ins {
+  text-decoration: none;
+}
+
+.wrapper .rm {
+  background: var(--paper-invalid-bg);
+  color: var(--paper-rm);
+}
+
+.wrapper :is(.add, .rm) :is(ins, del) {
+  color: inherit;
+}
+
+.wrapper .wording {
+  margin: 1em calc(var(--paper-wording-inset) * 1em);
+  padding: 0 calc(var(--paper-wording-padding) * 1em);
+  border: calc(var(--paper-border-width) * 1em) solid var(--paper-wording-border);
+  background: var(--paper-wording-bg);
+  color: var(--paper-wording-text);
+  font-style: normal;
+}
+
+.wording :is(p, li, .example) {
+  position: relative;
+}
+
+.wording p {
+  margin-block: 1em;
+}
+
+.wording .marginalizedparent {
+  position: static;
+}
+
+.wording .marginalized {
+  position: absolute;
+  inset-inline-end: calc(100% + 1.25rem);
+  top: 0;
+  width: 3em;
+  color: var(--paper-wording-number);
+  font: normal 0.75rem/var(--paper-body-leading) var(--paper-body-font), serif;
+  text-align: end;
+  text-decoration: none;
+}
+
+.wording li .marginalized {
+  inset-inline-end: calc(100% + 3.25rem);
+}
+
+.wrapper .wording .add,
+.wrapper .wording code.diff span.va {
+  background: var(--paper-wording-add-bg);
+}
+
+.wrapper .wording .rm,
+.wrapper .wording code.diff span.st {
+  background: var(--paper-wording-remove-bg);
+  color: var(--paper-rm);
+}
+
+.wrapper .wording code.diff {
+  color: inherit;
+}
+
+.wrapper code.diff span.va {
+  color: var(--paper-add);
+}
+
+.wrapper code.diff span.st {
+  color: var(--paper-rm);
+}
+
+.wrapper .wording code.diff span.st,
+.wrapper .rm code.sourceCode {
+  text-decoration: line-through;
+}
+
+.wrapper :is(.wording, .add, .rm) div.sourceCode,
+.wrapper td:has(pre:is(.code-valid, .code-invalid)) div.sourceCode {
+  background: transparent;
+}
+
+.wrapper code {
+  font-family: var(--paper-code-font), monospace;
+  font-size: calc(var(--paper-code-scale) * 1rem);
+}
+
+.wrapper .table-wrapper > table {
+  border-collapse: collapse;
+  border-inline: none;
+  border-block: calc(var(--paper-border-width) * 1em) solid var(--paper-table-rule);
+  margin-block: 1em;
+}
+
+.wrapper .table-wrapper > table > :is(thead, tbody, tfoot) > tr {
+  border: none;
+}
+
+.wrapper .table-wrapper > table > :is(thead, tbody, tfoot) > tr > :is(th, td) {
+  border: none;
+  padding: calc(var(--paper-table-padding-y) * 1em) calc(var(--paper-table-padding-x) * 1em);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.wrapper .table-wrapper > table > thead {
+  background: var(--paper-table-head);
+  border-bottom: calc(var(--paper-border-width) * 1em) solid var(--paper-table-rule);
+}
+
+.table-wrapper > table > tbody > tr:nth-child(even) {
+  background: var(--paper-table-stripe);
+}
+
+.table-wrapper caption {
+  margin-block: 1em;
+  text-align: center;
+  color: var(--paper-caption);
+}
+
+.table-wrapper caption blockquote {
+  margin: 0;
+}
+
+.code-comparison table,
+table.cmptable {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.wrapper #pack-matrix > .table-wrapper > table > tbody > tr > td:first-child {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.wrapper .code-comparison code,
+.wrapper table.cmptable code {
+  font-size: calc(var(--paper-comparison-code-scale) * 1rem);
+}
+
+.wrapper td:has(pre.code-valid) {
+  background: var(--paper-valid-bg);
+}
+
+.wrapper td:has(pre.code-invalid) {
+  background: var(--paper-invalid-bg);
+}
+
+.poll-table table {
+  font-variant-numeric: tabular-nums;
+}
+
+.poll-table :is(th, td):not(:first-child) {
+  min-width: 2.5em;
+  text-align: center;
+}
+
+.poll-table :is(th, td):first-child {
+  text-align: start;
+}
+
+.poll-summary table {
+  width: 100%;
+}
+

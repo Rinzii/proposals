@@ -1,0 +1,100 @@
+\usepackage{fvextra}
+\usepackage{colortbl}
+\usepackage{booktabs}
+\usepackage{etoolbox}
+\usepackage{titlesec}
+\geometry{paperwidth=\PaperPageWidth mm,paperheight=\PaperPageHeight mm,left=\PaperPageMarginX mm,right=\PaperPageMarginX mm,top=\PaperPageMarginY mm,bottom=\PaperPageMarginY mm}
+\newcommand{\PaperCurrentCodeScale}{\PaperCodeScale}
+\newcommand{\PaperCodeFontSize}{\fontsize{\fpeval{\PaperBodySize*\PaperCurrentCodeScale}pt}{\fpeval{\PaperBodySize*\PaperCurrentCodeScale*\PaperBodyLeading}pt}\selectfont}
+\fvset{fontsize=\PaperCodeFontSize,breaklines=true,breakanywhere=true,breaknonspaceingroup=true}
+\newcommand{\PaperHeadingFont}[1]{\fontsize{\fpeval{\PaperBodySize*#1}pt}{\fpeval{\PaperBodySize*#1*\PaperHeadingLeading}pt}\selectfont}
+\titleformat{\section}{\normalfont\bfseries\PaperHeadingFont{\PaperHeadingOne}}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\bfseries\PaperHeadingFont{\PaperHeadingTwo}}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalfont\bfseries\PaperHeadingFont{\PaperHeadingThree}}{\thesubsubsection}{1em}{}
+\titleformat{\paragraph}[block]{\normalfont\bfseries\PaperHeadingFont{\PaperHeadingFour}}{\theparagraph}{1em}{}
+\titleformat{\subparagraph}[block]{\normalfont\bfseries\PaperHeadingFont{\PaperHeadingFive}}{\thesubparagraph}{1em}{}
+\arrayrulecolor{paper-table-rule}
+\setlength{\heavyrulewidth}{\PaperBorderWidth em}
+\setlength{\lightrulewidth}{\PaperBorderWidth em}
+\setlength{\tabcolsep}{\PaperTablePaddingX em}
+\setlength{\extrarowheight}{\PaperTablePaddingY em}
+\colorlet{shadecolor}{paper-code-bg}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\},breaklines=true,breakanywhere=true,fontsize=\PaperCodeFontSize}
+\renewcommand{\KeywordTok}[1]{\textcolor{paper-code-keyword}{\textbf{#1}}}
+\renewcommand{\DataTypeTok}[1]{\textcolor{paper-code-type}{#1}}
+\renewcommand{\ControlFlowTok}[1]{\textcolor{paper-code-keyword}{\textbf{#1}}}
+\renewcommand{\FunctionTok}[1]{\textcolor{paper-code-name}{#1}}
+\renewcommand{\VariableTok}[1]{\textcolor{paper-code-name}{#1}}
+\renewcommand{\BuiltInTok}[1]{\textcolor{paper-code-name}{#1}}
+\renewcommand{\AttributeTok}[1]{\textcolor{paper-code-name}{#1}}
+\renewcommand{\ImportTok}[1]{\textcolor{paper-code-scope}{#1}}
+\renewcommand{\ConstantTok}[1]{\textcolor{paper-code-name}{#1}}
+\renewcommand{\StringTok}[1]{\textcolor{paper-code-string}{#1}}
+\renewcommand{\CharTok}[1]{\textcolor{paper-code-string}{#1}}
+\renewcommand{\SpecialCharTok}[1]{\textcolor{paper-code-string}{#1}}
+\renewcommand{\SpecialStringTok}[1]{\textcolor{paper-code-string}{#1}}
+\renewcommand{\VerbatimStringTok}[1]{\textcolor{paper-code-string}{#1}}
+\renewcommand{\CommentTok}[1]{\textcolor{paper-code-comment}{\textit{#1}}}
+\renewcommand{\CommentVarTok}[1]{\textcolor{paper-code-comment}{\textit{#1}}}
+\renewcommand{\AlertTok}[1]{\textcolor{paper-code-error}{#1}}
+\renewcommand{\ErrorTok}[1]{\textcolor{paper-code-error}{\textbf{#1}}}
+\renewcommand{\WarningTok}[1]{\textcolor{paper-code-comment}{\textbf{\textit{#1}}}}
+\renewcommand{\DocumentationTok}[1]{\textcolor{paper-code-comment}{\textit{#1}}}
+\renewcommand{\InformationTok}[1]{\textcolor{paper-code-comment}{\textit{#1}}}
+\renewcommand{\PreprocessorTok}[1]{\textcolor{paper-code-preprocessor}{#1}}
+\renewcommand{\OperatorTok}[1]{\textcolor{paper-code-punctuation}{#1}}
+\renewcommand{\ExtensionTok}[1]{\textcolor{paper-code-ellipsis}{\textbf{#1}}}
+\renewcommand{\DecValTok}[1]{\textcolor{paper-code-number}{#1}}
+\renewcommand{\BaseNTok}[1]{\textcolor{paper-code-number}{#1}}
+\renewcommand{\FloatTok}[1]{\textcolor{paper-code-number}{#1}}
+\newcommand{\PaperHighlight}[2]{\bgroup\markoverwith{\textcolor{#1}{\rule[-0.4ex]{2pt}{2.2ex}}}\ULon{#2}}
+\newcommand{\PaperUnmarked}[1]{#1}
+\newcommand{\PaperStrikeHighlight}[1]{\bgroup\markoverwith{\rlap{\textcolor{\PaperRemovalColor}{\rule[-0.4ex]{2pt}{2.2ex}}}\rule[0.55ex]{2pt}{0.4pt}}\ULon{#1}}
+\begingroup\lccode`\~=`\ \lowercase{\endgroup\def\PaperCodeSpace{~}}
+\ExplSyntaxOn
+\cs_generate_variant:Nn \seq_set_split:Nnn {NVn}
+\NewDocumentCommand{\PaperCodeStrike}{m}{\seq_set_split:NVn\l_tmpa_seq\PaperCodeSpace{#1}\seq_pop_left:NN\l_tmpa_seq\l_tmpa_tl\exp_args:NV\sout\l_tmpa_tl\seq_map_inline:Nn\l_tmpa_seq{\sout{\mbox{\space}}\allowbreak\sout{##1}}}
+\NewDocumentCommand{\PaperDottedUrlText}{m}{\tl_map_inline:nn{#1}{\leavevmode\setbox0=\hbox{##1}\rlap{\raisebox{-\PaperLinkUnderlineOffset em}{\hbox to\wd0{\leaders\hbox{\rule{\PaperLinkUnderlineWidth em}{\PaperLinkUnderlineWidth em}\hskip\PaperLinkUnderlineWidth em}\hfill}}}\box0\penalty100\hskip0pt}}
+\NewDocumentCommand{\PaperLinkText}{m}{\tl_if_in:nnTF{#1}{\CSLIndent}{\group_begin:\cs_set_eq:NN\PaperOriginalCSLIndent\CSLIndent\RenewDocumentCommand\CSLIndent{m}{\PaperOriginalCSLIndent{\PaperDottedUrlText{##1}}}#1\group_end:}{\PaperDottedLink{#1}}}
+\ExplSyntaxOff
+\newcommand{\PaperDiffLine}[2]{\expandafter\def\csname PaperDiffLine#1\endcsname{#2}}
+\newcommand{\PaperDiffBackground}[1]{\ifcsname PaperDiffLine\arabic{FancyVerbLine}\endcsname\begingroup\setlength{\fboxsep}{0pt}\colorbox{\csname PaperDiffLine\arabic{FancyVerbLine}\endcsname}{#1}\endgroup\else#1\fi}
+\newcommand{\PaperStrikeToken}[1]{\csletcs{PaperOriginal#1}{#1}\csdef{#1}##1{\csuse{PaperOriginal#1}{\PaperCodeStrike{##1}}}}
+\newif\ifPaperDiff
+\newif\ifPaperRemoved
+\newenvironment{PaperComparison}{\begingroup\renewcommand{\PaperCurrentCodeScale}{\PaperComparisonCodeScale}}{\endgroup}
+\newenvironment{PaperMeasureCell}[3]{\def\PaperMeasuredName{#1}\expandafter\newsavebox\csname PaperCell#1\endcsname\begin{lrbox}{\csname PaperCell#1\endcsname}\begin{minipage}[t]{\dimexpr#2\dimexpr\linewidth-#3\tabcolsep*2\relax\relax}\raggedright}{\end{minipage}\end{lrbox}\global\setbox\csname PaperCell\PaperMeasuredName\endcsname=\copy\csname PaperCell\PaperMeasuredName\endcsname}
+\newcommand{\PaperCenteredCell}[3]{\begingroup\dimen0=\ht\csname PaperCell#2\endcsname\dimen2=\dp\csname PaperCell#2\endcsname\ifdim\ht\csname PaperCell#3\endcsname>\dimen0\dimen0=\ht\csname PaperCell#3\endcsname\fi\ifdim\dp\csname PaperCell#3\endcsname>\dimen2\dimen2=\dp\csname PaperCell#3\endcsname\fi\ifdim\ht\csname @arstrutbox\endcsname>\dimen0\dimen0=\ht\csname @arstrutbox\endcsname\fi\ifdim\dp\csname @arstrutbox\endcsname>\dimen2\dimen2=\dp\csname @arstrutbox\endcsname\fi\raisebox{\dimexpr(\dimen0-\dimen2-\ht\csname PaperCell#1\endcsname+\dp\csname PaperCell#1\endcsname)/2\relax}{\usebox{\csname PaperCell#1\endcsname}}\endgroup}
+\newenvironment{PaperDiff}{\begingroup\PaperDifftrue}{\endgroup}
+\newmdenv[backgroundcolor=paper-wording-bg,fontcolor=paper-wording-text,linecolor=paper-wording-border,linewidth=\PaperBorderWidth em,leftmargin=\PaperWordingInset em,rightmargin=\PaperWordingInset em,innerleftmargin=\PaperWordingPadding em,innerrightmargin=\PaperWordingPadding em,innertopmargin=0pt,innerbottommargin=0pt,skipabove=\baselineskip,skipbelow=\baselineskip]{PaperWording}
+\AtBeginEnvironment{PaperWording}{\emergencystretch=\linewidth}
+\newmdenv[backgroundcolor=paper-wording-add-bg,hidealllines=true,innerleftmargin=0pt,innerrightmargin=0pt,innertopmargin=0pt,innerbottommargin=0pt,skipabove=0.5\baselineskip,skipbelow=0pt]{PaperAddedBlock}
+\newmdenv[backgroundcolor=paper-wording-remove-bg,hidealllines=true,innerleftmargin=0pt,innerrightmargin=0pt,innertopmargin=0pt,innerbottommargin=0pt,skipabove=0.5\baselineskip,skipbelow=0pt]{PaperRemovedBlock}
+\newenvironment{PaperAddition}{\begin{PaperAddedBlock}\color{paper-add}\colorlet{shadecolor}{paper-wording-add-bg}}{\end{PaperAddedBlock}}
+\newenvironment{PaperRemoval}{\begin{PaperRemovedBlock}\color{paper-rm}\PaperRemovedtrue\colorlet{shadecolor}{paper-wording-remove-bg}}{\end{PaperRemovedBlock}}
+\AtBeginEnvironment{Highlighting}{
+  \ifPaperDiff
+    \renewcommand{\NormalTok}[1]{\textcolor{paper-wording-text}{#1}}
+    \renewcommand{\FancyVerbHighlightLine}[1]{\PaperDiffBackground{#1}}
+    \renewcommand{\VariableTok}[1]{\textcolor{paper-add}{#1}}
+    \renewcommand{\StringTok}[1]{\textcolor{paper-rm}{\PaperCodeStrike{#1}}}
+  \fi
+  \ifPaperRemoved
+    \forcsvlist{\PaperStrikeToken}{NormalTok,KeywordTok,DataTypeTok,ControlFlowTok,FunctionTok,VariableTok,BuiltInTok,AttributeTok,ImportTok,ConstantTok,StringTok,CharTok,SpecialCharTok,SpecialStringTok,VerbatimStringTok,CommentTok,CommentVarTok,DocumentationTok,InformationTok,PreprocessorTok,OperatorTok,ExtensionTok,DecValTok,BaseNTok,FloatTok,AlertTok,ErrorTok,WarningTok}
+  \fi
+}
+\newcommand{\PaperDottedLink}[1]{\bgroup\markoverwith{\rule[-\PaperLinkUnderlineOffset em]{\PaperLinkUnderlineWidth em}{\PaperLinkUnderlineWidth em}\hspace{\PaperLinkUnderlineWidth em}}\ULon{#1}}
+\makeatletter
+\AtBeginDocument{\let\PaperUrlInternal\url@\def\url@#1{\begingroup\def\Url@FormatString{\UrlFont\expandafter\PaperDottedUrlText\expandafter{\Url@String}}\PaperUrlInternal{#1}\endgroup}}
+\AtBeginDocument{\NewCommandCopy\PaperHref\href\RenewDocumentCommand\href{o m m}{\IfNoValueTF{#1}{\PaperHref{#2}{\PaperLinkText{#3}}}{\PaperHref[#1]{#2}{\PaperLinkText{#3}}}}\NewCommandCopy\PaperHyperlink\hyperlink\RenewDocumentCommand\hyperlink{m m}{\PaperHyperlink{#1}{\PaperDottedLink{#2}}}\NewCommandCopy\PaperHyperref\hyperref\renewrobustcmd\hyperref{\@ifnextchar[{\PaperLocalRef}{\PaperHyperref}}\def\PaperLocalRef[#1]#2{\PaperHyperref[#1]{\PaperDottedLink{#2}}}}
+\AtBeginDocument{\patchcmd{\@maketitle}{\LARGE}{\PaperHeadingFont{\PaperHeadingOne}}{}{}}
+\AtBeginDocument{\pretocmd{\@makecaption}{\begingroup\color{paper-caption}}{}{}\apptocmd{\@makecaption}{\endgroup}{}{}}
+\AtBeginDocument{\@ifundefined{LT@makecaption}{}{\patchcmd{\LT@makecaption}{\reset@font}{\reset@font\color{paper-caption}}{}{}}}
+\renewcommand{\pnum}[1]{\noindent\makebox[0pt][l]{\makebox[0pt][r]{\textcolor{paper-wording-number}{\scriptsize #1}\hspace{\@totalleftmargin}\quad}}\ignorespaces}
+\AtBeginDocument{
+  \fontsize{\PaperBodySize pt}{\fpeval{\PaperBodySize*\PaperBodyLeading}pt}\selectfont
+  \color{paper-text}
+  \global\let\default@color\current@color
+  \hypersetup{linkcolor=paper-link,urlcolor=paper-link,citecolor=paper-link,pdfborder={0 0 0},pdfborderstyle={},linkbordercolor=paper-link,urlbordercolor=paper-link,citebordercolor=paper-link}
+}
+\makeatother

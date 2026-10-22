@@ -1,0 +1,29 @@
+@media print {
+  @page {
+    size: calc(var(--paper-page-width) * 1mm) calc(var(--paper-page-height) * 1mm);
+    margin: calc(var(--paper-page-margin-y) * 1mm) calc(var(--paper-page-margin-x) * 1mm);
+  }
+
+  html {
+    font-size: var(--paper-body-size);
+  }
+
+  html body {
+    margin: 0;
+  }
+
+  .wrapper .table-wrapper {
+    overflow: visible;
+  }
+
+  .wrapper pre,
+  .wrapper pre.numberSource {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .wrapper pre,
+  .wrapper table tr {
+    break-inside: avoid;
+  }
+}

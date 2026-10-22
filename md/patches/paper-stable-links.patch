@@ -1,0 +1,12 @@
+diff --git a/data/filters/wg21.py b/data/filters/wg21.py
+--- a/data/filters/wg21.py
++++ b/data/filters/wg21.py
+@@ -305,7 +305,7 @@ def sref(elem, doc):
+ 
+     link = pf.Link(
+         pf.Str(f'[{name}]' + (f'/{pnum}' if pnum else '')),
+-        url=f'https://eel.is/c++draft/{target}')
++        url=f'https://wg21.link/{target}')
+     info = srefs.get(name)
+     if info is None:
+         pf.debug(f"""[WARNING] mpark/wg21: stable name {name} not found.

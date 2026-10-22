@@ -1,0 +1,80 @@
+diff --git a/data/filters/wg21.py b/data/filters/wg21.py
+--- a/data/filters/wg21.py
++++ b/data/filters/wg21.py
+@@ -844,7 +844,7 @@ def diff(elem, doc):
+ def code_init(elem, doc):
+     # Mark code elements within colored divspan as default.
+     if isinstance(elem, (pf.Div, pf.Span)) and \
+-       any(c in {'add', 'rm', 'ednote', 'draftnote'} for c in elem.classes):
++       any(c in {'ednote', 'draftnote'} for c in elem.classes):
+         elem.walk(lambda elem, _:
+             elem.classes.insert(0, 'default')
+             if isinstance(elem, (pf.Code, pf.CodeBlock))
+diff --git a/data/syntax/wg21.xml b/data/syntax/wg21.xml
+--- a/data/syntax/wg21.xml
++++ b/data/syntax/wg21.xml
+@@ -307,6 +307,7 @@
+         <!-- Match comments -->
+         <IncludeRules context="match comments and region markers" />
+         <!-- Match punctuators -->
++        <StringDetect attribute="Ellipsis" context="#stay" String="..." />
+         <AnyChar attribute="Symbol" context="#stay" String="&punctuators;" />
+         <!-- Match keywords -->
+         <IncludeRules context="match keywords" />
+@@ -369,8 +370,9 @@
+         <StringDetect context="#pop!SelectCharPrefix" String="u8'" lookAhead="1"/>
+ 
+         <!-- match identifier -->
++        <RegExpr attribute="Scope Qualifier" context="#pop" String="[A-Za-z_][A-Za-z0-9_]*(?=\s*::)"/>
+         <keyword attribute="Data Type" context="#pop" String="types"/>
+-        <DetectIdentifier context="#pop"/>
++        <DetectIdentifier attribute="Identifier" context="#pop"/>
+       </context>
+ 
+       <context name="SelectStringPrefix" attribute="String" lineEndContext="#pop">
+@@ -404,10 +406,11 @@
+       </context>
+ 
+       <context name="match identifier" attribute="Normal Text" lineEndContext="#pop">
++        <RegExpr attribute="Scope Qualifier" context="#stay" String="[A-Za-z_][A-Za-z0-9_]*(?=\s*::)"/>
+         <keyword attribute="Data Type" context="#stay" String="types" />
+         <keyword attribute="Type Modifiers" context="#stay" String="modifiers" />
+         <keyword attribute="Standard Macros" context="#stay" String="StdMacros" />
+-        <DetectIdentifier />
++        <DetectIdentifier attribute="Identifier" />
+       </context>
+       <context name="Number" attribute="Normal Text" lineEndContext="#pop" fallthroughContext="#pop">
+         <WordDetect attribute="Decimal" context="IntSuffix" String="0" weakDeliminator="."/>
+@@ -577,6 +580,7 @@
+         <StringDetect attribute="Symbol" context="#pop" String=":&gt;:&gt;" /> <!-- Digraph: ]] -->
+         <DetectChar attribute="Separator Symbol" context="#stay" char="," />
+         <IncludeRules context="match comments" />
++        <StringDetect attribute="Ellipsis" context="#stay" String="..." />
+         <AnyChar attribute="Symbol" context="#stay" String="&punctuators;#" />
+         <!-- Attributes may contain some text: [[deprecated("Reason text")]] -->
+         <DetectChar attribute="String" context="String8" char="&quot;" />
+@@ -722,6 +726,7 @@
+         <IncludeRules context="match comments" />
+         <!-- Match punctuators -->
+         <AnyChar attribute="Separator Symbol" context="#stay" String="&separators;" />
++        <StringDetect attribute="Ellipsis" context="#stay" String="..." />
+         <AnyChar attribute="Symbol" context="#stay" String="&punctuators;" />
+         <!-- Match keywords -->
+         <IncludeRules context="match keywords" />
+@@ -799,6 +804,8 @@
+ 
+     <itemDatas>
+       <itemData name="Normal Text"        defStyleNum="dsNormal"    spellChecking="false" />
++      <itemData name="Identifier"         defStyleNum="dsVariable"  spellChecking="false" />
++      <itemData name="Scope Qualifier"    defStyleNum="dsImport"    spellChecking="false" />
+       <itemData name="Control Flow"       defStyleNum="dsControlFlow" spellChecking="false" />
+       <itemData name="Keyword"            defStyleNum="dsKeyword"   spellChecking="false" />
+       <itemData name="Data Type"          defStyleNum="dsDataType"  spellChecking="false" />
+@@ -819,6 +826,7 @@
+       <itemData name="Raw String Delimiter" defStyleNum="dsString"  spellChecking="false" />
+       <itemData name="Raw String Literal Prefix" defStyleNum="dsString" spellChecking="false" />
+       <itemData name="Comment"            defStyleNum="dsComment"   spellChecking="true"  />
++      <itemData name="Ellipsis"           defStyleNum="dsExtension" spellChecking="false" />
+       <itemData name="Symbol"             defStyleNum="dsOperator"  spellChecking="false" />
+       <itemData name="Separator Symbol"   defStyleNum="dsOperator"  spellChecking="false" />
+       <itemData name="Preprocessor"       defStyleNum="dsPreprocessor" spellChecking="false" />

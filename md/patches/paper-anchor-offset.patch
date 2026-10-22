@@ -1,0 +1,13 @@
+diff --git a/data/templates/toc.css b/data/templates/toc.css
+index 4a9ab08..24d3a69 100644
+--- a/data/templates/toc.css
++++ b/data/templates/toc.css
+@@ -172,7 +172,7 @@
+     display: none;
+   }
+ 
+-  body.toc-ready :is(h1, h2, h3, h4, h5, h6)[id] {
++  body.toc-ready [id] {
+     scroll-margin-top: 4.5rem;
+   }
+ 

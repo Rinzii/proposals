@@ -1,0 +1,12 @@
+diff --git a/base.mk b/base.mk
+--- a/base.mk
++++ b/base.mk
+@@ -21,7 +21,7 @@ override define PANDOC
+ $(eval override FILES := $(filter %.md, $^))
+ $(eval override SUGGESTION := $(shell $(PYTHON_BIN) $(DATADIR)/suggest-target.py '$@'))
+ $(if $(FILES),,$(error No Markdown input found for target '$@'$(if $(SUGGESTION),. $(SUGGESTION))))
+-$(eval override CMD := pandoc $(DATADIR)/srefs.defs $(FILES) -o $@ --data-dir=$(DATADIR) -M data-dir=$(DATADIR) -d paper -d formatting)
++$(eval override CMD := pandoc $(DATADIR)/srefs.defs $(FILES) -o $@ --data-dir=$(DATADIR) -M data-dir=$(DATADIR) $(addprefix --filter=,$(PREFILTERS)) -d paper -d formatting)
+ $(eval $(and $(DEFAULTS), override CMD += -d $(DEFAULTS)))
+ $(if $(filter %.html, $@),
+   $(eval override TOCDEPTH := $(shell $(PYTHON_BIN) $(DATADIR)/toc-depth.py < $(firstword $(FILES))))

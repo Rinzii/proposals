@@ -1,10 +1,11 @@
-scratch/
+/out/
+/scratch/
 /workspace/
-.Internal/
+/.Internal/
+
+node_modules/
 .venv/
 __pycache__/
 *.pyc
-cpp/*.html
-out/
-.bikeshed/
+
 .DS_Store

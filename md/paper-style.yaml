@@ -1,0 +1,52 @@
+paper-style:
+  colors:
+    code-bg: ['eeedeb', '232220']
+    code-keyword: ['7a5100', 'fec675']
+    code-type: ['005a53', '54ddce']
+    code-name: ['004b96', '8bbeff']
+    code-scope: ['005367', '73deff']
+    code-string: ['356b00', 'a8dc8c']
+    code-number: ['773500', 'ffaa79']
+    code-ellipsis: ['8d1b5d', 'ff9ecc']
+    code-preprocessor: ['70462d', 'e2a989']
+    code-comment: ['475b18', 'a5ba82']
+    code-punctuation: ['a0223c', 'fe838f']
+    code-error: ['96162a', 'feaaa9']
+    valid-bg: ['d6efc7', '242c1f']
+    invalid-bg: ['fbdfe1', '342425']
+    table-stripe: ['eeedeb', '232220']
+    table-head: ['e4e1dc', '302e2b']
+    table-rule: ['6f6a63', '74706a']
+    caption: ['4f4c44', 'bcb7ad']
+    wording-bg: ['ebeae8', '272623']
+    wording-border: ['6f6a63', '74706a']
+    wording-text: ['27201a', 'ebe4d8']
+    wording-number: ['004b96', '8bbeff']
+    wording-add-bg: ['caeab9', '263220']
+    wording-remove-bg: ['f7d3d4', '3d2728']
+    add: ['006d3c', '91dfad']
+    rm: ['931646', 'fea8bb']
+    link: ['004b96', '8bbeff']
+    note: ['694400', 'f1c17f']
+    grammar: ['005b4f', '68dcc7']
+    text: ['27201a', 'ebe4d8']
+    background: ['f8f7f4', '181818']
+  body-font: TeX Gyre Termes
+  code-font: TeX Gyre Cursor
+  body-size: 10
+  body-leading: 1.35
+  code-scale: 0.8125
+  comparison-code-scale: 0.9
+  heading-scales: [2, 1.5, 1.17, 1, 0.83, 0.67]
+  heading-leading: 1.15
+  wording-inset: 2.5
+  wording-padding: 0.75
+  border-width: 0.0625
+  link-underline-width: 0.05
+  link-underline-offset: 0.25
+  table-padding-y: 0.5
+  table-padding-x: 0.4
+  page-width: 210
+  page-height: 297
+  page-margin-x: 22.45
+  page-margin-y: 25

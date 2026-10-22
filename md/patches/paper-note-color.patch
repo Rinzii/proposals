@@ -1,0 +1,16 @@
+diff --git a/data/filters/wg21.py b/data/filters/wg21.py
+--- a/data/filters/wg21.py
++++ b/data/filters/wg21.py
+@@ -544,10 +544,10 @@ def divspan(elem, doc):
+     def note():    _nonnormative('note', elem.attributes.get('num'))
+     def ednote():
+         wrap_elem(pf.Str("[ Editor's note: "), elem, pf.Str(' ]'))
+-        _color('0000ff')
++        _color(doc.get_metadata('notecolor', '0000ff'))
+     def draftnote():
+         audience = elem.attributes.get('audience')
+         text = 'Drafting note' + (f' for {audience}' if audience is not None else '')
+         wrap_elem(pf.Str(f'[ {text}: '), elem, pf.Str(' ]'))
+-        _color('0000ff')
++        _color(doc.get_metadata('notecolor', '0000ff'))
+ 

@@ -1,0 +1,33 @@
+diff --git a/.gitignore b/.gitignore
+--- a/.gitignore
++++ b/.gitignore
+@@ -1,7 +1,10 @@
+ data/defaults.yaml
+ data/csl.json
++data/csl.json.*
+ data/srefs.json
++data/srefs.json.*
+ data/srefs.defs
++data/srefs.defs.*
+ data/annex-f
+ deps/pandoc
+ deps/python
+diff --git a/base.mk b/base.mk
+--- a/base.mk
++++ b/base.mk
+@@ -74,12 +74,12 @@ $(PYTHON_DIR): $(DEPSDIR)/install-venv.sh $(DEPSDIR)/requirements.txt $(REQUIREMENTS)
+ 	PYTHON_DIR=$(PYTHON_DIR) $(DEPSDIR)/install-venv.sh -r $(DEPSDIR)/requirements.txt $(addprefix -r ,$(REQUIREMENTS))
+ 
+ $(DATADIR)/csl.json: $(DATADIR)/refs.py $(PYTHON_DIR)
+-	set -e; trap 'rm -f "$@.tmp"' EXIT; $(PYTHON_BIN) $< > "$@.tmp"; mv "$@.tmp" "$@"; trap - EXIT
++	set -e; ref_file=$$(mktemp "$@.XXXXXX"); trap 'rm -f "$$ref_file"' EXIT; $(PYTHON_BIN) $< > "$$ref_file"; mv "$$ref_file" "$@"; trap - EXIT
+ 
+ $(DATADIR)/srefs.json: $(DATADIR)/srefs.py $(PYTHON_DIR)
+-	set -e; trap 'rm -f "$@.tmp"' EXIT; $(PYTHON_BIN) $< > "$@.tmp"; mv "$@.tmp" "$@"; trap - EXIT
++	set -e; ref_file=$$(mktemp "$@.XXXXXX"); trap 'rm -f "$$ref_file"' EXIT; $(PYTHON_BIN) $< > "$$ref_file"; mv "$$ref_file" "$@"; trap - EXIT
+ 
+ $(DATADIR)/srefs.defs: $(DATADIR)/srefs-md.py $(DATADIR)/srefs.json $(PYTHON_DIR)
+-	set -e; trap 'rm -f "$@.tmp"' EXIT; $(PYTHON_BIN) $< < $(DATADIR)/srefs.json > "$@.tmp"; mv "$@.tmp" "$@"; trap - EXIT
++	set -e; ref_file=$$(mktemp "$@.XXXXXX"); trap 'rm -f "$$ref_file"' EXIT; $(PYTHON_BIN) $< < $(DATADIR)/srefs.json > "$$ref_file"; mv "$$ref_file" "$@"; trap - EXIT
+ 
+ .PHONY: distclean
