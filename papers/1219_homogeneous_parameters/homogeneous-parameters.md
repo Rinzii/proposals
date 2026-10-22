@@ -3,7 +3,7 @@ title: "Homogeneous variadic function parameters"
 document: P1219R3
 tracking-issue: 297
 status: progress
-date: 2026-10-21
+date: 2026-10-22
 audience: EWG
 author:
   - name: Ian Pike
@@ -225,7 +225,7 @@ We ask the Evolution Working Group to first confirm the C++29 pairing of named a
 
 # Revision history {#revision-history}
 
-## R3 (2026-10-21) {#revision-r3}
+## R3 (2026-10-22) {#revision-r3}
 
 - Updated active contributors and credited James Touton as original author.
 - Retargeted to C++29 and rebased wording on the current working draft.
