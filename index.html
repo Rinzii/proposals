@@ -3,42 +3,163 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WG21 Proposals</title>
-<link href="https://isocpp.org/favicon.ico" rel="icon">
+<meta name="description" content="C++ papers by Ian Pike.">
+<title>C++ papers · Ian Pike</title>
+<link href="https://www.ianpike.com/icon.png" rel="icon" type="image/png">
+<link href="https://fonts.googleapis.com/css?family=Roboto:400,100,300" rel="stylesheet">
 <style>
-  :root { color-scheme: light dark; }
-  body {
-    max-width: 44rem;
-    margin: 0 auto;
-    padding: 3rem 1.25rem;
-    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  :root {
+    color-scheme: only dark;
+    color: #fff;
+    background: #1a1a1d;
+    font: 16px/1.5 Roboto, sans-serif;
   }
-  h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
-  p.sub { margin-top: 0; color: #5c5c5c; }
-  ul { list-style: none; padding: 0; margin-top: 2rem; }
-  li { padding: 1rem 0; border-top: 1px solid #ddd; }
-  .title { font-size: 1.05rem; font-weight: 600; }
-  .meta { margin-top: 0.3rem; font-size: 0.9rem; color: #5c5c5c; }
-  a { color: #0645ad; }
-  @media (prefers-color-scheme: dark) {
-    p.sub, .meta { color: #9a9a9a; }
-    li { border-top-color: #333; }
-    a { color: #6ea8fe; }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  [hidden] { display: none !important; }
+  a { color: #c8acd6; text-underline-offset: 4px; }
+  a:hover { color: #ff87c3; }
+  :focus-visible { outline: 2px solid #ff87c3; outline-offset: 4px; }
+  button, input { font: inherit; border-radius: 0; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+  .skip-link { position: absolute; left: 24px; top: -64px; padding: 8px 16px; background: #1a1a1d; }
+  .skip-link:focus { top: 8px; }
+  .shell { width: min(100% - 48px, 1040px); margin: 24px auto; }
+  .masthead { display: flex; align-items: baseline; gap: 16px; margin-bottom: 16px; }
+  h1 { margin: 0; font-size: 24px; line-height: 1.25; font-weight: 400; }
+  .masthead p { margin: 0; color: #ff87c3; font-size: 14px; }
+  .masthead > a { margin-left: auto; display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; }
+  .masthead p a { display: inline-flex; align-items: center; min-height: 44px; color: inherit; text-decoration: none; }
+  .masthead p a:hover { text-decoration: underline; }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 24px; }
+  .search { flex: 0 1 280px; }
+  input[type="search"] { width: 100%; min-height: 44px; border: 0; border-bottom: 1px solid #777; padding: 8px 0; color: #fff; background: #1a1a1d; }
+  input[type="search"]:focus-visible { outline: none; border-bottom-color: #ff87c3; }
+  input::placeholder { color: #bbb; opacity: 1; }
+  fieldset { border: 0; margin: 0; padding: 0; }
+  .filters { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+  .filters button { cursor: pointer; border: 0; border-bottom: 2px solid transparent; padding: 8px 0; min-height: 44px; color: #bbb; background: transparent; font-size: 14px; }
+  .filters button:hover { color: #fff; }
+  .filters button[aria-pressed="true"] { color: #ff87c3; border-color: #ff87c3; }
+  .filters span { margin-left: 4px; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .results { color: #bbb; font-size: 12px; margin: 8px 0 0; }
+  .paper-group { margin-top: 20px; }
+  h2 { color: #ff87c3; font-size: 13px; font-weight: 400; margin: 0; padding-bottom: 4px; border-bottom: 1px solid rgba(255, 255, 255, 0.2); }
+  .paper { border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+  .paper-summary { display: grid; grid-template-columns: 72px minmax(0, 1fr) 16px; align-items: center; gap: 16px; min-height: 44px; padding: 4px 0; cursor: pointer; list-style: none; }
+  .paper-summary::-webkit-details-marker { display: none; }
+  .paper-title:hover { color: #ff87c3; }
+  .expand-icon { color: #bbb; font-size: 16px; text-align: center; }
+  .paper[open] .expand-icon { transform: rotate(45deg); }
+  .paper-body { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px; }
+  .document { color: #bbb; font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  a.document { width: fit-content; text-decoration: none; }
+  a.document:hover { color: #ff87c3; text-decoration: underline; }
+  .paper-heading { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+  .paper-title { color: #c8acd6; font-size: 16px; font-weight: 400; line-height: 1.5; }
+  .paper-latest { flex-shrink: 0; padding-left: 10px; border-left: 1px solid #555; color: #bbb; font-size: 10px; white-space: nowrap; text-decoration: none; }
+  .paper-latest:hover { color: #ff87c3; text-decoration: underline; }
+  .paper-meta { color: #bbb; font-size: 12px; margin: 0; white-space: nowrap; }
+  .revisions { list-style: none; margin: 0 0 8px 88px; padding: 0; color: #bbb; font-size: 12px; }
+  .revisions li { display: grid; grid-template-columns: 84px 10px minmax(0, 1fr); gap: 12px; min-height: 40px; }
+  .revisions time { padding-top: 8px; font-variant-numeric: tabular-nums; }
+  .revisions li { --revision-color: #c8acd6; }
+  .revision-marker { position: relative; color: var(--revision-color); }
+  .revisions li:first-child .revision-marker::before { outline: 1px solid var(--revision-color); outline-offset: 3px; }
+  .revision-marker::before { content: ""; position: absolute; top: 12px; left: 1px; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .revision-marker::after {
+    content: ""; position: absolute; top: 22px; bottom: -10px; left: 2px; width: 6px;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 4'%3E%3Cpath d='M0 0H2L3 1L4 0H6L4 3H2Z' fill='%23777'/%3E%3C/svg%3E") center top / 6px 4px no-repeat,
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 4'%3E%3Cpath d='M0 4H2L3 3L4 4H6L4 1H2Z' fill='%23777'/%3E%3C/svg%3E") center bottom / 6px 4px no-repeat,
+      linear-gradient(#777, #777) center / 2px calc(100% - 4px) no-repeat;
+  }
+  .revisions li:first-child .revision-marker::after { top: 26px; }
+  .revisions li:last-child .revision-marker::after { display: none; }
+  .revisions [data-status="progress"], .revisions [data-status="draft"] { --revision-color: #ff87c3; }
+  .revisions [data-status="adopted"] { --revision-color: #97c9a1; }
+  .revisions [data-status="rejected"] { --revision-color: #ee9191; }
+  .revisions [data-status="withdrawn"], .revisions [data-status="abandoned"] { --revision-color: #aaa; }
+  .revision-description { display: grid; grid-template-columns: 32px 64px minmax(0, 1fr); align-items: baseline; gap: 0 12px; padding-bottom: 8px; }
+  .revision-description a { display: inline-flex; align-items: center; min-height: 28px; margin-top: 2px; text-decoration-color: rgba(200, 172, 214, 0.5); font-variant-numeric: tabular-nums; }
+  .revision-description a:hover { text-decoration-color: currentColor; }
+  .revision-state { color: var(--revision-color); }
+  .revision-authors { padding-top: 8px; }
+  .empty { margin: 32px 0; color: #bbb; }
+  .empty p { display: inline; margin: 0 16px 0 0; }
+  .empty button { border: 0; border-bottom: 1px solid #bbb; padding: 8px 0; min-height: 44px; background: transparent; color: #ff87c3; cursor: pointer; }
+  @media (max-width: 640px) {
+    .shell { width: calc(100% - 32px); margin: 24px auto; }
+    .masthead { flex-wrap: wrap; gap: 8px 16px; margin-bottom: 8px; }
+    h1 { font-size: 22px; }
+    .search { flex-basis: 100%; }
+    .paper-summary { grid-template-columns: 60px minmax(0, 1fr) 16px; gap: 8px; padding: 8px 0; }
+    .paper-body { display: block; }
+    .paper-title, .paper-meta { display: block; }
+    .document { align-self: start; padding-top: 4px; }
+    .paper-meta { white-space: normal; }
+    .revisions { margin-left: 0; }
+    .revisions li { grid-template-columns: 80px 10px minmax(0, 1fr); gap: 10px; }
+    .revision-description { grid-template-columns: 28px minmax(0, 1fr); gap: 0 12px; }
+    .revision-authors { grid-column: 1 / -1; padding-top: 0; }
   }
 </style>
 </head>
 <body>
-<h1>WG21 Proposals</h1>
-<p class="sub">C++ standards committee papers by Ian Pike.</p>
-<ul>
-  <li>
-    <div class="title"><a href="drafts/cpp/P1219.html">Homogeneous variadic function parameters</a></div>
-    <div class="meta">P1219R3, work in progress. Audience: EWG. <a href="https://github.com/Rinzii/proposals/blob/main/drafts/cpp/P1219R3.bs">Source</a></div>
-  </li>
-  <li>
-    <div class="title"><a href="drafts/cpp/decorators_r0.html">Decorators: A Compile-Time Mechanism for Validating and Transforming Definitions</a></div>
-    <div class="meta">Draft, no paper number assigned yet. Audience: SG7, EWG, LEWG. <a href="https://github.com/Rinzii/proposals/blob/main/drafts/cpp/decorators_r0.bs">Source</a></div>
-  </li>
-</ul>
+<a class="skip-link" href="#papers">Skip to papers</a>
+<div class="shell">
+<header class="masthead">
+  <h1>C++ papers</h1>
+  <p><a href="https://www.ianpike.com/">Ian Pike</a></p>
+  <a href="https://github.com/Rinzii/proposals">GitHub</a>
+</header>
+<main id="papers" tabindex="-1">
+  <form class="controls" id="paper-controls" role="search" hidden>
+    <div class="search">
+      <label class="visually-hidden" for="paper-search">Search papers</label>
+      <input type="search" id="paper-search" placeholder="Search papers" autocomplete="off">
+    </div>
+    <fieldset>
+      <legend class="visually-hidden">Status</legend>
+      <div class="filters">
+<button type="button" data-filter="all" aria-pressed="true">All <span aria-hidden="true">2</span></button>
+<button type="button" data-filter="progress" aria-pressed="false">In progress <span aria-hidden="true">2</span></button>
+      </div>
+    </fieldset>
+  </form>
+  <p class="results" id="result-count" role="status" aria-live="polite">2 papers</p>
+  <div id="paper-list">
+<section class="paper-group" aria-labelledby="heading-progress">
+  <div class="group-heading"><h2 id="heading-progress">In progress</h2></div>
+  <details class="paper" data-status="progress" data-search="homogeneous variadic function parameters p1219r3 p1219 1219_homogeneous_parameters we propose homogeneous function parameter packs for c++29: a variable number of parameters of one declared type. one declaration replaces fixed-arity overload families, retaining ordinary parameter initialization, conversion ranking, and a compile-time count. we ask the evolution working group to first confirm the c++29 pairing of named and unnamed packs with mandatory c-varargs commas and reclamation of the comma-less spelling. this gives packs the same meaning with or without a name, while changing declarations deprecated in c++26. ewg p1219r2 p1219r1 p1219r0 ian pike eczbek jan schultke james touton james touton james touton james touton">
+  <summary class="paper-summary">
+    <a class="document" href="https://github.com/cplusplus/papers/issues/297" aria-label="WG21 tracking issue: P1219R3">P1219R3</a>
+    <span class="paper-body">
+      <span class="paper-heading"><span class="paper-title">Homogeneous variadic function parameters</span><a class="paper-latest" href="P1219/" aria-label="Latest draft: Homogeneous variadic function parameters">Latest <span aria-hidden="true">&rarr;</span></a></span>
+      <span class="paper-meta">2026-10-21 · EWG</span>
+    </span>
+    <span class="expand-icon" aria-hidden="true">+</span>
+  </summary>
+  <ol class="revisions"><li data-status="progress"><time datetime="2026-10-21">2026-10-21</time><span class="revision-marker" aria-hidden="true"></span><div class="revision-description"><a href="P1219R3/" aria-label="P1219R3 Homogeneous variadic function parameters">R3</a><span class="revision-state">Draft</span><span class="revision-authors">Ian Pike, Eczbek, Jan Schultke</span></div></li><li data-status="published"><time datetime="2019-10-05">2019-10-05</time><span class="revision-marker" aria-hidden="true"></span><div class="revision-description"><a href="https://wg21.link/p1219r2" aria-label="P1219R2 Homogeneous variadic function parameters">R2</a><span class="revision-state">Published</span><span class="revision-authors">James Touton</span></div></li><li data-status="published"><time datetime="2019-03-11">2019-03-11</time><span class="revision-marker" aria-hidden="true"></span><div class="revision-description"><a href="https://wg21.link/p1219r1" aria-label="P1219R1 Homogeneous variadic function parameters">R1</a><span class="revision-state">Published</span><span class="revision-authors">James Touton</span></div></li><li data-status="published"><time datetime="2018-10-08">2018-10-08</time><span class="revision-marker" aria-hidden="true"></span><div class="revision-description"><a href="https://wg21.link/p1219r0" aria-label="P1219R0 Homogeneous variadic function parameters">R0</a><span class="revision-state">Published</span><span class="revision-authors">James Touton</span></div></li></ol>
+</details><details class="paper" data-status="progress" data-search="guaranteed tail calls in c++ unnumbered draft, r0 always-tail always_tail this paper proposes [[always_tail]] for checked tail transfers that end the caller&#x27;s activation, with diagnosed rejection when unsupported. protobuf&#x27;s c++ parser and three compiler families establish use and implementation experience. a test across separate translation units on apple clang 21, arm64 macos, shows ordinary dispatch exhausting the stack without optimization while clang::musttail and a trampoline succeed. no speed advantage is claimed. this supports developing a common contract, while a portable minimum domain, mandatory attribute semantics, and wg21&#x27;s implementation-limit objection remain unresolved. ewg ian pike">
+  <summary class="paper-summary">
+    <span class="document">Draft R0</span>
+    <span class="paper-body">
+      <span class="paper-heading"><span class="paper-title">Guaranteed Tail Calls in C++</span><a class="paper-latest" href="always-tail/" aria-label="Latest draft: Guaranteed Tail Calls in C++">Latest <span aria-hidden="true">&rarr;</span></a></span>
+      <span class="paper-meta">2026-10-09 · EWG</span>
+    </span>
+    <span class="expand-icon" aria-hidden="true">+</span>
+  </summary>
+  <ol class="revisions"><li data-status="progress"><time datetime="2026-10-09">2026-10-09</time><span class="revision-marker" aria-hidden="true"></span><div class="revision-description"><a href="always-tail/" aria-label="Unnumbered draft, R0 Guaranteed Tail Calls in C++">R0</a><span class="revision-state">Draft</span><span class="revision-authors">Ian Pike</span></div></li></ol>
+</details>
+</section>
+  </div>
+  <div class="empty" id="empty-state" hidden>
+    <p>No matches.</p>
+    <button type="button" id="reset-filters">Reset</button>
+  </div>
+</main>
+</div>
+<script src="index.js" defer></script>
 </body>
 </html>
