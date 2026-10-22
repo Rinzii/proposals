@@ -66,6 +66,7 @@ def create_server(root):
         "md/defaults.yaml",
         "md/paper-style.yaml",
         "md/paper-style.py",
+        "md/wording-links.py",
         "md/papers.tex",
         "md/*.ts",
         "md/mpark-wg21.mk",

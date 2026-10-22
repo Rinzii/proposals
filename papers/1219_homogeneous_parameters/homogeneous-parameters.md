@@ -276,11 +276,11 @@ Homogeneous function parameter packs would replace fixed-arity overload families
 
 ::::
 
-Table 1's lower-right declaration is ill-formed because `T` names one type, leaving `T... vs` no pack to expand. [[temp.variadic]/8](https://wg21.link/temp.variadic#8) [[dcl.fct]/25](https://wg21.link/dcl.fct) Under our proposal, `vs` would be a pack of `T` parameters.
+Table 1's lower-right declaration is ill-formed because `T` names one type, leaving `T... vs` no pack to expand. [[temp.variadic]/8](https://wg21.link/temp.variadic#8) [[dcl.fct]/25](https://wg21.link/dcl.fct) Under our proposal, `vs` would be [a pack of `T` parameters](#definitions).
 
-A fixed or explicitly supplied `T` permits ordinary conversions from different source types. Deduced `T` requires consistent deductions across applicable arguments. [[temp.deduct.type]/2](https://wg21.link/temp.deduct.type#2) Unlike homogeneous template packs' constant arguments, function arguments may be runtime values. Their count remains compile-time. [[temp.variadic]/9](https://wg21.link/temp.variadic#9)
+A fixed or explicitly supplied `T` [permits ordinary conversions from different source types](#deduction). Deduced `T` requires consistent deductions across applicable arguments. [[temp.deduct.type]/2](https://wg21.link/temp.deduct.type#2) Unlike homogeneous template packs' constant arguments, function arguments may be runtime values. Their count remains compile-time. [[temp.variadic]/9](https://wg21.link/temp.variadic#9)
 
-An invented constant template parameter carries that count, making the declaration an abbreviated function template whose specializations have ordinary fixed-arity function types.
+[An invented constant template parameter](#implicit-template) carries that count, making the declaration an abbreviated function template whose specializations have ordinary fixed-arity function types.
 
 As in R2, one trailing homogeneous pack covers the library use cases and lets the remaining arguments determine its length. [Declaration-site lengths need new syntax and multiple packs need argument-partitioning rules](#explicit-lengths) so both remain deferred. Existing pack expansions retain their meanings.
 
@@ -314,7 +314,7 @@ auto char_offset = ints_and_doubles_known.Offset<char>();
 
 `ints_known.Offset<char>()` is rejected at compile time because the preceding `double` size is missing. A replacement must preserve these count-selected result types and offsets. [@ABSL-LAYOUT]
 
-The shipped declaration deduces every argument type and casts to `size_t` in its body. A homogeneous pack would deduce only the count and initialize `size_t` parameters at the call:
+The shipped declaration deduces every argument type and casts to `size_t` in its body. A homogeneous pack would [deduce only the count and initialize `size_t` parameters at the call](#deduction):
 
 :::: {#partial-comparison }
 
@@ -386,7 +386,7 @@ struct PartialOverloads<std::index_sequence<Ns...>, Ts...>
 };
 ```
 
-`Layout` exposes these generated overloads by inheriting `PartialOverloads<std::make_index_sequence<sizeof...(Ts) + 1>, Ts...>`. A homogeneous pack needs only one declaration.
+`Layout` exposes these generated overloads by inheriting `PartialOverloads<std::make_index_sequence<sizeof...(Ts) + 1>, Ts...>`. A homogeneous pack [needs only one declaration](#implicit-template).
 
 ## Preserve conversion ranking without fixed-arity wrappers {#example-casadi}
 
@@ -427,7 +427,7 @@ friend MatType vertcat(
 
 ::::
 
-The fixed parameters retain the two-operand minimum and the trailing pack removes the six-argument ceiling, likewise for horizontal and diagonal concatenation.
+[The fixed parameters retain the two-operand minimum and the trailing pack removes the six-argument ceiling](#implicit-template), likewise for horizontal and diagonal concatenation.
 
 A constrained deduced pack in the same class also replaces the overload family:
 
@@ -448,19 +448,19 @@ vertcat(symbolic(indices), 1);
 vertcat(1, symbolic(indices));
 ```
 
-Argument-dependent lookup finds concatenation functions for `SX` and the proxy's `IM` template argument. [[basic.lookup.argdep]/3-4](https://wg21.link/basic.lookup.argdep#3) Fixed parameters select `SX` in both calls because base binding outranks conversion to `IM`. [[over.ics.rank]/2.1](https://wg21.link/over.ics.rank#2.1) With deduced packs, both candidates bind directly and satisfy the constraints, making both calls ambiguous. [[over.match.best.general]/2](https://wg21.link/over.match.best.general#2) Homogeneous packs retain the fixed destinations for ranking.
+Argument-dependent lookup finds concatenation functions for `SX` and the proxy's `IM` template argument. [[basic.lookup.argdep]/3-4](https://wg21.link/basic.lookup.argdep#3) Fixed parameters select `SX` in both calls because base binding outranks conversion to `IM`. [[over.ics.rank]/2.1](https://wg21.link/over.ics.rank#2.1) With deduced packs, both candidates bind directly and satisfy the constraints, making both calls ambiguous. [[over.match.best.general]/2](https://wg21.link/over.match.best.general#2) Homogeneous packs [retain the fixed destinations for ranking](#overload-ordering).
 
 Fixing only the first parameter as `const MatType&` leaves the second call ambiguous. Even two fixed parameters leave `vertcat(1, 1, symbolic(indices))` ambiguous because its distinguishing operand is in the deduced tail.
 
 Competing `std::initializer_list<SX>` and `std::initializer_list<IM>` overloads are also ambiguous: list ranking uses the worst element conversion so the scalar's user-defined conversions erase the indexed operand's distinction. [[over.ics.list]/5](https://wg21.link/over.ics.list#5)
 
-Current C++ supports arbitrary counts with an explicit destination, as in `SX::vertcat({symbolic(indices), 1})`. Existing or generated wrappers preserve positional calls. A homogeneous pack would directly express two or more `const MatType&` parameters with one declaration per operation.
+Current C++ supports arbitrary counts with an explicit destination, as in `SX::vertcat({symbolic(indices), 1})`. Existing or generated wrappers preserve positional calls. A homogeneous pack would directly express two or more `const MatType&` parameters [with one declaration per operation](#implicit-template).
 
 ## Broader demand for fixed-type packs {#expressivity}
 
-R2 includes deduced-type and fixed-type homogeneous interfaces. [@P1219R2] Later requests seek fixed-type positional interfaces [@REDDIT-ENUM-PACK] [@SO-STRING-VIEW-CONCAT], addressing body conversions [@SO-TYPED-ACCUMULATOR], ordinary conversion ranking [@LOEW-HOMOGENEOUS-OVERLOADS], and by-value initialization without additional body construction. [@MAZIERES-PARAM-PACK] The count would also permit constraints such as even arity. [@SO-10]
+R2 includes deduced-type and fixed-type homogeneous interfaces. [@P1219R2] Later requests seek fixed-type positional interfaces [@REDDIT-ENUM-PACK] [@SO-STRING-VIEW-CONCAT], addressing body conversions [@SO-TYPED-ACCUMULATOR], ordinary conversion ranking [@LOEW-HOMOGENEOUS-OVERLOADS], and by-value initialization without additional body construction. [@MAZIERES-PARAM-PACK] The count would also [permit constraints such as even arity](#length-constraints). [@SO-10]
 
-The discussions offer constrained packs and fixed-parameter emulations. For these interfaces, we consider direct parameter typing easier to write, maintain, and reason about than constraints, helpers, or generated overloads. It reduces helper code and repeated declarations while retaining ordinary initialization and conversion ranking.
+The discussions offer constrained packs and fixed-parameter emulations. For these interfaces, we consider direct parameter typing easier to write, maintain, and reason about than constraints, helpers, or generated overloads. It reduces helper code and repeated declarations while retaining [ordinary initialization](#parameter-initialization) and [conversion ranking](#overload-ordering).
 
 # Sequence alternatives {#motivation}
 
@@ -513,7 +513,7 @@ auto from_braces = array_count({3, 5});
 
 All three results are `std::integral_constant<std::size_t, 2>`. Since `array_count({3, 5})` deduces a bound and initializes a temporary array, an analogous array-reference `Partial({int_count, double_count})` could return `PartialType<2>` without named storage or an explicit extent. [[temp.deduct.call]/1](https://wg21.link/temp.deduct.call#1)
 
-Braced arrays use list-initialization, rejecting narrowing accepted by ordinary `size_t` parameters in Abseil's [signed-variable case](#example-count). Empty braces cannot deduce the bound in `array_count({})`. [[temp.deduct.call]/1](https://wg21.link/temp.deduct.call#1) Explicit zero also fails because built-in array bounds must be positive. [[dcl.array]/1](https://wg21.link/dcl.array#1) Static spans and `std::array` permit zero extent but retain grouped arguments. [[span.cons]/1](https://wg21.link/span.cons#1) A homogeneous `size_t` pack permits both the conversion and zero arguments positionally.
+Braced arrays use list-initialization, rejecting narrowing accepted by ordinary `size_t` parameters in Abseil's [signed-variable case](#example-count). Empty braces cannot deduce the bound in `array_count({})`. [[temp.deduct.call]/1](https://wg21.link/temp.deduct.call#1) Explicit zero also fails because built-in array bounds must be positive. [[dcl.array]/1](https://wg21.link/dcl.array#1) Static spans and `std::array` permit zero extent but retain grouped arguments. [[span.cons]/1](https://wg21.link/span.cons#1) A homogeneous `size_t` pack [permits both the conversion and zero arguments positionally](#deduction).
 
 A span over an existing array avoids constructing another array but requires matching element types apart from permitted qualification conversions. Thus an `int` array cannot initialize `std::span<const std::size_t>`, although `size_t` parameters could accept its individual elements. [[span.cons]/13](https://wg21.link/span.cons#13)
 
@@ -665,7 +665,7 @@ We retain R2's rejection of a bare `template` introducer and empty template head
 
 Kona's discussion objected to another template introducer without a [template-head]{.grammar-term}. [@P1219-EWG-RECORD] The [abbreviated-template model](#abbreviated-syntax) adds no token: an ellipsis before the name already declares packs in `Ts... values` and `auto... values`. The invented count supplies the template parameter as `auto`'s invented type parameter does. R2 reports that Richard Smith suggested the marker, which he and David Vandevoorde thought simpler to implement across compilers. Smith later agreed by e-mail that implementations supporting P1141R2's headless declarations should handle homogeneous packs without added syntax. [@P1219R2] We prefer the existing cue.
 
-[]{#explicit-lengths}The invented count covers the [present use cases](#examples), though declaration-site lengths would let authors name and position it. We defer these lengths and multiple or non-trailing homogeneous packs, which need count association and deduction rules. [@P2347R2] proposes deducing a single non-trailing pack's length from argument count and required trailing parameters.
+[]{#explicit-lengths}The invented count covers the [present use cases](#examples), though declaration-site lengths would let authors name and position it. We defer these lengths and multiple or non-trailing homogeneous packs, which need count association and deduction rules. Poll 4 ([](#proposed-polls)) asks EWG to confirm this scope. [@P2347R2] proposes deducing a single non-trailing pack's length from argument count and required trailing parameters.
 
 R2's bracketed length spelling conflicts with C++26 pack indexing: `Ts...[Len]` already selects one type. [@P1219R2] [[dcl.type.pack.index]](https://wg21.link/dcl.type.pack.index) A marker cannot resolve this conflict, but other spellings remain possible. Restoring [abstract array-pack grammar](#arrays) remains separate.
 
@@ -861,11 +861,11 @@ Calls without pack arguments contribute no element-type comparisons. Default tem
 
 ::::
 
-For `packed(1, 2)` in Table 9, deduction between transformed pack patterns succeeds both ways. Both declarations have trailing packs so [[temp.deduct.partial]/11](https://wg21.link/temp.deduct.partial#11) prefers neither. Adding the deduced homogeneous overload to the heterogeneous catch-all therefore makes same-type calls ambiguous. A fixed element type can still establish ordering. The candidate wording adds no preference, but if EWG wants to allow this addition to existing `Ts...` overload sets, we would accept a tie-break preferring a homogeneous trailing pack over an ordinary one for equal-length calls.
+For `packed(1, 2)` in Table 9, deduction between transformed pack patterns succeeds both ways. Both declarations have trailing packs so [[temp.deduct.partial]/11](https://wg21.link/temp.deduct.partial#11) prefers neither. Adding the deduced homogeneous overload to the heterogeneous catch-all therefore makes same-type calls ambiguous. A fixed element type can still establish ordering. The candidate wording adds no preference. We would accept a tie-break preferring a homogeneous trailing pack over an ordinary one for equal-length calls, allowing this addition to existing `Ts...` overload sets, and ask EWG to decide in Poll 8 ([](#proposed-polls)).
 
 Replacing constrained emulation can also change overload selection. Beside `template <class T> void single(T)`, `void single(std::same_as<int> auto...)` loses for `single(1)`. Replacing it with `void single(int...)` produces Table 9's ambiguity. [[temp.deduct.partial]/8](https://wg21.link/temp.deduct.partial#8)
 
-Length-dependent associated constraints require count determination before satisfaction substitutes ordinary template arguments, including counts and enclosing specializations' arguments, without separate count bindings. Rechecking the same atomic constraint with the same arguments retains the existing consistency requirement. [[temp.constr.atomic]/3](https://wg21.link/temp.constr.atomic#3)
+[]{#length-constraints}Length-dependent associated constraints require count determination before satisfaction substitutes ordinary template arguments, including counts and enclosing specializations' arguments, without separate count bindings. Rechecking the same atomic constraint with the same arguments retains the existing consistency requirement. [[temp.constr.atomic]/3](https://wg21.link/temp.constr.atomic#3)
 
 The count adds no atomic-identity or subsumption test, including no arithmetic implication between separate `sizeof...(values) >= 1` and `sizeof...(values) >= 2` predicates. [[temp.constr.atomic]/2](https://wg21.link/temp.constr.atomic#2) [[temp.constr.order]/1.2](https://wg21.link/temp.constr.order#1.2)
 
@@ -927,7 +927,7 @@ struct Values {
 
 :::: {.draftnote}
 
-The candidate wording includes constructors subject to Poll 5, but support remains undecided. It excludes deduction guides, with support undecided pending analysis of deduction and return types. For class templates, [[over.match.class.deduct]/1.1](https://wg21.link/over.match.class.deduct#1.1) forms implicit deduction candidates from constructor template parameters and parameter lists, including the invented count. Whether implicit guides from [homogeneous constructors](#constructors) fall under that exclusion or satisfy the context restriction remains unresolved by Poll 5. The examples still need validation treating homogeneous constructors as implicit templates.
+The candidate wording includes constructors subject to Poll 7, but support remains undecided. It excludes deduction guides, with support undecided pending analysis of deduction and return types. For class templates, [[over.match.class.deduct]/1.1](https://wg21.link/over.match.class.deduct#1.1) forms implicit deduction candidates from constructor template parameters and parameter lists, including the invented count. Whether implicit guides from [homogeneous constructors](#constructors) fall under that exclusion or satisfy the context restriction remains unresolved by Poll 7. The examples still need validation treating homogeneous constructors as implicit templates.
 
 ::::
 
@@ -1065,11 +1065,11 @@ Table 13's first and last rows become ill-formed, requiring diagnostics. The mid
 
 The six-dot declaration `template<class... Ts> struct S { static void f(Ts......); };` is valid today: `S<int>::f(1, 2.0)` passes its second argument through C varargs. Migration must insert a comma between the ellipses, including in named expansions: `Ts... values...` becomes `Ts... values, ...`. Removing the last ellipsis would change the interface. [@P3176R1]
 
-An old `f(1, 2.5)` call to `void f(int...)` passed a double through C varargs. Reclamation instead initializes two int parameters, using an ordinary floating-integral conversion. It also permits empty calls and produces fixed-count specializations without C ellipsis. Even successful recompilation thus leaves a source and potential link compatibility break. Adoption includes approving these known source and ABI incompatibilities under [@SD10].
+An old `f(1, 2.5)` call to `void f(int...)` passed a double through C varargs. Reclamation instead initializes two int parameters, using an ordinary floating-integral conversion. It also permits empty calls and produces fixed-count specializations without C ellipsis. Even successful recompilation thus leaves a source and potential link compatibility break. Adoption includes approving these known source and ABI incompatibilities under [@SD10], which Poll 2 ([](#proposed-polls)) asks separately.
 
 ### Migrating definitions and function types {#migrating-definitions}
 
-Legacy definitions using `va_start` require comma insertion to preserve the C ellipsis that homogeneous parameters cannot supply. C++26 discards the second and subsequent macro arguments so a surviving parameter name cannot portably trigger diagnostics. Implementations may reject builtin invocations in non-variadic specializations, but C-library preconditions require no diagnostics. [[cstdarg.syn]](https://wg21.link/cstdarg.syn)
+Legacy definitions using `va_start` require comma insertion to preserve the C ellipsis that homogeneous parameters cannot supply. C++26 discards the second and subsequent macro arguments so a surviving parameter name cannot portably trigger diagnostics. [[cstdarg.syn]](https://wg21.link/cstdarg.syn)
 
 Inconsistently migrated declarations and definitions can validly declare separate homogeneous-template and C-varargs overloads. For `void f(int...)` and `void f(int, ...)` after reclamation, zero arguments select the template. One argument convertible to `int` selects the non-template C-varargs overload. [[over.match.best.general]/2.4](https://wg21.link/over.match.best.general#2.4) With two or more arguments all convertible to `int`, the template wins because ordinary conversions outrank ellipsis conversions. [[over.ics.rank]/2.1](https://wg21.link/over.ics.rank#2.1) If an additional argument cannot initialize `int`, C varargs can remain viable. A missing selected-template definition can surface during instantiation or linking. Changing a declaration provides no ABI compatibility with an existing C-varargs definition.
 
@@ -1086,14 +1086,17 @@ Reclamation needs grammar coordination with [@P3776R1], *More trailing commas*, 
 We ask EWG to take the first poll before the others. The remaining polls assume it, since the design gives a pack the same meaning with and without a parameter name ([](#compatibility)).
 
 1. We want C++29 to require a comma before C varargs and to reclaim the comma-less spelling for unnamed homogeneous function parameter packs.
-2. We want homogeneous function parameter packs for C++29.
-3. We want each homogeneous function parameter pack to have an invented constant template parameter whose argument specifies the pack's length and participates in function template specialization identity.
-4. We want functions with homogeneous function parameter packs to be function templates without requiring a [template-head]{.grammar-term}.
-5. We want C++29 to support homogeneous function parameter packs in constructors.
+2. We accept the source and ABI incompatibilities for comma-less C-varargs declarations that Poll 1 causes, as recorded in the [Annex C entry](#wording-compatibility).
+3. We want homogeneous function parameter packs for C++29.
+4. We want C++29 to permit at most one homogeneous function parameter pack per parameter list, in trailing position, deferring declaration-site lengths and multiple or non-trailing homogeneous packs.
+5. We want each homogeneous function parameter pack to have an invented constant template parameter whose argument specifies the pack's length and participates in function template specialization identity.
+6. We want functions with homogeneous function parameter packs to be function templates without requiring a [template-head]{.grammar-term}.
+7. We want C++29 to support homogeneous function parameter packs in constructors.
+8. We want a tie-break preferring a trailing homogeneous function parameter pack over an ordinary trailing function parameter pack when partial ordering would otherwise leave a call ambiguous.
 
 ## Historical results {#historical-polls}
 
-The polls in Tables 14 to 16 concern earlier revisions, before the C++26 changes addressed here. Proposed Polls 1, 2, and 4 revisit the first, second, and last rows of Table 14. The `template <>` row is the empty template-head spelling this revision rejects ([](#alternatives)).
+The polls in Tables 14 to 16 concern earlier revisions, before the C++26 changes addressed here. Proposed Polls 1, 3, and 6 revisit the first, second, and last rows of Table 14. The `template <>` row is the empty template-head spelling this revision rejects ([](#alternatives)).
 
 :::: {#kona-ewgi-polls .poll-table .poll-summary}
 
@@ -1158,11 +1161,11 @@ Wording is relative to [@CPP-DRAFT].
 
 ### General [expr.prim.lambda.general] {#wording-lambda-general}
 
-In [[expr.prim.lambda.general]/6](https://wg21.link/expr.prim.lambda.general#6), insert after the first sentence and append to Example 4:
+Modify the first sentence of [[expr.prim.lambda.general]/6](https://wg21.link/expr.prim.lambda.general#6) and append to Example 4:
 
 :::: {.wording}
 
-[[6]{.pnum}](https://wg21.link/expr.prim.lambda.general#6) A lambda is a generic lambda if the *lambda-expression* has any generic parameter type placeholders ([dcl.spec.auto]), or if the lambda has a *template-parameter-list*. [A lambda is also a generic lambda if its *parameter-declaration-clause* declares a homogeneous function parameter pack ([temp.variadic]).]{.add}
+[[6]{.pnum}](https://wg21.link/expr.prim.lambda.general#6) A lambda is a generic lambda if the *lambda-expression* has any generic parameter type placeholders ([dcl.spec.auto]), [or]{.rm} if the lambda has a *template-parameter-list*[, or if its *parameter-declaration-clause* declares a homogeneous function parameter pack ([dcl.fct])]{.add}.
 
 ::::: {.example num=4}
 
@@ -1179,19 +1182,15 @@ In [[expr.prim.lambda.general]/6](https://wg21.link/expr.prim.lambda.general#6),
 
 ### Closure types [expr.prim.lambda.closure] {#wording-lambda-closure}
 
-In [[expr.prim.lambda.closure]/5](https://wg21.link/expr.prim.lambda.closure#5), insert after the first sentence:
+In [[expr.prim.lambda.closure]/5](https://wg21.link/expr.prim.lambda.closure#5), insert after the first sentence, and in [/12](https://wg21.link/expr.prim.lambda.closure#12), insert after the second sentence:
 
 :::: {.wording}
 
-[[5]{.pnum}](https://wg21.link/expr.prim.lambda.closure#5) The closure type for a *lambda-expression* has a public inline function call operator (for a non-generic lambda) or function call operator template (for a generic lambda) ([over.call]) whose parameters and return type are those of the *lambda-expression*'s *parameter-declaration-clause* and *trailing-return-type* respectively, and whose *template-parameter-list* consists of the specified *template-parameter-list*, if any. [If the *lambda-expression* declares a homogeneous function parameter pack, the function call operator template has the invented constant template parameter introduced by the abbreviated-function-template rules ([dcl.fct]). It follows any explicitly declared template parameters and invented type parameters. Its type and interpretation are specified in [temp.variadic].]{.add} [...]
+[[5]{.pnum}](https://wg21.link/expr.prim.lambda.closure#5) The closure type for a *lambda-expression* has a public inline function call operator (for a non-generic lambda) or function call operator template (for a generic lambda) ([over.call]) whose parameters and return type are those of the *lambda-expression*'s *parameter-declaration-clause* and *trailing-return-type* respectively, and whose *template-parameter-list* consists of the specified *template-parameter-list*, if any. [If the *lambda-expression* declares a homogeneous function parameter pack, the function call operator template has the invented constant template parameter introduced by the abbreviated-function-template rules ([dcl.fct]). It follows any explicitly declared template parameters and invented type parameters.]{.add} [...]
 
-::::
+[...]
 
-In [[expr.prim.lambda.closure]/12](https://wg21.link/expr.prim.lambda.closure#12), insert after the second sentence:
-
-:::: {.wording}
-
-[[12]{.pnum}](https://wg21.link/expr.prim.lambda.closure#12) For a generic lambda with no *lambda-capture* and no explicit object parameter ([dcl.fct]), the closure type has a conversion function template to pointer to function. The conversion function template has the same invented template parameter list, and the pointer to function has the same parameter types, as the function call operator template. [If the function call operator template declares a homogeneous function parameter pack ([temp.variadic]), the parameter types of the pointer to function include a homogeneous function parameter pack with the same parameter pattern, whose count parameter is the conversion function template's invented count parameter.]{.add} [...]
+[[12]{.pnum}](https://wg21.link/expr.prim.lambda.closure#12) For a generic lambda with no *lambda-capture* and no explicit object parameter ([dcl.fct]), the closure type has a conversion function template to pointer to function. The conversion function template has the same invented template parameter list, and the pointer to function has the same parameter types, as the function call operator template. [If the function call operator template declares a homogeneous function parameter pack ([dcl.fct]), the parameter types of the pointer to function include a homogeneous function parameter pack with the same parameter pattern, whose count parameter is the conversion function template's invented count parameter.]{.add} [...]
 
 ::::
 
@@ -1201,13 +1200,13 @@ Modify [[dcl.fct]/22](https://wg21.link/dcl.fct), [/23](https://wg21.link/dcl.fc
 
 :::: {.wording}
 
-[[22]{.pnum}](https://wg21.link/dcl.fct) An abbreviated function template is a function declaration that has one or more generic parameter type placeholders ([dcl.spec.auto]) [or declares a homogeneous function parameter pack ([temp.variadic])]{.add}. [...]
+[[22]{.pnum}](https://wg21.link/dcl.fct) An abbreviated function template is a function declaration that has one or more generic parameter type placeholders ([dcl.spec.auto]) [or declares a homogeneous function parameter pack]{.add}. [...]
 
-[[23]{.pnum}](https://wg21.link/dcl.fct) [...] The invented *type-parameter*s are appended to the *template-parameter-list* after the explicitly declared *template-parameter*s. [For an abbreviated function template that declares a homogeneous function parameter pack, one invented constant template parameter is appended to its *template-parameter-list* after the explicitly declared template parameters and all invented type parameters. This parameter has no default argument. Its type and interpretation are specified in [temp.variadic]. No *template-head* is required when no template parameters are explicitly declared.]{.add} [The *declaration* in an *explicit-specialization* ([temp.expl.spec]) shall not declare a homogeneous function parameter pack.]{.add}
+[[23]{.pnum}](https://wg21.link/dcl.fct) [...] The invented *type-parameter*s are appended to the *template-parameter-list* after the explicitly declared *template-parameter*s. [For an abbreviated function template that declares a homogeneous function parameter pack, one invented constant template parameter, the *count parameter* of the pack, is appended to its *template-parameter-list* after the explicitly declared template parameters and all invented type parameters. Its type is the type of a `sizeof` expression ([expr.sizeof]), and it has no default argument. Its value, the *pack count*, is the number of function parameters the pack introduces. No *template-head* is required when no template parameters are explicitly declared.]{.add} [The *declaration* in an *explicit-specialization* ([temp.expl.spec]) shall not declare a homogeneous function parameter pack.]{.add}
 
 [...]
 
-[[25]{.pnum}](https://wg21.link/dcl.fct) [...] A function parameter pack is a pack expansion ([temp.variadic]) [unless it is a homogeneous function parameter pack]{.add}. [...]
+[[25]{.pnum}](https://wg21.link/dcl.fct) [...] When it is part of a *parameter-declaration-clause*, the *parameter-declaration* declares a function parameter pack ([temp.variadic])[, whose *parameter pattern* is the *parameter-declaration* without the ellipsis]{.add}. [...] [A function parameter pack whose parameter pattern contains neither an unexpanded pack nor a generic parameter type placeholder ([dcl.spec.auto]) is a *homogeneous function parameter pack*. A homogeneous function parameter pack shall be declared by the last *parameter-declaration* of a *parameter-declaration-clause* of the form *parameter-declaration-list*, and no other parameter of that clause shall be a function parameter pack.]{.add} A function parameter pack is a pack expansion ([temp.variadic]) [unless it is a homogeneous function parameter pack]{.add}. [...]
 
 ::::
 
@@ -1289,32 +1288,33 @@ Insert after [[over.over]/3](https://wg21.link/over.over#3):
 
 ## Variadic templates [temp.variadic] {#wording-variadic}
 
-In [[temp.variadic]/2](https://wg21.link/temp.variadic#2), insert after the first sentence. Modify the second sentence of [/5](https://wg21.link/temp.variadic#5) and insert immediately after it, replace [/6.1](https://wg21.link/temp.variadic#6.1), modify [/8](https://wg21.link/temp.variadic#8), and replace the example in [/15](https://wg21.link/temp.variadic#15) as follows:
+Modify Example 2 in [[temp.variadic]/2](https://wg21.link/temp.variadic#2). Modify the second sentence of [/5](https://wg21.link/temp.variadic#5) and insert immediately after it, replace [/6.1](https://wg21.link/temp.variadic#6.1), modify [/8](https://wg21.link/temp.variadic#8) and [/9.2](https://wg21.link/temp.variadic#9.2), and replace the example in [/15](https://wg21.link/temp.variadic#15) as follows:
 
-Retain the remaining requirements of paragraph 8, the other expansion patterns in paragraph 6, and the element interpretations in paragraph 9.
+Retain the remaining requirements of paragraph 8, the other expansion patterns in paragraph 6, and the other element interpretations in paragraph 9.
 
 :::: {.wording}
 
 [[2]{.pnum}](https://wg21.link/temp.variadic#2) A function parameter pack is a function parameter that accepts zero or more function arguments.
 
-::::: {.add}
+::::: {.example num=2}
 
-[For a *parameter-declaration* that declares a function parameter pack, its *parameter pattern* is the *parameter-declaration* with the ellipsis in its declarator or *abstract-declarator* removed. The unexpanded packs in the parameter pattern are determined after introducing any template parameter corresponding to a generic parameter type placeholder in the declaration ([dcl.fct]).]{.add}
-
-[If the parameter pattern contains no unexpanded packs, the declaration declares a *homogeneous function parameter pack*. Otherwise, it declares a function parameter pack that is a pack expansion whose pattern is the parameter pattern. This classification is determined before substituting template arguments from an enclosing templated entity and is not changed by that substitution.]{.add}
-
-[A homogeneous function parameter pack shall declare parameters of the function declared by a function declaration or of a lambda's function call operator template, or shall appear in the *parameter-type-list* of the pointer to function type of a closure type's conversion function template ([expr.prim.lambda.closure]).]{.add}
-
-[A homogeneous function parameter pack has an associated invented constant template parameter, its *count parameter*. The type of the count parameter is the type of a `sizeof` expression ([expr.sizeof]). The value of the count parameter is the *pack count* and specifies the number of function parameters introduced by the pack. A homogeneous function parameter pack shall be the last parameter of its *parameter-declaration-clause*. That *parameter-declaration-clause* shall have the form *parameter-declaration-list*. No other parameter of that clause shall be a function parameter pack.]{.add}
-
-[The type of each parameter introduced by a homogeneous function parameter pack is obtained from its parameter pattern by substitution and the parameter type adjustments specified in [dcl.fct]. Substitution into the type specified by the parameter pattern is performed even when the pack count is zero. Each parameter so introduced is considered to have been expanded from the homogeneous function parameter pack. The value of a `sizeof...` expression naming this pack is the pack count.]{.add}
+```diff
+  template<class ... Types> void f(Types ... args);
++ void g(int ... args);           // args is a homogeneous function parameter pack
+  
+  f();                            // args contains no arguments
+  f(1);                           // args contains one argument: int
+  f(2, 1.0);                      // args contains two arguments: int and double
++ g();                            // pack count is zero
++ g(2, 1.0);                      // pack count is two and 1.0 converts to int
++ g<1>(2, 1.0);                   // error: explicit pack count does not match two arguments
+```
 
 :::::
 
 [...]
 
-
-[[5]{.pnum}](https://wg21.link/temp.variadic#5) [...] The number of elements of a template parameter pack or a function parameter pack [other than a homogeneous function parameter pack]{.add} is the number of arguments provided for the parameter pack. [The number of elements of a homogeneous function parameter pack is its pack count.]{.add} [...]
+[[5]{.pnum}](https://wg21.link/temp.variadic#5) [...] The number of elements of a template parameter pack or a function parameter pack [other than a homogeneous function parameter pack]{.add} is the number of arguments provided for the parameter pack. [The number of elements of a homogeneous function parameter pack is its pack count ([dcl.fct]).]{.add} [...]
 
 [...]
 
@@ -1327,6 +1327,10 @@ Retain the remaining requirements of paragraph 8, the other expansion patterns i
 [An appearance of the name of]{.rm}[Each occurrence of a name denoting]{.add} a pack [within the pattern of a pack expansion]{.add} is [only]{.rm} expanded by the innermost [enclosing]{.rm} pack expansion [whose pattern contains that occurrence]{.add}. The pattern of a pack expansion shall [name]{.rm}[contain]{.add} one or more [packs that are not expanded by a nested pack expansion; such packs are called]{.rm} [packs that are]{.add} unexpanded [packs]{.rm} in [the]{.rm}[that]{.add} pattern.
 
 All of the packs expanded by a pack expansion shall have the same number of arguments specified. An appearance of a name of a pack that is not expanded is ill-formed. [...]
+
+[...]
+
+- [[9.2]{.pnum}](https://wg21.link/temp.variadic#9.2) if the pack is a function parameter pack, the element is an *id-expression* designating the *i*^th^ function parameter that resulted from instantiation of the function parameter pack declaration [or, for a homogeneous function parameter pack, the *i*^th^ function parameter it introduces]{.add};
 
 [...]
 
@@ -1372,7 +1376,7 @@ In [[temp.deduct.general]/1](https://wg21.link/temp.deduct.general#1), insert be
 
 :::: {.wording}
 
-[[1]{.pnum}](https://wg21.link/temp.deduct.general#1) When a function template specialization is referenced, all of the template arguments shall have values. The values can be explicitly specified or, in some cases, be deduced from the use or obtained from default *template-argument*s. [For a function template that declares a homogeneous function parameter pack, the argument for its count parameter shall be determined. The argument can be explicitly specified or deduced as described in [temp.deduct.call] and [temp.deduct.type]. After substitution, the pack introduces the number of function parameters specified by that argument, each formed from its parameter pattern. Explicit specification and deduction of equivalent count arguments identify the same specialization under the ordinary template-argument equivalence rules.]{.add} [...]
+[[1]{.pnum}](https://wg21.link/temp.deduct.general#1) When a function template specialization is referenced, all of the template arguments shall have values. The values can be explicitly specified or, in some cases, be deduced from the use or obtained from default *template-argument*s. [For a function template that declares a homogeneous function parameter pack, the argument for its count parameter shall be determined. The argument can be explicitly specified or deduced as described in [temp.deduct.call] and [temp.deduct.type]. After substitution, the pack introduces the number of function parameters specified by that argument, each formed from its parameter pattern. The parameter pattern undergoes substitution even when that number is zero. Explicit specification and deduction of equivalent count arguments identify the same specialization under the ordinary template-argument equivalence rules.]{.add} [...]
 
 
 ::::: {.example num=1}
@@ -1406,9 +1410,7 @@ and
 
 ::::: {.add}
 
-:::::: {.example .unnumbered}
-
-::::::: {.add}
+:::::: {.example num=2}
 
 ```cpp
 template <class T>
@@ -1420,8 +1422,6 @@ auto p = &f<int>;
 // OK, q has type void (*)(int, int, int)
 auto q = &f<int, 3>;
 ```
-
-:::::::
 
 ::::::
 
@@ -1473,11 +1473,11 @@ In [[temp.deduct.partial]/8](https://wg21.link/temp.deduct.partial#8), make the 
 
 :::: {.wording}
 
-[[8]{.pnum}](https://wg21.link/temp.deduct.partial#8) [...] Each comparison deduces template arguments for subsequent positions in the template parameter packs [(if any)]{.add} expanded by the function parameter pack. [For partial ordering, the pattern of a homogeneous function parameter pack is its parameter pattern ([temp.variadic]). Deduction against this pattern combines deductions for template parameters under the usual consistency requirements. Comparison of two pack patterns does not determine their count arguments from the arity of a candidate specialization. A parameter transformed from a homogeneous function parameter pack remains a parameter transformed from a function parameter pack for the purposes of this subclause.]{.add} [...]
+[[8]{.pnum}](https://wg21.link/temp.deduct.partial#8) [...] Each comparison deduces template arguments for subsequent positions in the template parameter packs [(if any)]{.add} expanded by the function parameter pack. [For partial ordering, the pattern of a homogeneous function parameter pack is its parameter pattern ([dcl.fct]). Deduction against this pattern combines deductions for template parameters under the usual consistency requirements. Comparison of two pack patterns does not determine their count arguments from the arity of a candidate specialization. A parameter transformed from a homogeneous function parameter pack remains a parameter transformed from a function parameter pack for the purposes of this subclause.]{.add} [...]
 
 ::::
 
-Existing tie-breaks apply without a new preference for homogeneous packs.
+Existing tie-breaks apply without a new preference for homogeneous packs, pending Poll 8 ([](#proposed-polls)).
 
 :::: {.draftnote}
 
@@ -1496,6 +1496,12 @@ Wording for the declaration correspondence described in [](#addresses) remains t
 ## Feature-test macro [cpp.predefined] {#wording-feature-test}
 
 Add a homogeneous function parameter pack feature-test macro to [Table 22, Feature-test macros](https://wg21.link/cpp.predefined#tab:cpp.predefined.ft). Options include `__cpp_homo_fn_packs` and `__cpp_homogeneous_function_packs`. SG10 will choose the spelling. Its value remains undetermined.
+
+:::: {.draftnote}
+
+Settle the macro spelling with SG10 and supply its value.
+
+::::
 
 ## Annex C (informative) Compatibility [diff.cpp26] {#wording-compatibility}
 

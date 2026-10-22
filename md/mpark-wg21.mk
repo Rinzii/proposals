@@ -2,7 +2,7 @@
 DEFAULT_FORMAT ?= html
 DEFAULTS := ../../md/defaults.yaml
 PREFILTERS := ../../md/paper-style.py
-PAPER_STYLES := $(wildcard ../../md/papers*.css) ../../md/paper-style.yaml ../../md/paper-style.py ../../md/papers.tex
+PAPER_STYLES := $(wildcard ../../md/papers*.css) ../../md/paper-style.yaml ../../md/paper-style.py ../../md/wording-links.py ../../md/papers.tex
 OUTDIR := ../../out/papers/$(notdir $(CURDIR))
 
 paper_id := $(word 1,$(subst :, ,$(PAPER_RULE)))

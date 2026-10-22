@@ -2,5 +2,7 @@ css:
   - ${.}/papers.css
   - ${.}/papers-screen.css
   - ${.}/papers-print.css
+filters:
+  - ${.}/wording-links.py
 metadata-files:
   - ${.}/paper-style.yaml
