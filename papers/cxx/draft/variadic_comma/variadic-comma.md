@@ -2,7 +2,7 @@
 title: "Require the comma before C varargs"
 document: DnnnnR0
 status: progress
-date: November 2026
+date: 2026-11-23
 audience:
   - EWG
   - CWG
