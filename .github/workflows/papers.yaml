@@ -18,17 +18,53 @@ jobs:
           fetch-depth: 0
           submodules: true
       - uses: actions/setup-python@v5
+        id: python
         with:
           python-version: '3.13'
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-      - name: Install dependencies
+      - name: Install TeX Live
+        uses: zauguin/install-texlive@c9f3ea3d51b2e04d092c4f9d208a19542d5dabcf # v4.5.0
+        with:
+          packages: >
+            xetex tex-gyre lm-math hyphen-english
+            amsfonts amsmath auxhook babel babel-english bigintcalc bitset
+            bookmark booktabs caption colortbl ec environ etexcmds etoolbox
+            fancyvrb fontname fontspec footnotehyper framed fvextra geometry
+            gettitlestring graphics graphics-cfg graphics-def hycolor hyperref
+            iftex infwarerr intcalc kpathsea kvdefinekeys kvoptions kvsetkeys
+            l3backend l3kernel l3packages latex latex-fonts lineno lm ltxcmds
+            mdframed microtype multirow needspace parskip pdfcol pdfescape
+            pdftexcmds pgf refcount rerunfilecheck soul stringenc tcolorbox
+            tikzfill titlesec tools trimspaces ulem unicode-math uniquecounter
+            upquote url xcolor xurl zapfding zref
+      - name: Date for the reference cache
+        id: date
+        run: echo "today=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+      - name: Cache Pandoc and the Python environment
+        uses: actions/cache@v4
+        with:
+          path: |
+            md/wg21/deps/pandoc
+            md/wg21/deps/python
+          key: wg21-deps-${{ runner.os }}-py${{ steps.python.outputs.python-version }}-${{ hashFiles('md/wg21/base.mk', 'md/wg21/deps/*.sh', 'md/wg21/deps/requirements.txt', 'md/patches/*.patch') }}
+      - name: Cache reference indexes
+        uses: actions/cache@v4
+        with:
+          path: |
+            md/wg21/data/csl.json
+            md/wg21/data/srefs.json
+            md/wg21/data/srefs.defs
+          key: wg21-refs-${{ steps.date.outputs.today }}-${{ hashFiles('md/wg21/data/refs.py', 'md/wg21/data/srefs.py', 'md/wg21/data/srefs-md.py') }}
+      - name: Mark restored dependencies as current
         run: |
-          sudo apt-get update
-          sudo apt-get install -y texlive-xetex fonts-texgyre
-          make setup
+          for restored in md/wg21/deps/pandoc/* md/wg21/deps/python md/wg21/data/csl.json md/wg21/data/srefs.json md/wg21/data/srefs.defs; do
+            if [ -e "$restored" ]; then touch "$restored"; fi
+          done
+      - name: Install dependencies
+        run: make setup
       - name: Build
         run: make site
       - name: Upload rendered papers
