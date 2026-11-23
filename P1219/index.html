@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="generator" content="mpark/wg21" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <meta name="dcterms.date" content="2026-10-21" />
+  <meta name="dcterms.date" content="2026-10-22" />
   <title>Homogeneous variadic function parameters</title>
   <style>
 
@@ -535,6 +535,9 @@ float: right;
 }
 #title-block-header > table tbody tr {
 border-bottom: none;
+}
+.add ins {
+text-decoration: none;
 }
 details.collapsed > summary {
 list-style: none;
@@ -1348,27 +1351,122 @@ text-underline-offset: calc(var(--paper-link-underline-offset) * 1em);
 .wrapper a.self-link {
 text-decoration: none;
 }
-.wrapper :is(.draftnote, .ednote) {
+.wrapper span:is(.draftnote, .ednote) {
 color: var(--paper-note);
 }
-.wrapper .draftnote {
-background: color-mix(in srgb, var(--paper-note) 8%, transparent);
+.paper-note {
+--accent: var(--paper-note-accent);
+--surface: var(--paper-note-bg);
+--icon: var(--paper-icon-info);
 }
-.wrapper div.draftnote {
-margin-block: 1em;
-padding: 0.65em 0.9em 0.65em 1.1em;
-border-inline-start: 0.25em solid var(--paper-note);
-border-radius: 0 0.4em 0.4em 0;
-font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-font-size: 0.92em;
+.paper-draftnote {
+--accent: var(--paper-draftnote-accent);
+--surface: var(--paper-draftnote-bg);
+--icon: var(--paper-icon-info);
 }
-.wrapper div.draftnote > :first-child {
+.paper-decision {
+--accent: var(--paper-decision-accent);
+--surface: var(--paper-decision-bg);
+--icon: var(--paper-icon-decision);
+}
+.paper-bug {
+--accent: var(--paper-bug-accent);
+--surface: var(--paper-bug-bg);
+--icon: var(--paper-icon-bug);
+}
+.recorded-poll {
+--accent: var(--paper-recorded-accent);
+--surface: var(--paper-recorded-bg);
+--icon: var(--paper-icon-recorded);
+}
+.proposed-poll {
+--accent: var(--paper-proposed-accent);
+--surface: var(--paper-proposed-bg);
+--icon: var(--paper-icon-proposed);
+}
+.paper-callout:is(.recorded-poll, .proposed-poll) > p:first-child {
+display: flex;
+align-items: baseline;
+flex-wrap: wrap;
+gap: 0.25em 1em;
+margin-block-end: 0.45em;
+text-align: start;
+}
+.poll-result {
+margin-inline-start: auto;
+color: var(--accent);
+}
+.paper-callout:is(.recorded-poll, .proposed-poll) > *:nth-child(2) {
 margin-block-start: 0;
 }
-.wrapper div.draftnote > :last-child {
+.recorded-poll .table-wrapper > table {
+width: 100%;
+font-variant-numeric: tabular-nums;
+}
+.wrapper .recorded-poll:not(.poll-table) .table-wrapper > table {
+margin: 0.7em 0 0;
+}
+.paper-callout blockquote {
+--accent: var(--paper-quote-accent);
+--surface: var(--paper-quote-bg);
+--icon: var(--paper-icon-quote);
+}
+.wording {
+--accent: var(--paper-wording-border);
+--surface: var(--paper-wording-bg);
+--icon: var(--paper-icon-wording);
+color: var(--paper-wording-text);
+font-style: normal;
+}
+div.add {
+--accent: var(--paper-insert-accent);
+--surface: var(--paper-insert-bg);
+--icon: var(--paper-icon-insert);
+}
+.paper-removal {
+--accent: var(--paper-remove-accent);
+--surface: var(--paper-remove-bg);
+--icon: var(--paper-icon-remove);
+}
+.wrapper :is(.wording:not(.wording-change), .paper-callout, .paper-callout blockquote, div.add, .paper-removal) {
+position: relative;
+margin: 1em 0;
+margin-inline-start: calc(var(--paper-panel-inset) * 1em);
+padding: calc(var(--paper-panel-padding) * 1em);
+border-inline-start: calc(var(--paper-panel-rule) * 1em) solid var(--accent);
+border-radius: 0 0.25em 0.25em 0;
+background: var(--surface);
+}
+.wrapper :is(.wording:not(.wording-change), .paper-callout, .paper-callout blockquote, div.add, .paper-removal)::before {
+content: "";
+position: absolute;
+inset-block-start: 0.35em;
+inset-inline-end: calc(100% + 0.6em);
+inline-size: 1.75em;
+block-size: 1.75em;
+background: var(--accent);
+mask: var(--icon) center / contain no-repeat;
+}
+.wrapper :is(.wording:not(.wording-change), .paper-callout, .paper-callout blockquote, div.add, .paper-removal) > :first-child {
+margin-block-start: 0;
+}
+.wrapper :is(.wording:not(.wording-change), .paper-callout, .paper-callout blockquote, div.add, .paper-removal) > :last-child {
 margin-block-end: 0;
 }
+.paper-callout .callout-label {
+color: var(--accent);
+font: bold 0.92em/1.2 ui-sans-serif, system-ui, sans-serif;
+text-transform: uppercase;
+}
+.paper-callout ul {
+list-style: disc;
+margin-block: 0.7em;
+}
+.paper-callout ul > li::before {
+content: none;
+}
 .wrapper span.draftnote {
+background: color-mix(in srgb, var(--paper-note) 8%, transparent);
 padding-inline: 0.25em;
 border-radius: 0.2em;
 box-decoration-break: clone;
@@ -1451,23 +1549,12 @@ white-space: inherit;
 background: var(--paper-valid-bg);
 color: var(--paper-add);
 }
-.wrapper .add ins {
-text-decoration: none;
-}
 .wrapper .rm {
 background: var(--paper-invalid-bg);
 color: var(--paper-rm);
 }
 .wrapper :is(.add, .rm) :is(ins, del) {
 color: inherit;
-}
-.wrapper .wording {
-margin: 1em calc(var(--paper-wording-inset) * 1em);
-padding: 0 calc(var(--paper-wording-padding) * 1em);
-border: calc(var(--paper-border-width) * 1em) solid var(--paper-wording-border);
-background: var(--paper-wording-bg);
-color: var(--paper-wording-text);
-font-style: normal;
 }
 .wording :is(p, li, .example) {
 position: relative;
@@ -1477,6 +1564,12 @@ margin-block: 1em;
 }
 .wording .marginalizedparent {
 position: static;
+}
+.wrapper .wording-numbered:not(.wording-change) {
+margin-inline-start: calc(2 * var(--paper-panel-inset) * 1em);
+}
+.wrapper .wording-numbered:not(.wording-change)::before {
+inset-inline-end: calc(100% + (var(--paper-panel-inset) + 0.6) * 1em);
 }
 .wording .marginalized {
 position: absolute;
@@ -1491,11 +1584,15 @@ text-decoration: none;
 .wording li .marginalized {
 inset-inline-end: calc(100% + 3.25rem);
 }
-.wrapper .wording .add,
+.wrapper .wording div.add :is(span.add, div.sourceCode),
+.wrapper .paper-removal :is(.rm, div.sourceCode) {
+background: transparent;
+}
+.wrapper .wording span.add,
 .wrapper .wording code.diff span.va {
 background: var(--paper-wording-add-bg);
 }
-.wrapper .wording .rm,
+.wrapper .wording span.rm:not(.paper-removal *),
 .wrapper .wording code.diff span.st {
 background: var(--paper-wording-remove-bg);
 color: var(--paper-rm);
@@ -1510,7 +1607,7 @@ color: var(--paper-add);
 color: var(--paper-rm);
 }
 .wrapper .wording code.diff span.st,
-.wrapper .rm code.sourceCode {
+.wrapper .rm code.sourceCode:not(del *) {
 text-decoration: line-through;
 }
 .wrapper :is(.wording, .add, .rm) div.sourceCode,
@@ -1613,9 +1710,6 @@ accent-color: var(--toc-accent);
 }
 }
 @media screen and (max-width: 42em) {
-.wrapper .wording {
-margin-inline-end: 0;
-}
 .code-comparison table,
 .table-wrapper > table.cmptable {
 min-width: 44em;
@@ -1848,6 +1942,8 @@ background-color: #4b6345;
 :root {
 --paper-add: light-dark(#006d3c, #91dfad);
 --paper-background: light-dark(#f8f7f4, #181818);
+--paper-bug-accent: light-dark(#76533c, #bb957b);
+--paper-bug-bg: light-dark(#f0e2d9, #373028);
 --paper-caption: light-dark(#4f4c44, #bcb7ad);
 --paper-code-bg: light-dark(#eeedeb, #232220);
 --paper-code-comment: light-dark(#475b18, #a5ba82);
@@ -1861,22 +1957,47 @@ background-color: #4b6345;
 --paper-code-scope: light-dark(#005367, #73deff);
 --paper-code-string: light-dark(#356b00, #a8dc8c);
 --paper-code-type: light-dark(#005a53, #54ddce);
+--paper-decision-accent: light-dark(#794772, #bd83b4);
+--paper-decision-bg: light-dark(#f4e6f4, #30232d);
+--paper-draftnote-accent: light-dark(#306966, #77b5b4);
+--paper-draftnote-bg: light-dark(#e6f4f3, #222f30);
 --paper-grammar: light-dark(#005b4f, #68dcc7);
+--paper-insert-accent: light-dark(#17752d, #5bab6d);
+--paper-insert-bg: light-dark(#e4faea, #233023);
 --paper-invalid-bg: light-dark(#fbdfe1, #342425);
 --paper-link: light-dark(#004b96, #8bbeff);
 --paper-note: light-dark(#694400, #f1c17f);
+--paper-note-accent: light-dark(#376b43, #79b481);
+--paper-note-bg: light-dark(#e6f4e9, #233025);
+--paper-proposed-accent: light-dark(#805721, #d6af77);
+--paper-proposed-bg: light-dark(#f8f0e2, #332d23);
+--paper-quote-accent: light-dark(#656565, #979797);
+--paper-quote-bg: light-dark(#f0f0f0, #2c2c2c);
+--paper-recorded-accent: light-dark(#355e84, #90b6d9);
+--paper-recorded-bg: light-dark(#e9f0f7, #242e39);
+--paper-remove-accent: light-dark(#973a48, #d28088);
+--paper-remove-bg: light-dark(#f8e7e8, #39272b);
 --paper-rm: light-dark(#931646, #fea8bb);
 --paper-table-head: light-dark(#e4e1dc, #302e2b);
 --paper-table-rule: light-dark(#6f6a63, #74706a);
 --paper-table-stripe: light-dark(#eeedeb, #232220);
 --paper-text: light-dark(#27201a, #ebe4d8);
 --paper-valid-bg: light-dark(#d6efc7, #242c1f);
---paper-wording-add-bg: light-dark(#caeab9, #263220);
---paper-wording-bg: light-dark(#ebeae8, #272623);
---paper-wording-border: light-dark(#6f6a63, #74706a);
+--paper-wording-add-bg: light-dark(#d8efdd, #123b22);
+--paper-wording-bg: light-dark(#f0f0ef, #2c2c2c);
+--paper-wording-border: light-dark(#727272, #858585);
 --paper-wording-number: light-dark(#004b96, #8bbeff);
---paper-wording-remove-bg: light-dark(#f7d3d4, #3d2728);
+--paper-wording-remove-bg: light-dark(#f8dfe1, #51212a);
 --paper-wording-text: light-dark(#27201a, #ebe4d8);
+--paper-icon-info: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%22-1%20-1%2026%2026%22%3E%3Cpath%20d%3D%22M22%2012%20C22%206.5%2017.5%202%2012%202%20S2%206.5%202%2012%20S6.5%2022%2012%2022%20S22%2017.5%2022%2012%20Z%20M12%2011%20V17%20M12%207%20V7.1%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E');
+--paper-icon-decision: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%22-1%20-1%2026%2026%22%3E%3Cpath%20d%3D%22M4%2020%20H14%20M3%209%20L6%206%20L12%2012%20L9%2015%20Z%20M9%203%20L12%200%20L18%206%20L15%209%20Z%20M8%208%20L11%205%20M11%209%20L22%2020%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E');
+--paper-icon-bug: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%22-1%20-1%2026%2026%22%3E%3Cpath%20d%3D%22M7%2010%20C7%206%2017%206%2017%2010%20V15%20C17%2023%207%2023%207%2015%20Z%20M9%207%20C9%203%2015%203%2015%207%20M8%203%20L10%205%20M16%203%20L14%205%20M3%209%20L7%2011%20M2%2014%20H7%20M3%2019%20L7%2017%20M21%209%20L17%2011%20M22%2014%20H17%20M21%2019%20L17%2017%20M12%2011%20V16%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E');
+--paper-icon-insert: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%22-1%20-1%2026%2026%22%3E%3Cpath%20d%3D%22M5%202%20H14%20L20%208%20V22%20H5%20Z%20M14%202%20V8%20H20%20M9%2015%20H16%20M12.5%2011.5%20V18.5%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E');
+--paper-icon-remove: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%22-1%20-1%2026%2026%22%3E%3Cpath%20d%3D%22M5%202%20H14%20L20%208%20V22%20H5%20Z%20M14%202%20V8%20H20%20M9%2015%20H16%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E');
+--paper-icon-recorded: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%22-1%20-1%2026%2026%22%3E%3Cpath%20d%3D%22M3%2012%20H7%20M17%2012%20H21%20L22%2021%20H2%20L3%2012%20M7%2014%20H17%20M8%209%20L13%203%20L19%208%20L14%2014%20Z%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E');
+--paper-icon-proposed: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%22-1%20-1%2026%2026%22%3E%3Cpath%20d%3D%22M4%2020%20L5%2015%20L17%203%20L21%207%20L9%2019%20Z%20M15%205%20L19%209%20M4%2022%20H21%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E');
+--paper-icon-wording: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%22-1%20-1%2026%2026%22%3E%3Cpath%20d%3D%22M2%206%20V22%20H15%20M6%202%20H15%20L21%208%20V18%20H6%20Z%20M15%202%20V8%20H21%20M9%209%20H13%20M11%207%20V11%20M9%2014%20H15%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E');
+--paper-icon-quote: url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%22-1%20-1%2026%2026%22%3E%3Cpath%20d%3D%22M3%206%20H9%20V13%20L6%2018%20H4%20L7%2012%20H3%20Z%20M14%206%20H20%20V13%20L17%2018%20H15%20L18%2012%20H14%20Z%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E');
 --paper-body-leading: 1.35;
 --paper-body-size: 10pt;
 --paper-border-width: 0.0625;
@@ -1889,10 +2010,11 @@ background-color: #4b6345;
 --paper-page-margin-x: 22.45;
 --paper-page-margin-y: 25;
 --paper-page-width: 210;
+--paper-panel-inset: 2.5;
+--paper-panel-padding: 0.5;
+--paper-panel-rule: 0.23;
 --paper-table-padding-x: 0.4;
 --paper-table-padding-y: 0.5;
---paper-wording-inset: 2.5;
---paper-wording-padding: 0.75;
 --paper-heading-1: 2;
 --paper-heading-2: 1.5;
 --paper-heading-3: 1.17;
@@ -1964,7 +2086,7 @@ function parameters</h1>
   </tr>
   <tr>
     <td>Date:</td>
-    <td>2026-10-21</td>
+    <td>2026-10-22</td>
   </tr>
   <tr>
     <td>Project:</td>
@@ -2004,7 +2126,7 @@ function parameters</h1>
 <ul>
 <li><a href="#revision-history" id="toc-revision-history"><span class="toc-section-number">1</span> Revision history</a>
 <ul>
-<li><a href="#revision-r3" id="toc-revision-r3"><span class="toc-section-number">1.1</span> R3 (2026-10-21)</a></li>
+<li><a href="#revision-r3" id="toc-revision-r3"><span class="toc-section-number">1.1</span> R3 (2026-10-22)</a></li>
 <li><a href="#revision-r2" id="toc-revision-r2"><span class="toc-section-number">1.2</span> R2 (2019-10-05)</a></li>
 <li><a href="#revision-r1" id="toc-revision-r1"><span class="toc-section-number">1.3</span> R1 (2019-03-11)</a></li>
 <li><a href="#revision-r0" id="toc-revision-r0"><span class="toc-section-number">1.4</span> R0 (2018-10-08)</a></li>
@@ -2106,7 +2228,7 @@ reclamation of the comma-less spelling. This gives packs the same
 meaning with or without a name, while changing declarations deprecated
 in C++26.</p>
 <h1 data-number="1" id="revision-history"><span class="header-section-number">1</span> Revision history<a href="#revision-history" class="self-link"></a></h1>
-<h2 data-number="1.1" id="revision-r3"><span class="header-section-number">1.1</span> R3 (2026-10-21)<a href="#revision-r3" class="self-link"></a></h2>
+<h2 data-number="1.1" id="revision-r3"><span class="header-section-number">1.1</span> R3 (2026-10-22)<a href="#revision-r3" class="self-link"></a></h2>
 <ul>
 <li>Updated active contributors and credited James Touton as original
 author.</li>
@@ -2968,11 +3090,12 @@ Lambda call operators use the same order.</p>
 <p>The trailing-pack rule keeps invented parameters in
 function-parameter order. <a href="#explicit-lengths">Non-trailing
 support</a> would require revisiting this.</p>
-<div class="draftnote">
-<p>[ Drafting note: Explicit-argument assignment remains unspecified for
-preceding template parameter packs, including constant packs and
-<code class="sourceCode default cpp">auto</code> parameters. The count
-stays last. ]</p>
+<div class="paper-callout paper-draftnote" role="note">
+<p><span class="callout-label">Drafting note:</span> Explicit-argument
+assignment remains unspecified for preceding template parameter packs,
+including constant packs and
+<code class="sourceCode cpp"><span class="kw">auto</span></code>
+parameters. The count stays last.</p>
 </div>
 <h3 data-number="5.2.1" id="alternatives"><span class="header-section-number">5.2.1</span> Alternatives<a href="#alternatives" class="self-link"></a></h3>
 <p>We retain R2’s rejection of a bare
@@ -3485,9 +3608,10 @@ and
 <code class="sourceCode cpp"><span class="kw">sizeof</span><span class="ex">...</span><span class="op">(</span><span class="va">values</span><span class="op">)</span> <span class="op">&gt;=</span> <span class="dv">2</span></code>
 predicates. <a href="https://wg21.link/temp.constr.atomic#2">[temp.constr.atomic]/2</a>
 <a href="https://wg21.link/temp.constr.order#1.2">[temp.constr.order]/1.2</a></p>
-<div class="draftnote">
-<p>[ Drafting note: The rules for matching corresponding packs in atomic
-and fold-expanded constraints remain incomplete. ]</p>
+<div class="paper-callout paper-draftnote" role="note">
+<p><span class="callout-label">Drafting note:</span> The rules for
+matching corresponding packs in atomic and fold-expanded constraints
+remain incomplete.</p>
 </div>
 <h3 data-number="5.2.6" id="constructors"><span class="header-section-number">5.2.6</span> Constructors<a href="#constructors" class="self-link"></a></h3>
 <p>If supported, homogeneous constructors would be implicit templates in
@@ -3583,17 +3707,17 @@ selection under ordinary ranking.</span></caption>
 </table>
 </div>
 </div>
-<div class="draftnote">
-<p>[ Drafting note: The candidate wording includes constructors subject
-to Poll 7, but support remains undecided. It excludes deduction guides,
-with support undecided pending analysis of deduction and return types.
-For class templates, <a href="https://wg21.link/over.match.class.deduct#1.1">[over.match.class.deduct]/1.1</a>
+<div class="paper-callout paper-draftnote" role="note">
+<p><span class="callout-label">Drafting note:</span> The candidate
+wording includes constructors subject to Poll 7, but support remains
+undecided. It excludes deduction guides, with support undecided pending
+analysis of deduction and return types. For class templates, <a href="https://wg21.link/over.match.class.deduct#1.1">[over.match.class.deduct]/1.1</a>
 forms implicit deduction candidates from constructor template parameters
 and parameter lists, including the invented count. Whether implicit
 guides from <a href="#constructors">homogeneous constructors</a> fall
 under that exclusion or satisfy the context restriction remains
 unresolved by Poll 7. The examples still need validation treating
-homogeneous constructors as implicit templates. ]</p>
+homogeneous constructors as implicit templates.</p>
 </div>
 <h2 data-number="5.3" id="lambdas"><span class="header-section-number">5.3</span> Lambdas<a href="#lambdas" class="self-link"></a></h2>
 <p>Lambdas use the same count model. This proposed call operator remains
@@ -4167,9 +4291,10 @@ primary-template syntax, but do not establish implementation of this
 revision’s invented count model. <span class="citation" data-cites="P1219-CLANG-TESTS"><a href="https://github.com/Bekenn/clang/blob/ff4799a4b5b8d071eba265249994aee7b7970258/test/SemaTemplate/cxx2a-func-parm-packs.cpp">[P1219-CLANG-TESTS]</a></span>
 Such an implementation may not be ready for Brazil. We seek EWG design
 direction.</p>
-<div class="draftnote">
-<p>[ Drafting note: Complete and document an implementation of this
-revision’s syntax and count model. ]</p>
+<div class="paper-callout paper-draftnote" role="note">
+<p><span class="callout-label">Drafting note:</span> Complete and
+document an implementation of this revision’s syntax and count
+model.</p>
 </div>
 <h1 data-number="9" id="candidate-rules"><span class="header-section-number">9</span> Wording<a href="#candidate-rules" class="self-link"></a></h1>
 <p>Wording is relative to <span class="citation" data-cites="CPP-DRAFT"><a href="https://wg21.link/N5054">[N5054]</a></span>.</p>
@@ -4177,7 +4302,7 @@ revision’s syntax and count model. ]</p>
 <h3 data-number="9.1.1" id="wording-lambda-general"><span class="header-section-number">9.1.1</span> General <a href="https://wg21.link/expr.prim.lambda.general" title="7.5.6.1 General">[expr.prim.lambda.general]</a><a href="#wording-lambda-general" class="self-link"></a></h3>
 <p>Modify the first sentence of <a href="https://wg21.link/expr.prim.lambda.general#6">[expr.prim.lambda.general]/6</a>
 and append to Example 4:</p>
-<div class="wording">
+<div class="wording wording-numbered">
 <p><a href="https://wg21.link/expr.prim.lambda.general#6"><span class="marginalizedparent"><span id="pnum-1" class="marginalized">6</span></span></a> A lambda is a generic lambda if
 the <em>lambda-expression</em> has any generic parameter type
 placeholders ([dcl.spec.auto]), <span class="rm"><del>or</del></span> if
@@ -4197,7 +4322,7 @@ declares a homogeneous function parameter pack
 <p>In <a href="https://wg21.link/expr.prim.lambda.closure#5">[expr.prim.lambda.closure]/5</a>,
 insert after the first sentence, and in <a href="https://wg21.link/expr.prim.lambda.closure#12">/12</a>, insert
 after the second sentence:</p>
-<div class="wording">
+<div class="wording wording-numbered">
 <p><a href="https://wg21.link/expr.prim.lambda.closure#5"><span class="marginalizedparent"><span id="pnum-2" class="marginalized">5</span></span></a> The closure type for a
 <em>lambda-expression</em> has a public inline function call operator
 (for a non-generic lambda) or function call operator template (for a
@@ -4225,7 +4350,7 @@ function template’s invented count parameter.</ins></span> […]</p>
 </div>
 <h2 data-number="9.2" id="wording-functions"><span class="header-section-number">9.2</span> Functions <a href="https://wg21.link/dcl.fct" title="9.3.4.6 Functions">[dcl.fct]</a><a href="#wording-functions" class="self-link"></a></h2>
 <p>Modify <a href="https://wg21.link/dcl.fct">[dcl.fct]/22</a>, <a href="https://wg21.link/dcl.fct">/23</a>, and <a href="https://wg21.link/dcl.fct">/25</a> as follows:</p>
-<div class="wording">
+<div class="wording wording-numbered">
 <p><a href="https://wg21.link/dcl.fct"><span class="marginalizedparent"><span id="pnum-4" class="marginalized">22</span></span></a> An abbreviated function
 template is a function declaration that has one or more generic
 parameter type placeholders ([dcl.spec.auto]) <span class="add"><ins>or
@@ -4268,7 +4393,7 @@ pack</ins></span>. […]</p>
 <p>Remove the comma-less alternative in <a href="https://wg21.link/dcl.fct">[dcl.fct]/1</a>, the indicated wording
 in <a href="https://wg21.link/dcl.fct">/3</a>, paragraph <a href="https://wg21.link/dcl.fct">/26</a>, and its disambiguation
 footnote:</p>
-<div class="wording">
+<div class="wording wording-numbered">
 <p><a href="https://wg21.link/dcl.fct"><span class="marginalizedparent"><span id="pnum-7" class="marginalized">1</span></span></a></p>
 <div class="sourceCode" id="cb29"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>  <em>parameter-declaration-clause</em>:</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>      ...</span>
@@ -4304,8 +4429,8 @@ parameter (so the ellipsis will be parsed as part of the
 <em>declarator-id</em>).</del></span></p>
 </div>
 <p>Remove <a href="https://wg21.link/depr.ellipsis.comma">[depr.ellipsis.comma]</a>:</p>
-<div class="wording">
-<div class="rm">
+<div class="wording wording-change wording-numbered">
+<div class="rm paper-removal wording-numbered">
 <p><a href="https://wg21.link/depr.ellipsis.comma"><span class="marginalizedparent"><span id="pnum-11" class="marginalized">(D.5)</span></span></a> <span class="rm"><del><strong>Non-comma-separated ellipsis parameters
 [depr.ellipsis.comma]</strong></del></span></p>
 <p><span class="rm"><del>A <em>parameter-declaration-clause</em> of the
@@ -4328,12 +4453,12 @@ declaration under homogeneous-pack or existing ordinary expansion
 rules.</p>
 <h2 data-number="9.4" id="wording-addresses"><span class="header-section-number">9.4</span> Address of an overload set <a href="https://wg21.link/over.over" title="12.3 Address of an overload set">[over.over]</a><a href="#wording-addresses" class="self-link"></a></h2>
 <p>Insert after <a href="https://wg21.link/over.over#3">[over.over]/3</a>:</p>
-<div class="wording">
+<div class="wording wording-numbered">
 <p><a href="https://wg21.link/over.over#3"><span class="marginalizedparent"><span id="pnum-12" class="marginalized">3</span></span></a> The specialization, if any,
 generated by template argument deduction ([temp.over],
 [temp.deduct.funcaddr], [temp.arg.explicit]) for each function template
 named is added to the set of selected functions considered.</p>
-<div class="add">
+<div class="add wording-numbered">
 <p><span id="wording-address-count"></span><a href="#wording-address-count"><span class="marginalizedparent"><span id="pnum-13" class="marginalized">*</span></span></a> <span class="add"><ins>For a function template that declares a homogeneous
 function parameter pack, an omitted argument for its invented count
 parameter is deduced from the target function type as specified in
@@ -4351,7 +4476,7 @@ follows:</p>
 <p>Retain the remaining requirements of paragraph 8, the other expansion
 patterns in paragraph 6, and the other element interpretations in
 paragraph 9.</p>
-<div class="wording">
+<div class="wording wording-numbered">
 <p><a href="https://wg21.link/temp.variadic#2"><span class="marginalizedparent"><span id="pnum-14" class="marginalized">2</span></span></a> A function parameter pack is a
 function parameter that accepts zero or more function arguments.</p>
 <div id="example-3" class="example" data-num="2">
@@ -4436,26 +4561,27 @@ function types containing function parameter packs dependent and
 value-dependent. <a href="https://wg21.link/temp.dep.type#10.7">[temp.dep.type]/10.7</a> <a href="https://wg21.link/temp.dep.constexpr#4">[temp.dep.constexpr]/4</a>
 Count substitution follows ordinary template rules. Declaring the pack
 does not make unrelated expressions dependent.</p>
-<div class="draftnote">
-<p>[ Drafting note: <a href="https://wg21.link/temp.dep.expr#3.6">[temp.dep.expr]/3.6</a>’s
+<div class="paper-callout paper-draftnote" role="note">
+<p><span class="callout-label">Drafting note:</span> <a href="https://wg21.link/temp.dep.expr#3.6">[temp.dep.expr]/3.6</a>’s
 pack-specific type-dependence rule covers structured binding packs, not
 homogeneous function parameter packs with fixed element types and
 undetermined counts. Remaining dependency and substitution-failure
 wording must address pack expressions, indexing, and count constraints,
-including invalid indexed element types at count zero. ]</p>
+including invalid indexed element types at count zero.</p>
 </div>
 <h2 data-number="9.7" id="wording-deduction"><span class="header-section-number">9.7</span> Deduction<a href="#wording-deduction" class="self-link"></a></h2>
 <h3 data-number="9.7.1" id="wording-general-deduction"><span class="header-section-number">9.7.1</span> General <a href="https://wg21.link/temp.deduct.general" title="13.10.3.1 General">[temp.deduct.general]</a><a href="#wording-general-deduction" class="self-link"></a></h3>
-<div class="draftnote">
-<p>[ Drafting note: Substitution-order and failure-handling wording is
-incomplete, particularly with template parameter packs preceding the
-count. Explicit counts should apply before parameter matching and
-omitted counts be deduced before checking constraints using them. ]</p>
+<div class="paper-callout paper-draftnote" role="note">
+<p><span class="callout-label">Drafting note:</span> Substitution-order
+and failure-handling wording is incomplete, particularly with template
+parameter packs preceding the count. Explicit counts should apply before
+parameter matching and omitted counts be deduced before checking
+constraints using them.</p>
 </div>
 <p>In <a href="https://wg21.link/temp.deduct.general#1">[temp.deduct.general]/1</a>,
 insert before Example 1, append to Example 1, and add a new example
 immediately after it as follows:</p>
-<div class="wording">
+<div class="wording wording-numbered">
 <p><a href="https://wg21.link/temp.deduct.general#1"><span class="marginalizedparent"><span id="pnum-20" class="marginalized">1</span></span></a> When a function template
 specialization is referenced, all of the template arguments shall have
 values. The values can be explicitly specified or, in some cases, be
@@ -4510,7 +4636,7 @@ ordinary template-argument equivalence rules.</ins></span> […]</p>
 from a function call <a href="https://wg21.link/temp.deduct.call" title="13.10.3.2 Deducing template arguments from a function call">[temp.deduct.call]</a><a href="#wording-call-deduction" class="self-link"></a></h3>
 <p>In <a href="https://wg21.link/temp.deduct.call#1">[temp.deduct.call]/1</a>,
 make the inline change and insert before Example 2:</p>
-<div class="wording">
+<div class="wording wording-numbered">
 <p><a href="https://wg21.link/temp.deduct.call#1"><span class="marginalizedparent"><span id="pnum-21" class="marginalized">1</span></span></a> […] For a function parameter
 pack that occurs at the end of the <em>parameter-declaration-list</em>,
 deduction is performed for each remaining argument of the call, taking
@@ -4540,7 +4666,7 @@ from a type <a href="https://wg21.link/temp.deduct.type" title="13.10.3.6 Deduci
 <p>In <a href="https://wg21.link/temp.deduct.type#10">[temp.deduct.type]/10</a>,
 make the inline change and insert immediately after the sentence shown
 below:</p>
-<div class="wording">
+<div class="wording wording-numbered">
 <p><a href="https://wg21.link/temp.deduct.type#10"><span class="marginalizedparent"><span id="pnum-22" class="marginalized">10</span></span></a> […] Each comparison deduces
 template arguments for subsequent positions in the template parameter
 packs <span class="add"><ins>(if any)</ins></span> expanded by the
@@ -4564,7 +4690,7 @@ and no specialization is identified.</ins></span> […]</p>
 templates <a href="https://wg21.link/temp.func.order" title="13.7.7.3 Partial ordering of function templates">[temp.func.order]</a><a href="#wording-partial-ordering" class="self-link"></a></h3>
 <p>For the rules in <a href="#overload-ordering">Overload ordering</a>,
 insert after <a href="https://wg21.link/temp.func.order#3">[temp.func.order]/3</a>:</p>
-<div class="wording">
+<div class="wording wording-numbered">
 <p><a href="https://wg21.link/temp.func.order#3"><span class="marginalizedparent"><span id="pnum-23" class="marginalized">3</span></span></a> To produce the transformed
 template, for each type, constant, type template, variable template, or
 concept template parameter (including template parameter packs
@@ -4574,7 +4700,7 @@ for each occurrence of that parameter in the function type of the
 template. The type replacing a placeholder in the type of the value
 synthesized for a constant template parameter is a unique synthesized
 type.</p>
-<div class="add">
+<div class="add wording-numbered">
 <p><span id="wording-ordering-count"></span><a href="#wording-ordering-count"><span class="marginalizedparent"><span id="pnum-24" class="marginalized">*</span></span></a> <span class="add"><ins>The transformation preserves each homogeneous function
 parameter pack and applies the usual transformation to all template
 parameters, including its count parameter. The parameter pattern is not
@@ -4587,7 +4713,7 @@ during partial ordering <a href="https://wg21.link/temp.deduct.partial" title="1
 <p>In <a href="https://wg21.link/temp.deduct.partial#8">[temp.deduct.partial]/8</a>,
 make the inline change and insert immediately after the sentence shown
 below:</p>
-<div class="wording">
+<div class="wording wording-numbered">
 <p><a href="https://wg21.link/temp.deduct.partial#8"><span class="marginalizedparent"><span id="pnum-25" class="marginalized">8</span></span></a> […] Each comparison deduces
 template arguments for subsequent positions in the template parameter
 packs <span class="add"><ins>(if any)</ins></span> expanded by the
@@ -4604,15 +4730,15 @@ subclause.</ins></span> […]</p>
 <p>Existing tie-breaks apply without a new preference for homogeneous
 packs, pending Poll 8 (<a href="#proposed-polls">Proposed EWG
 polls</a>).</p>
-<div class="draftnote">
-<p>[ Drafting note: Whether the invented count is used in types compared
-for partial ordering under <a href="https://wg21.link/temp.deduct.partial#12">[temp.deduct.partial]/12</a>,
-including whole function types outside calls, remains unspecified. ]</p>
+<div class="paper-callout paper-draftnote" role="note">
+<p><span class="callout-label">Drafting note:</span> Whether the
+invented count is used in types compared for partial ordering under <a href="https://wg21.link/temp.deduct.partial#12">[temp.deduct.partial]/12</a>,
+including whole function types outside calls, remains unspecified.</p>
 </div>
 <h2 data-number="9.8" id="wording-correspondence"><span class="header-section-number">9.8</span> Declarations<a href="#wording-correspondence" class="self-link"></a></h2>
-<div class="draftnote">
-<p>[ Drafting note: Wording for the declaration correspondence described
-in <a href="#addresses">Address-taking</a> remains to be supplied. ]</p>
+<div class="paper-callout paper-draftnote" role="note">
+<p><span class="callout-label">Drafting note:</span> Wording for the
+declaration correspondence described in <a href="#addresses">Address-taking</a> remains to be supplied.</p>
 </div>
 <h2 data-number="9.9" id="wording-feature-test"><span class="header-section-number">9.9</span> Feature-test macro <a href="https://wg21.link/cpp.predefined" title="15.12 Predefined macro names">[cpp.predefined]</a><a href="#wording-feature-test" class="self-link"></a></h2>
 <p>Add a homogeneous function parameter pack feature-test macro to <a href="https://wg21.link/cpp.predefined#tab:cpp.predefined.ft">Table 22,
@@ -4621,15 +4747,15 @@ Feature-test macros</a>. Options include
 and
 <code class="sourceCode cpp"><span class="va">__cpp_homogeneous_function_packs</span></code>.
 SG10 will choose the spelling. Its value remains undetermined.</p>
-<div class="draftnote">
-<p>[ Drafting note: Settle the macro spelling with SG10 and supply its
-value. ]</p>
+<div class="paper-callout paper-draftnote" role="note">
+<p><span class="callout-label">Drafting note:</span> Settle the macro
+spelling with SG10 and supply its value.</p>
 </div>
 <h2 data-number="9.10" id="wording-compatibility"><span class="header-section-number">9.10</span> Annex C (informative)
 Compatibility <a href="https://wg21.link/diff.cpp26" title="C.1 C++ and ISO C++ 2026">[diff.cpp26]</a><a href="#wording-compatibility" class="self-link"></a></h2>
 <p>Add a new entry to <a href="https://wg21.link/diff.cpp26.dcl">[diff.cpp26.dcl]</a>, before the
 <a href="https://wg21.link/dcl.init" title="9.5 Initializers">[dcl.init]</a> entry:</p>
-<div class="wording">
+<div class="wording wording-change">
 <div class="add">
 <p><span id="wording-compatibility-entry"></span><span class="add"><ins><strong>Affected subclause:</strong>
 [dcl.fct]</ins></span></p>
