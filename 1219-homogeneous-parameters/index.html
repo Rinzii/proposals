@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="generator" content="mpark/wg21" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <meta name="dcterms.date" content="2026-10-22" />
+  <meta name="dcterms.date" content="2026-10-23" />
   <title>Homogeneous variadic function parameters</title>
   <style>
 
@@ -2078,7 +2078,7 @@ function parameters</h1>
     <td>Document #:</td>
     <td>
       <span class="document-info">
-        <span>P1219R3</span>
+        <span>D1219R4</span>
       <a class="document-link" href="https://wg21.link/P1219">Latest</a>
       <a class="document-link" href="https://wg21.link/P1219/status">Status</a>
       </span>
@@ -2086,7 +2086,7 @@ function parameters</h1>
   </tr>
   <tr>
     <td>Date:</td>
-    <td>2026-10-22</td>
+    <td>2026-10-23</td>
   </tr>
   <tr>
     <td>Project:</td>
@@ -2126,10 +2126,11 @@ function parameters</h1>
 <ul>
 <li><a href="#revision-history" id="toc-revision-history"><span class="toc-section-number">1</span> Revision history</a>
 <ul>
-<li><a href="#revision-r3" id="toc-revision-r3"><span class="toc-section-number">1.1</span> R3 (2026-10-22)</a></li>
-<li><a href="#revision-r2" id="toc-revision-r2"><span class="toc-section-number">1.2</span> R2 (2019-10-05)</a></li>
-<li><a href="#revision-r1" id="toc-revision-r1"><span class="toc-section-number">1.3</span> R1 (2019-03-11)</a></li>
-<li><a href="#revision-r0" id="toc-revision-r0"><span class="toc-section-number">1.4</span> R0 (2018-10-08)</a></li>
+<li><a href="#revision-r4" id="toc-revision-r4"><span class="toc-section-number">1.1</span> R4 (draft)</a></li>
+<li><a href="#revision-r3" id="toc-revision-r3"><span class="toc-section-number">1.2</span> R3 (2026-10-22)</a></li>
+<li><a href="#revision-r2" id="toc-revision-r2"><span class="toc-section-number">1.3</span> R2 (2019-10-05)</a></li>
+<li><a href="#revision-r1" id="toc-revision-r1"><span class="toc-section-number">1.4</span> R1 (2019-03-11)</a></li>
+<li><a href="#revision-r0" id="toc-revision-r0"><span class="toc-section-number">1.5</span> R0 (2018-10-08)</a></li>
 </ul></li>
 <li><a href="#introduction" id="toc-introduction"><span class="toc-section-number">2</span> Introduction</a></li>
 <li><a href="#examples" id="toc-examples"><span class="toc-section-number">3</span> Library use cases</a>
@@ -2228,7 +2229,11 @@ reclamation of the comma-less spelling. This gives packs the same
 meaning with or without a name, while changing declarations deprecated
 in C++26.</p>
 <h1 data-number="1" id="revision-history"><span class="header-section-number">1</span> Revision history<a href="#revision-history" class="self-link"></a></h1>
-<h2 data-number="1.1" id="revision-r3"><span class="header-section-number">1.1</span> R3 (2026-10-22)<a href="#revision-r3" class="self-link"></a></h2>
+<h2 data-number="1.1" id="revision-r4"><span class="header-section-number">1.1</span> R4 (draft)<a href="#revision-r4" class="self-link"></a></h2>
+<ul>
+<li>No substantive changes from R3 yet.</li>
+</ul>
+<h2 data-number="1.2" id="revision-r3"><span class="header-section-number">1.2</span> R3 (2026-10-22)<a href="#revision-r3" class="self-link"></a></h2>
 <ul>
 <li>Updated active contributors and credited James Touton as original
 author.</li>
@@ -2244,12 +2249,12 @@ and lambda rules for the count model and C++26 pack indexing.</li>
 <li>Required mandatory C-varargs commas and reclamation of the
 comma-less spelling for unnamed packs in C++29.</li>
 </ul>
-<h2 data-number="1.2" id="revision-r2"><span class="header-section-number">1.2</span> R2 (2019-10-05)<a href="#revision-r2" class="self-link"></a></h2>
+<h2 data-number="1.3" id="revision-r2"><span class="header-section-number">1.3</span> R2 (2019-10-05)<a href="#revision-r2" class="self-link"></a></h2>
 <ul>
 <li>Rebased wording against N4830.</li>
 <li>Discussed the impact of mandatory varargs commas.</li>
 </ul>
-<h2 data-number="1.3" id="revision-r1"><span class="header-section-number">1.3</span> R1 (2019-03-11)<a href="#revision-r1" class="self-link"></a></h2>
+<h2 data-number="1.4" id="revision-r1"><span class="header-section-number">1.4</span> R1 (2019-03-11)<a href="#revision-r1" class="self-link"></a></h2>
 <ul>
 <li>Rebased wording against N4800 and added signature changes.</li>
 <li>Removed permission for empty template parameter lists in template
@@ -2260,7 +2265,7 @@ with explicit specializations.</li>
 acknowledgments.</li>
 <li>Corrected examples.</li>
 </ul>
-<h2 data-number="1.4" id="revision-r0"><span class="header-section-number">1.4</span> R0 (2018-10-08)<a href="#revision-r0" class="self-link"></a></h2>
+<h2 data-number="1.5" id="revision-r0"><span class="header-section-number">1.5</span> R0 (2018-10-08)<a href="#revision-r0" class="self-link"></a></h2>
 <ul>
 <li>Initial draft. <span class="citation" data-cites="P1219R0"><a href="https://wg21.link/p1219r0">[P1219R0]</a></span></li>
 </ul>
@@ -3596,8 +3601,8 @@ Replacing it with
 <code class="sourceCode cpp"><span class="dt">void</span> <span class="va">single</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span><span class="op">)</span></code>
 produces Table 9’s ambiguity. <a href="https://wg21.link/temp.deduct.partial#8">[temp.deduct.partial]/8</a></p>
 <p><span id="length-constraints"></span>Length-dependent associated
-constraints require count determination before satisfaction substitutes
-ordinary template arguments, including counts and enclosing
+constraints require determining the count before satisfaction
+substitutes ordinary template arguments, including counts and enclosing
 specializations’ arguments, without separate count bindings. Rechecking
 the same atomic constraint with the same arguments retains the existing
 consistency requirement. <a href="https://wg21.link/temp.constr.atomic#3">[temp.constr.atomic]/3</a></p>
@@ -3926,8 +3931,8 @@ list and C varargs. <a href="https://wg21.link/depr.ellipsis.comma">[depr.ellips
 <p>A final ellipsis that could belong to an abstract (unnamed)
 declarator declares a pack if its type names an unexpanded template
 parameter pack or contains
-<code class="sourceCode cpp"><span class="kw">auto</span></code>,
-otherwise C varargs. <a href="https://wg21.link/dcl.fct">[dcl.fct]/26</a> Writing
+<code class="sourceCode cpp"><span class="kw">auto</span></code>.
+Otherwise, it declares C varargs. <a href="https://wg21.link/dcl.fct">[dcl.fct]/26</a> Writing
 <code class="sourceCode cpp"><span class="va">basic_string_view</span><span class="op">&lt;</span><span class="va">Char</span><span class="op">,</span> <span class="va">Traits</span><span class="op">&gt;</span> <span class="va">svs</span> <span class="ex">...</span></code>
 to declare a pack gives C varargs today. <span class="citation" data-cites="SO-STRING-VIEW-CONCAT"><a href="https://stackoverflow.com/questions/78550299/fold-expression-to-concatenate-string-views">[SO-STRING-VIEW-CONCAT]</a></span></p>
 <p>These C++26 declarations therefore differ:</p>
@@ -4061,9 +4066,9 @@ specialization’s count. Passing a formerly non-template name to
 callable-deducing interfaces also needs a <a href="#addresses">selected
 specialization, typed pointer, or wrapper</a>.</p>
 <p>The conversion changes can also affect well-formed metaprogramming
-probing callability, taking addresses, or recognizing C-varargs function
-types. Preserving C varargs requires commas across declarations,
-definitions, pointer and member-pointer types, traits, and
+that probes callability, takes addresses, or recognizes C-varargs
+function types. Preserving C varargs requires commas across
+declarations, definitions, pointer and member-pointer types, traits, and
 macro-generated declarations. Ordinary expansions such as
 <code class="sourceCode cpp"><span class="kw">template</span><span class="op">&lt;</span><span class="kw">class</span><span class="ex">...</span> <span class="va">Ts</span><span class="op">&gt;</span> <span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="va">Ts</span><span class="ex">...</span><span class="op">)</span></code>
 stay unchanged.</p>
@@ -4077,6 +4082,8 @@ parameters.</p>
 polls assume it, since the design gives a pack the same meaning with and
 without a parameter name (<a href="#compatibility">Reclaiming the
 deprecated comma-less spelling</a>).</p>
+<div class="proposed-poll paper-callout" role="group" aria-label="Proposed EWG polls">
+<p><span class="callout-label">Proposed EWG polls</span></p>
 <ol type="1">
 <li>We want C++29 to require a comma before C varargs and to reclaim the
 comma-less spelling for unnamed homogeneous function parameter
@@ -4099,13 +4106,15 @@ constructors.</li>
 parameter pack over an ordinary trailing function parameter pack when
 partial ordering would otherwise leave a call ambiguous.</li>
 </ol>
+</div>
 <h2 data-number="7.2" id="historical-polls"><span class="header-section-number">7.2</span> Historical results<a href="#historical-polls" class="self-link"></a></h2>
 <p>The polls in Tables 14 to 16 concern earlier revisions, before the
 C++26 changes addressed here. Proposed Polls 1, 3, and 6 revisit the
 first, second, and last rows of Table 14. The
 <code class="sourceCode cpp"><span class="kw">template</span> <span class="op">&lt;&gt;</span></code>
 row is the empty template-head spelling this revision rejects (<a href="#alternatives">Alternatives</a>).</p>
-<div id="kona-ewgi-polls" class="poll-table poll-summary">
+<div id="kona-ewgi-polls" class="poll-table poll-summary recorded-poll paper-callout" role="group" aria-label="Recorded EWGI polls">
+<p><span class="callout-label">Recorded EWGI polls</span></p>
 <div class="table-wrapper">
 <table style="width:97%;">
 <caption><span id="kona-ewgi-polls-caption">Table 14: <a href="https://github.com/cplusplus/papers/issues/297#issuecomment-466713457">Kona</a>
@@ -4180,7 +4189,8 @@ EWGI polls, February 2019. <span class="citation" data-cites="P1219-EWG-RECORD">
 </table>
 </div>
 </div>
-<div id="cologne-ewgi-poll" class="poll-table">
+<div id="cologne-ewgi-poll" class="poll-table recorded-poll paper-callout" role="group" aria-label="Recorded EWGI poll">
+<p><span class="callout-label">Recorded EWGI poll</span></p>
 <div class="table-wrapper">
 <table style="width:95%;">
 <caption><span id="cologne-ewgi-poll-caption">Table 15: <a href="https://github.com/cplusplus/papers/issues/297#issuecomment-512737287">Cologne</a>
@@ -4229,7 +4239,8 @@ feedback. <span class="citation" data-cites="P1219-EWG-RECORD"><a href="https://
 </table>
 </div>
 </div>
-<div id="belfast-ewg-poll" class="poll-table">
+<div id="belfast-ewg-poll" class="poll-table recorded-poll paper-callout" role="group" aria-label="Recorded EWG poll">
+<p><span class="callout-label">Recorded EWG poll</span> <span class="poll-result">Result: <strong>Failed.</strong></span></p>
 <div class="table-wrapper">
 <table style="width:96%;">
 <caption><span id="belfast-ewg-poll-caption">Table 16: <a href="https://github.com/cplusplus/papers/issues/297#issuecomment-577015415">Belfast</a>
@@ -4278,10 +4289,9 @@ EWG poll, November 2019. The public record was posted on January 22,
 </table>
 </div>
 </div>
-<p>The Belfast poll (Table 16) failed. Although Kona’s public record
-identifies objections to template-introducing syntax and to conflicts
-with existing syntax, it does not establish why Belfast later failed.
-<span class="citation" data-cites="P1219-EWG-RECORD"><a href="https://github.com/cplusplus/papers/issues/297">[P1219-EWG-RECORD]</a></span></p>
+<p>Although Kona’s public record identifies objections to
+template-introducing syntax and to conflicts with existing syntax, it
+does not establish why Belfast later failed. <span class="citation" data-cites="P1219-EWG-RECORD"><a href="https://github.com/cplusplus/papers/issues/297">[P1219-EWG-RECORD]</a></span></p>
 <h1 data-number="8" id="implementation"><span class="header-section-number">8</span> Implementation experience<a href="#implementation" class="self-link"></a></h1>
 <p>P1219R2 links an experimental <a href="https://github.com/Bekenn/clang/tree/func-parm-packs">Clang
 branch</a>. <span class="citation" data-cites="P1219R2"><a href="https://wg21.link/p1219r2">[P1219R2]</a></span> Its tests cover
@@ -4575,7 +4585,7 @@ including invalid indexed element types at count zero.</p>
 <p><span class="callout-label">Drafting note:</span> Substitution-order
 and failure-handling wording is incomplete, particularly with template
 parameter packs preceding the count. Explicit counts should apply before
-parameter matching and omitted counts be deduced before checking
+parameter matching and omitted counts should be deduced before checking
 constraints using them.</p>
 </div>
 <p>In <a href="https://wg21.link/temp.deduct.general#1">[temp.deduct.general]/1</a>,
