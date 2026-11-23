@@ -15,4 +15,8 @@ for patch_file in "$(pwd)"/md/patches/*.patch; do
     fi
 done
 
-make -C "papers/${1:-1219_homogeneous_parameters}" setup
+if (( $# )); then
+    make paper-deps "PAPER=$1"
+else
+    make -f md/mpark-wg21.mk setup
+fi

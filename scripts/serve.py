@@ -58,9 +58,10 @@ def create_server(root):
     server = Server(watcher=SiteWatcher(root))
     server.SFH = PreviewFileHandler
     for pattern in (
-        "papers/*/*.md",
-        "papers/*/Makefile",
-        "papers/*/revisions.yaml",
+        "papers/*/*/*/*.md",
+        "papers/*/*/*/Makefile",
+        "papers/*/*/*/revisions.yaml",
+        "papers/*/*/*/snapshots/*",
         "md/index.html",
         "md/*.css",
         "md/defaults.yaml",

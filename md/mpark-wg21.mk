@@ -1,9 +1,10 @@
 .DEFAULT_GOAL := all
 DEFAULT_FORMAT ?= html
-DEFAULTS := ../../md/defaults.yaml
-PREFILTERS := ../../md/paper-style.py
-PAPER_STYLES := $(wildcard ../../md/papers*.css) ../../md/paper-style.yaml ../../md/paper-style.py ../../md/wording-links.py ../../md/papers.tex
-OUTDIR := ../../out/papers/$(notdir $(CURDIR))
+md_dir := $(dir $(lastword $(MAKEFILE_LIST)))
+DEFAULTS := $(md_dir)defaults.yaml
+PREFILTERS := $(md_dir)paper-style.py
+PAPER_STYLES := $(wildcard $(md_dir)papers*.css) $(addprefix $(md_dir),paper-style.yaml paper-style.py wording-links.py papers.tex)
+OUTDIR := $(md_dir)../out/papers/$(subst $(abspath $(md_dir)../papers)/,,$(CURDIR))
 
 paper_id := $(word 1,$(subst :, ,$(PAPER_RULE)))
 paper_src := $(word 2,$(subst :, ,$(PAPER_RULE)))
@@ -11,15 +12,14 @@ targets := $(addprefix $(paper_id).,html pdf latex)
 
 .PHONY: all html pdf latex setup
 all: $(DEFAULT_FORMAT)
-html: $(paper_id).html
-pdf: $(paper_id).pdf
-latex: $(paper_id).latex
+html pdf latex: %: $(paper_id).%
+	@printf '%s\n' "$(abspath $(OUTDIR)/$<)"
 
-include ../../md/wg21/base.mk
+include $(md_dir)wg21/base.mk
 
 override WATCHDEPS += $(PAPER_STYLES)
 
-$(addprefix $(OUTDIR)/,$(targets)): $(paper_src).md $(DEPS) $(PAPER_STYLES) | $(OUTDIR)
+$(addprefix $(OUTDIR)/,$(targets)): $(paper_src).md $(DEPS) $(PAPER_STYLES) Makefile $(md_dir)mpark-wg21.mk | $(OUTDIR)
 	$(PANDOC)
 
 setup: $(GENDEPS)

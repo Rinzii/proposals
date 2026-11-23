@@ -1,5 +1,6 @@
 import argparse
 import html
+from os.path import relpath
 from pathlib import Path
 import shutil
 from string import Template
@@ -55,6 +56,17 @@ def redirect(destination, script_path):
 '''
 
 
+def write_redirects(output, folders, aliases, target):
+    for folder in folders:
+        destination = output / folder
+        destination.mkdir(parents=True, exist_ok=True)
+        page = redirect(f"{relpath(target, folder)}/", relpath("redirect.js", folder))
+        for alias in aliases:
+            path = destination / f"{alias}.html"
+            if not path.exists():
+                path.write_text(page)
+
+
 def render_site(root, output, directories):
     groups = {"progress": [], "abandoned": []}
     output.mkdir(parents=True, exist_ok=True)
@@ -64,29 +76,62 @@ def render_site(root, output, directories):
             raise FileNotFoundError(f"Missing compiled frontend asset: {assets / filename}")
     for asset in assets.glob("*.js"):
         shutil.copyfile(asset, output / asset.name)
+    # Published papers own the existing series and revision URLs.
+    directories = sorted(map(Path, directories), key=lambda path: path.parent.name == "draft")
+    draft_slugs = {(path.parents[1].name, path.name) for path in directories if path.parent.name == "draft"}
     for directory in directories:
         folder, output_stem, metadata, routes = read_paper(root, directory)
-        compiled = root / "out/papers" / folder.name
+        paper_path = folder.relative_to(root / "papers")
+        language, stage, slug = paper_path.parts
+        if stage not in {"draft", "published"}:
+            raise ValueError(f"Expected draft/ or published/ in {directory}")
+        is_draft = stage == "draft"
+        namespace = Path() if language == "cxx" else Path(language)
+        compiled = root / "out/papers" / paper_path
         rendered = compiled / f"{output_stem}.html"
         pdf = compiled / f"{output_stem}.pdf"
-        for route in routes:
+        canonical = (namespace / routes[0]).as_posix()
+        slug_route = slug.replace("_", "-")
+        share_route = Path("drafts") / language / slug_route
+        destinations = {namespace / route for route in [*routes, slug_route]}
+        if is_draft or (language, slug) not in draft_slugs:
+            destinations.add(share_route)
+        for route in destinations:
             destination = output / route
+            if is_draft and (destination / "index.html").exists():
+                continue
             destination.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(rendered, destination / "index.html")
             if pdf.exists():
                 shutil.copyfile(pdf, destination / "paper.pdf")
 
-        canonical = routes[0]
         aliases = {output_stem, output_stem.replace("-", "_"), *routes}
-        for legacy_folder in ("", "drafts/cpp", "cpp"):
-            destination = output / legacy_folder
-            destination.mkdir(parents=True, exist_ok=True)
-            prefix = "../" * len(Path(legacy_folder).parts)
-            for alias in aliases:
-                (destination / f"{alias}.html").write_text(redirect(f"{prefix}{canonical}/", f"{prefix}redirect.js"))
+        legacy_folders = [Path(), Path("drafts/cpp"), Path("cpp")] if language == "cxx" else [namespace]
+        write_redirects(output, legacy_folders, aliases, share_route if is_draft else canonical)
+
+        document = metadata["document"]
+        manifest = folder / "revisions.yaml"
+        older = yaml.safe_load(manifest.read_text()) or [] if manifest.exists() else []
+        older = [item for item in older if item["document"].upper() != document.upper()]
+        older.sort(key=lambda item: int(item["document"].upper().rpartition("R")[2]), reverse=True)
+        for item in older:
+            published_url = urlsplit(item["url"])
+            if published_url.scheme not in {"https", "http"} or not published_url.netloc:
+                raise ValueError(f"Revision URL must be an HTTP or HTTPS address: {item['url']}")
+            if "snapshot" in item:
+                snapshot = folder / item["snapshot"]
+                route = namespace / item["document"].upper()
+                destination = output / route
+                destination.mkdir(parents=True, exist_ok=True)
+                if not (is_draft and (destination / "index.html").exists()):
+                    shutil.copyfile(snapshot.with_suffix(".html"), destination / "index.html")
+                    shutil.copyfile(snapshot.with_suffix(".pdf"), destination / "paper.pdf")
+                item["url"] = f"{route}/"
+                write_redirects(output, legacy_folders, {route.name, route.name.lower()}, route)
+        if is_draft:
+            continue
 
         title = html.escape(metadata["title"])
-        document = metadata["document"]
         status = str(metadata.get("status", "unspecified"))
         audience = metadata.get("audience", [])
         if isinstance(audience, str):
@@ -100,15 +145,7 @@ def render_site(root, output, directories):
             document_markup = f'<a class="document" href="https://github.com/cplusplus/papers/issues/{int(tracking_issue)}" aria-label="WG21 tracking issue: {html.escape(identifier)}">{html.escape(identifier)}</a>'
         date = metadata.get("date")
         date_text = date.isoformat() if hasattr(date, "isoformat") else str(date or "Not specified")
-        manifest = folder / "revisions.yaml"
-        older = yaml.safe_load(manifest.read_text()) or [] if manifest.exists() else []
-        older = [item for item in older if item["document"].upper() != document.upper()]
-        older.sort(key=lambda item: int(item["document"].upper().rpartition("R")[2]), reverse=True)
-        for item in older:
-            published_url = urlsplit(item["url"])
-            if published_url.scheme not in {"https", "http"} or not published_url.netloc:
-                raise ValueError(f"Revision URL must be an HTTP or HTTPS address: {item['url']}")
-        revisions = [{"document": document, "date": date, "url": f"{routes[-1]}/", "author": metadata.get("author"), "original-author": metadata.get("original-author"), "status": status}, *older]
+        revisions = [{"document": document, "date": date, "url": f"{namespace / routes[-1]}/", "author": metadata.get("author"), "original-author": metadata.get("original-author"), "status": status}, *older]
         items = []
         authors = []
         for item in revisions:
@@ -127,7 +164,7 @@ def render_site(root, output, directories):
   <summary class="paper-summary">
     {document_markup}
     <span class="paper-body">
-      <span class="paper-heading"><span class="paper-title">{title}</span><a class="paper-latest" href="{html.escape(canonical)}/" aria-label="Latest draft: {title}">Latest <span aria-hidden="true">&rarr;</span></a></span>
+      <span class="paper-heading"><span class="paper-title">{title}</span><a class="paper-latest" href="{html.escape(canonical)}/" aria-label="Latest version of {title}">Latest <span aria-hidden="true">&rarr;</span></a></span>
       <span class="paper-meta">{html.escape(date_text)} · {html.escape(", ".join(audience)) or "Not specified"}</span>
     </span>
     <span class="expand-icon" aria-hidden="true">+</span>
@@ -150,7 +187,8 @@ def render_site(root, output, directories):
   {"".join(entries)}
 </section>''')
     template = Template((root / "md/index.html").read_text())
-    (output / "index.html").write_text(template.substitute(papers="\n".join(sections), filters="\n".join(filters), total=total))
+    count_label = f"{total} {'paper' if total == 1 else 'papers'}"
+    (output / "index.html").write_text(template.substitute(papers="\n".join(sections), filters="\n".join(filters), count_label=count_label))
     (output / ".nojekyll").touch()
 
 
@@ -177,7 +215,7 @@ def build_site(root, output, directories):
             if ".git" in relative.parts:
                 continue
             if path.is_symlink() or path.is_file():
-                if relative not in generated:
+                if relative not in generated and not (staged / relative).is_file():
                     stale.append(path)
             elif path.is_dir():
                 folders.append(path)
