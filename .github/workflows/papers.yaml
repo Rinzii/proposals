@@ -35,8 +35,8 @@ jobs:
             fancyvrb fontname fontspec footnotehyper framed fvextra geometry
             gettitlestring graphics graphics-cfg graphics-def hycolor hyperref
             iftex infwarerr intcalc kpathsea kvdefinekeys kvoptions kvsetkeys
-            l3backend l3kernel l3packages latex latex-fonts lineno lm ltxcmds
-            mdframed microtype multirow needspace parskip pdfcol pdfescape
+            l3kernel l3packages latex latex-fonts lineno lm ltxcmds mdframed
+            microtype multirow nameref needspace parskip pdfcol pdfescape
             pdftexcmds pgf refcount rerunfilecheck soul stringenc tcolorbox
             tikzfill titlesec tools trimspaces ulem unicode-math uniquecounter
             upquote url xcolor xurl zapfding zref
