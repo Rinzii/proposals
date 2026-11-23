@@ -4,8 +4,8 @@ document: DnnnnR0
 status: progress
 date: November 2026
 audience:
-  - Evolution Working Group (EWG)
-  - Core Working Group (CWG)
+  - EWG
+  - CWG
 author:
   - name: Ian Pike
     email: <ianpike98cs@gmail.com>
