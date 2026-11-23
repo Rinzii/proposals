@@ -29,10 +29,6 @@
 }
 
 @media screen and (max-width: 42em) {
-  .wrapper .wording {
-    margin-inline-end: 0;
-  }
-
   .code-comparison table,
   .table-wrapper > table.cmptable {
     min-width: 44em;

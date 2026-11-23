@@ -3,6 +3,9 @@
 \usepackage{booktabs}
 \usepackage{etoolbox}
 \usepackage{titlesec}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepgflibrary{svg.path}
 \geometry{paperwidth=\PaperPageWidth mm,paperheight=\PaperPageHeight mm,left=\PaperPageMarginX mm,right=\PaperPageMarginX mm,top=\PaperPageMarginY mm,bottom=\PaperPageMarginY mm}
 \newcommand{\PaperCurrentCodeScale}{\PaperCodeScale}
 \newcommand{\PaperCodeFontSize}{\fontsize{\fpeval{\PaperBodySize*\PaperCurrentCodeScale}pt}{\fpeval{\PaperBodySize*\PaperCurrentCodeScale*\PaperBodyLeading}pt}\selectfont}
@@ -66,12 +69,53 @@
 \newenvironment{PaperMeasureCell}[3]{\def\PaperMeasuredName{#1}\expandafter\newsavebox\csname PaperCell#1\endcsname\begin{lrbox}{\csname PaperCell#1\endcsname}\begin{minipage}[t]{\dimexpr#2\dimexpr\linewidth-#3\tabcolsep*2\relax\relax}\raggedright}{\end{minipage}\end{lrbox}\global\setbox\csname PaperCell\PaperMeasuredName\endcsname=\copy\csname PaperCell\PaperMeasuredName\endcsname}
 \newcommand{\PaperCenteredCell}[3]{\begingroup\dimen0=\ht\csname PaperCell#2\endcsname\dimen2=\dp\csname PaperCell#2\endcsname\ifdim\ht\csname PaperCell#3\endcsname>\dimen0\dimen0=\ht\csname PaperCell#3\endcsname\fi\ifdim\dp\csname PaperCell#3\endcsname>\dimen2\dimen2=\dp\csname PaperCell#3\endcsname\fi\ifdim\ht\csname @arstrutbox\endcsname>\dimen0\dimen0=\ht\csname @arstrutbox\endcsname\fi\ifdim\dp\csname @arstrutbox\endcsname>\dimen2\dimen2=\dp\csname @arstrutbox\endcsname\fi\raisebox{\dimexpr(\dimen0-\dimen2-\ht\csname PaperCell#1\endcsname+\dp\csname PaperCell#1\endcsname)/2\relax}{\usebox{\csname PaperCell#1\endcsname}}\endgroup}
 \newenvironment{PaperDiff}{\begingroup\PaperDifftrue}{\endgroup}
-\newmdenv[backgroundcolor=paper-wording-bg,fontcolor=paper-wording-text,linecolor=paper-wording-border,linewidth=\PaperBorderWidth em,leftmargin=\PaperWordingInset em,rightmargin=\PaperWordingInset em,innerleftmargin=\PaperWordingPadding em,innerrightmargin=\PaperWordingPadding em,innertopmargin=0pt,innerbottommargin=0pt,skipabove=\baselineskip,skipbelow=\baselineskip]{PaperWording}
-\AtBeginEnvironment{PaperWording}{\emergencystretch=\linewidth}
-\newmdenv[backgroundcolor=paper-wording-add-bg,hidealllines=true,innerleftmargin=0pt,innerrightmargin=0pt,innertopmargin=0pt,innerbottommargin=0pt,skipabove=0.5\baselineskip,skipbelow=0pt]{PaperAddedBlock}
-\newmdenv[backgroundcolor=paper-wording-remove-bg,hidealllines=true,innerleftmargin=0pt,innerrightmargin=0pt,innertopmargin=0pt,innerbottommargin=0pt,skipabove=0.5\baselineskip,skipbelow=0pt]{PaperRemovedBlock}
-\newenvironment{PaperAddition}{\begin{PaperAddedBlock}\color{paper-add}\colorlet{shadecolor}{paper-wording-add-bg}}{\end{PaperAddedBlock}}
-\newenvironment{PaperRemoval}{\begin{PaperRemovedBlock}\color{paper-rm}\PaperRemovedtrue\colorlet{shadecolor}{paper-wording-remove-bg}}{\end{PaperRemovedBlock}}
+\let\PaperIconnote\PaperIconinfo
+\let\PaperIcondraftnote\PaperIconinfo
+\newcommand{\PaperCalloutIcon}[1]{%
+  \resizebox{1.75em}{!}{\begin{tikzpicture}[yscale=-1]
+    \path[use as bounding box] (-1pt,-1pt) rectangle (25pt,25pt);
+    \pgfsetlinewidth{2pt}\pgfsetroundcap\pgfsetroundjoin
+    \csname PaperIcon#1\endcsname\pgfusepath{stroke}
+  \end{tikzpicture}}%
+}
+\newcommand{\PaperCalloutLabel}[1]{{\color{PaperCalloutAccent}\sffamily\small\bfseries\MakeUppercase{#1}}}
+\newlength{\PaperPanelExtraInset}
+\newenvironment{PaperNumberedGutter}{%
+  \setlength{\PaperPanelExtraInset}{\PaperPanelInset em}%
+}{}
+\tcbset{paper panel/.style={
+  enhanced, breakable, boxrule=0pt, frame hidden, arc=0.25em, sharp corners=west,
+  left skip=\dimexpr\PaperPanelInset em+\PaperPanelExtraInset\relax, boxsep=0pt, left=\dimexpr\PaperPanelPadding em+\PaperPanelRule em\relax,
+  right=\PaperPanelPadding em, top=\PaperPanelPadding em, bottom=\PaperPanelPadding em,
+  before skip=0.7\baselineskip, after skip=0.7\baselineskip
+}, paper gutter icon/.style 2 args={
+  overlay unbroken and first={
+    \node[anchor=north east,inner sep=0pt,text=#2]
+      at ([xshift=\dimexpr-0.4em-\PaperPanelExtraInset\relax,yshift=-0.35em]frame.north west) {\PaperCalloutIcon{#1}};}
+}}
+\newtcolorbox{PaperCallout}[1]{
+  paper panel, colback=paper-#1-bg, colupper=paper-text,
+  borderline west={\PaperPanelRule em}{0pt}{paper-#1-accent}, paper gutter icon={#1}{paper-#1-accent},
+  before upper={\colorlet{PaperCalloutAccent}{paper-#1-accent}%
+    \setlength{\PaperPanelExtraInset}{0pt}%
+    \setlength{\parskip}{0.6\baselineskip}%
+    \renewenvironment{quote}{\begin{PaperCallout}{quote}}{\end{PaperCallout}}}
+}
+\newtcolorbox{PaperWording}{
+  paper panel, colback=paper-wording-bg, colupper=paper-wording-text,
+  borderline west={\PaperPanelRule em}{0pt}{paper-wording-border},
+  paper gutter icon={wording}{paper-wording-border},
+  before upper={\emergencystretch=\linewidth\setlength{\parskip}{0.6\baselineskip}%
+    \setlength{\PaperPanelExtraInset}{0pt}}
+}
+\newenvironment{PaperAddition}{%
+  \begin{PaperCallout}{insert}%
+  \color{paper-add}\colorlet{shadecolor}{paper-insert-bg}\colorlet{paper-wording-add-bg}{paper-insert-bg}%
+}{\end{PaperCallout}}
+\newenvironment{PaperRemoval}{%
+  \begin{PaperCallout}{remove}\PaperRemovedtrue\color{paper-rm}%
+  \colorlet{shadecolor}{paper-remove-bg}\colorlet{paper-wording-remove-bg}{paper-remove-bg}%
+}{\end{PaperCallout}}
 \AtBeginEnvironment{Highlighting}{
   \ifPaperDiff
     \renewcommand{\NormalTok}[1]{\textcolor{paper-wording-text}{#1}}
@@ -90,7 +134,7 @@
 \AtBeginDocument{\patchcmd{\@maketitle}{\LARGE}{\PaperHeadingFont{\PaperHeadingOne}}{}{}}
 \AtBeginDocument{\pretocmd{\@makecaption}{\begingroup\color{paper-caption}}{}{}\apptocmd{\@makecaption}{\endgroup}{}{}}
 \AtBeginDocument{\@ifundefined{LT@makecaption}{}{\patchcmd{\LT@makecaption}{\reset@font}{\reset@font\color{paper-caption}}{}{}}}
-\renewcommand{\pnum}[1]{\noindent\makebox[0pt][l]{\makebox[0pt][r]{\textcolor{paper-wording-number}{\scriptsize #1}\hspace{\@totalleftmargin}\quad}}\ignorespaces}
+\renewcommand{\pnum}[1]{\noindent\makebox[0pt][l]{\makebox[0pt][r]{\textcolor{paper-wording-number}{\scriptsize #1}\hspace{\dimexpr\@totalleftmargin+1.4em\relax}}}\ignorespaces}
 \AtBeginDocument{
   \fontsize{\PaperBodySize pt}{\fpeval{\PaperBodySize*\PaperBodyLeading}pt}\selectfont
   \color{paper-text}

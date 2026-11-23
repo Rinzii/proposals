@@ -1,3 +1,4 @@
+paper-callouts: true
 paper-style:
   colors:
     code-bg: ['eeedeb', '232220']
@@ -18,16 +19,34 @@ paper-style:
     table-head: ['e4e1dc', '302e2b']
     table-rule: ['6f6a63', '74706a']
     caption: ['4f4c44', 'bcb7ad']
-    wording-bg: ['ebeae8', '272623']
-    wording-border: ['6f6a63', '74706a']
+    wording-bg: ['f0f0ef', '2c2c2c']
+    wording-border: ['727272', '858585']
     wording-text: ['27201a', 'ebe4d8']
     wording-number: ['004b96', '8bbeff']
-    wording-add-bg: ['caeab9', '263220']
-    wording-remove-bg: ['f7d3d4', '3d2728']
+    wording-add-bg: ['d8efdd', '123b22']
+    wording-remove-bg: ['f8dfe1', '51212a']
     add: ['006d3c', '91dfad']
     rm: ['931646', 'fea8bb']
     link: ['004b96', '8bbeff']
     note: ['694400', 'f1c17f']
+    note-accent: ['376b43', '79b481']
+    note-bg: ['e6f4e9', '233025']
+    draftnote-accent: ['306966', '77b5b4']
+    draftnote-bg: ['e6f4f3', '222f30']
+    decision-accent: ['794772', 'bd83b4']
+    decision-bg: ['f4e6f4', '30232d']
+    bug-accent: ['76533c', 'bb957b']
+    bug-bg: ['f0e2d9', '373028']
+    insert-accent: ['17752d', '5bab6d']
+    insert-bg: ['e4faea', '233023']
+    remove-accent: ['973a48', 'd28088']
+    remove-bg: ['f8e7e8', '39272b']
+    recorded-accent: ['355e84', '90b6d9']
+    recorded-bg: ['e9f0f7', '242e39']
+    proposed-accent: ['805721', 'd6af77']
+    proposed-bg: ['f8f0e2', '332d23']
+    quote-accent: ['656565', '979797']
+    quote-bg: ['f0f0f0', '2c2c2c']
     grammar: ['005b4f', '68dcc7']
     text: ['27201a', 'ebe4d8']
     background: ['f8f7f4', '181818']
@@ -39,8 +58,9 @@ paper-style:
   comparison-code-scale: 0.9
   heading-scales: [2, 1.5, 1.17, 1, 0.83, 0.67]
   heading-leading: 1.15
-  wording-inset: 2.5
-  wording-padding: 0.75
+  panel-inset: 2.5
+  panel-padding: 0.5
+  panel-rule: 0.23
   border-width: 0.0625
   link-underline-width: 0.05
   link-underline-offset: 0.25

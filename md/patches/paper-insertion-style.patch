@@ -1,0 +1,27 @@
+diff --git a/data/filters/wg21.py b/data/filters/wg21.py
+--- a/data/filters/wg21.py
++++ b/data/filters/wg21.py
+@@ -502,8 +502,7 @@ def divspan(elem, doc):
+     """
+     Non-code diffs: `add` and `rm` are classes that can be added to
+     a `Div` or a `Span`. `add` colors the text with `addcolor` and
+-    `rm` colors the text `rmcolor`. For `Span`s, `add` underlines
+-    and `rm` strikes out the text.
++    `rm` colors the text with `rmcolor` and strikes out removed spans.
+ 
+     # Example
+ 
+diff --git a/data/templates/paper.css b/data/templates/paper.css
+--- a/data/templates/paper.css
++++ b/data/templates/paper.css
+@@ -9,6 +9,10 @@
+   border-bottom: none;
+ }
+ 
++.add ins {
++  text-decoration: none;
++}
++
+ details.collapsed > summary {
+   list-style: none;
+   cursor: pointer;

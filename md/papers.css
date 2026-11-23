@@ -21,32 +21,145 @@ html body {
   text-decoration: none;
 }
 
-.wrapper :is(.draftnote, .ednote) {
+.wrapper span:is(.draftnote, .ednote) {
   color: var(--paper-note);
 }
 
-.wrapper .draftnote {
-  background: color-mix(in srgb, var(--paper-note) 8%, transparent);
+.paper-note {
+  --accent: var(--paper-note-accent);
+  --surface: var(--paper-note-bg);
+  --icon: var(--paper-icon-info);
 }
 
-.wrapper div.draftnote {
-  margin-block: 1em;
-  padding: 0.65em 0.9em 0.65em 1.1em;
-  border-inline-start: 0.25em solid var(--paper-note);
-  border-radius: 0 0.4em 0.4em 0;
-  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 0.92em;
+.paper-draftnote {
+  --accent: var(--paper-draftnote-accent);
+  --surface: var(--paper-draftnote-bg);
+  --icon: var(--paper-icon-info);
 }
 
-.wrapper div.draftnote > :first-child {
+.paper-decision {
+  --accent: var(--paper-decision-accent);
+  --surface: var(--paper-decision-bg);
+  --icon: var(--paper-icon-decision);
+}
+
+.paper-bug {
+  --accent: var(--paper-bug-accent);
+  --surface: var(--paper-bug-bg);
+  --icon: var(--paper-icon-bug);
+}
+
+.recorded-poll {
+  --accent: var(--paper-recorded-accent);
+  --surface: var(--paper-recorded-bg);
+  --icon: var(--paper-icon-recorded);
+}
+
+.proposed-poll {
+  --accent: var(--paper-proposed-accent);
+  --surface: var(--paper-proposed-bg);
+  --icon: var(--paper-icon-proposed);
+}
+
+.paper-callout:is(.recorded-poll, .proposed-poll) > p:first-child {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.25em 1em;
+  margin-block-end: 0.45em;
+  text-align: start;
+}
+
+.poll-result {
+  margin-inline-start: auto;
+  color: var(--accent);
+}
+
+.paper-callout:is(.recorded-poll, .proposed-poll) > *:nth-child(2) {
   margin-block-start: 0;
 }
 
-.wrapper div.draftnote > :last-child {
+.recorded-poll .table-wrapper > table {
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.wrapper .recorded-poll:not(.poll-table) .table-wrapper > table {
+  margin: 0.7em 0 0;
+}
+
+.paper-callout blockquote {
+  --accent: var(--paper-quote-accent);
+  --surface: var(--paper-quote-bg);
+  --icon: var(--paper-icon-quote);
+}
+
+.wording {
+  --accent: var(--paper-wording-border);
+  --surface: var(--paper-wording-bg);
+  --icon: var(--paper-icon-wording);
+  color: var(--paper-wording-text);
+  font-style: normal;
+}
+
+div.add {
+  --accent: var(--paper-insert-accent);
+  --surface: var(--paper-insert-bg);
+  --icon: var(--paper-icon-insert);
+}
+
+.paper-removal {
+  --accent: var(--paper-remove-accent);
+  --surface: var(--paper-remove-bg);
+  --icon: var(--paper-icon-remove);
+}
+
+.wrapper :is(.wording:not(.wording-change), .paper-callout, .paper-callout blockquote, div.add, .paper-removal) {
+  position: relative;
+  margin: 1em 0;
+  margin-inline-start: calc(var(--paper-panel-inset) * 1em);
+  padding: calc(var(--paper-panel-padding) * 1em);
+  border-inline-start: calc(var(--paper-panel-rule) * 1em) solid var(--accent);
+  border-radius: 0 0.25em 0.25em 0;
+  background: var(--surface);
+}
+
+.wrapper :is(.wording:not(.wording-change), .paper-callout, .paper-callout blockquote, div.add, .paper-removal)::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0.35em;
+  inset-inline-end: calc(100% + 0.6em);
+  inline-size: 1.75em;
+  block-size: 1.75em;
+  background: var(--accent);
+  mask: var(--icon) center / contain no-repeat;
+}
+
+.wrapper :is(.wording:not(.wording-change), .paper-callout, .paper-callout blockquote, div.add, .paper-removal) > :first-child {
+  margin-block-start: 0;
+}
+
+.wrapper :is(.wording:not(.wording-change), .paper-callout, .paper-callout blockquote, div.add, .paper-removal) > :last-child {
   margin-block-end: 0;
 }
 
+.paper-callout .callout-label {
+  color: var(--accent);
+  font: bold 0.92em/1.2 ui-sans-serif, system-ui, sans-serif;
+  text-transform: uppercase;
+}
+
+.paper-callout ul {
+  list-style: disc;
+  margin-block: 0.7em;
+}
+
+.paper-callout ul > li::before {
+  content: none;
+}
+
 .wrapper span.draftnote {
+  background: color-mix(in srgb, var(--paper-note) 8%, transparent);
   padding-inline: 0.25em;
   border-radius: 0.2em;
   box-decoration-break: clone;
@@ -152,10 +265,6 @@ html .wrapper :where(:target) :is(.codeblock, .sourceCode, ul),
   color: var(--paper-add);
 }
 
-.wrapper .add ins {
-  text-decoration: none;
-}
-
 .wrapper .rm {
   background: var(--paper-invalid-bg);
   color: var(--paper-rm);
@@ -163,15 +272,6 @@ html .wrapper :where(:target) :is(.codeblock, .sourceCode, ul),
 
 .wrapper :is(.add, .rm) :is(ins, del) {
   color: inherit;
-}
-
-.wrapper .wording {
-  margin: 1em calc(var(--paper-wording-inset) * 1em);
-  padding: 0 calc(var(--paper-wording-padding) * 1em);
-  border: calc(var(--paper-border-width) * 1em) solid var(--paper-wording-border);
-  background: var(--paper-wording-bg);
-  color: var(--paper-wording-text);
-  font-style: normal;
 }
 
 .wording :is(p, li, .example) {
@@ -184,6 +284,14 @@ html .wrapper :where(:target) :is(.codeblock, .sourceCode, ul),
 
 .wording .marginalizedparent {
   position: static;
+}
+
+.wrapper .wording-numbered:not(.wording-change) {
+  margin-inline-start: calc(2 * var(--paper-panel-inset) * 1em);
+}
+
+.wrapper .wording-numbered:not(.wording-change)::before {
+  inset-inline-end: calc(100% + (var(--paper-panel-inset) + 0.6) * 1em);
 }
 
 .wording .marginalized {
@@ -201,12 +309,17 @@ html .wrapper :where(:target) :is(.codeblock, .sourceCode, ul),
   inset-inline-end: calc(100% + 3.25rem);
 }
 
-.wrapper .wording .add,
+.wrapper .wording div.add :is(span.add, div.sourceCode),
+.wrapper .paper-removal :is(.rm, div.sourceCode) {
+  background: transparent;
+}
+
+.wrapper .wording span.add,
 .wrapper .wording code.diff span.va {
   background: var(--paper-wording-add-bg);
 }
 
-.wrapper .wording .rm,
+.wrapper .wording span.rm:not(.paper-removal *),
 .wrapper .wording code.diff span.st {
   background: var(--paper-wording-remove-bg);
   color: var(--paper-rm);
@@ -225,7 +338,7 @@ html .wrapper :where(:target) :is(.codeblock, .sourceCode, ul),
 }
 
 .wrapper .wording code.diff span.st,
-.wrapper .rm code.sourceCode {
+.wrapper .rm code.sourceCode:not(del *) {
   text-decoration: line-through;
 }
 

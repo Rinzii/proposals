@@ -1,0 +1,62 @@
+--- a/data/filters/wg21.py
++++ b/data/filters/wg21.py
+@@ -455,7 +455,49 @@
+     elem.walk(process_pnum)
+     elem.walk(process_nonnormative)
+     return elem
++
++def block_callout(elem, doc):
++    if doc.format not in ('html', 'latex'):
++        return
++    labels = {'note': 'Note', 'draftnote': 'Drafting note', 'ednote': "Editor's note",
++              'decision': 'Decision', 'bug': 'Bug'}
++    kind = next((c for c in elem.classes if c in labels), None)
++    if not kind or not doc.get_metadata('paper-callouts', False):
++        return
++
++    # Notes in specification wording use the standard's numbering and end marker.
++    if kind == 'note':
++        parent = elem.parent
++        while parent is not None:
++            if isinstance(parent, pf.Div) and 'wording' in parent.classes:
++                return
++            parent = parent.parent
+ 
++    label = [pf.Str(labels[kind])]
++    if kind == 'draftnote' and 'audience' in elem.attributes:
++        label.append(pf.Str(' for ' + elem.attributes['audience']))
++    if kind == 'note' and 'num' in elem.attributes:
++        number = pf.Str(elem.attributes['num'])
++        if doc.format == 'html':
++            if not elem.identifier:
++                nonnormative_count['note'] += 1
++                elem.identifier = f"note-{nonnormative_count['note']}"
++            number = pf.Link(number, url='#' + elem.identifier)
++        label.extend([pf.Space(), number])
++    label.append(pf.Str(':'))
++
++    variant = 'draftnote' if kind == 'ednote' else kind
++    elem.classes.remove(kind)
++    elem.classes.extend(['paper-callout', 'paper-' + variant])
++    if doc.format == 'html':
++        elem.attributes.setdefault('role', 'note')
++        prepend_elem(elem, pf.Span(*label, classes=['callout-label']), pf.Space())
++    else:
++        prepend_elem(elem, pf.RawInline(r'\PaperCalloutLabel{', 'latex'), *label,
++                     pf.RawInline('}', 'latex'), pf.Space())
++        elem.content.insert(0, pf.RawBlock(r'\begin{PaperCallout}{' + variant + '}', 'latex'))
++        elem.content.append(pf.RawBlock(r'\end{PaperCallout}', 'latex'))
++
+ def divspan(elem, doc):
+     """
+     Non-code diffs: `add` and `rm` are classes that can be added to
+@@ -573,6 +615,9 @@
+ 
+     if 'pnum' in elem.classes and isinstance(elem, pf.Span):
+         return pnum()
++
++    if isinstance(elem, pf.Div):
++        block_callout(elem, doc)
+ 
+     note_cls = next(iter(c for c in elem.classes if c in note_classes), None)
+     if note_cls == 'example':  example()
