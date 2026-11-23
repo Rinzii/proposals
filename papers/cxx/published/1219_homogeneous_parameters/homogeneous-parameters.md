@@ -1,9 +1,9 @@
 ---
 title: "Homogeneous variadic function parameters"
-document: P1219R3
+document: D1219R4
 tracking-issue: 297
 status: progress
-date: 2026-10-22
+date: 2026-10-23
 audience: EWG
 author:
   - name: Ian Pike
@@ -224,6 +224,10 @@ We propose homogeneous function parameter packs for C++29: a variable number of 
 We ask the Evolution Working Group to first confirm the C++29 pairing of named and unnamed packs with mandatory C-varargs commas and reclamation of the comma-less spelling. This gives packs the same meaning with or without a name, while changing declarations deprecated in C++26.
 
 # Revision history {#revision-history}
+
+## R4 (draft) {#revision-r4}
+
+- No substantive changes from R3 yet.
 
 ## R3 (2026-10-22) {#revision-r3}
 
@@ -865,7 +869,7 @@ For `packed(1, 2)` in Table 9, deduction between transformed pack patterns succe
 
 Replacing constrained emulation can also change overload selection. Beside `template <class T> void single(T)`, `void single(std::same_as<int> auto...)` loses for `single(1)`. Replacing it with `void single(int...)` produces Table 9's ambiguity. [[temp.deduct.partial]/8](https://wg21.link/temp.deduct.partial#8)
 
-[]{#length-constraints}Length-dependent associated constraints require count determination before satisfaction substitutes ordinary template arguments, including counts and enclosing specializations' arguments, without separate count bindings. Rechecking the same atomic constraint with the same arguments retains the existing consistency requirement. [[temp.constr.atomic]/3](https://wg21.link/temp.constr.atomic#3)
+[]{#length-constraints}Length-dependent associated constraints require determining the count before satisfaction substitutes ordinary template arguments, including counts and enclosing specializations' arguments, without separate count bindings. Rechecking the same atomic constraint with the same arguments retains the existing consistency requirement. [[temp.constr.atomic]/3](https://wg21.link/temp.constr.atomic#3)
 
 The count adds no atomic-identity or subsumption test, including no arithmetic implication between separate `sizeof...(values) >= 1` and `sizeof...(values) >= 2` predicates. [[temp.constr.atomic]/2](https://wg21.link/temp.constr.atomic#2) [[temp.constr.order]/1.2](https://wg21.link/temp.constr.order#1.2)
 
@@ -1025,7 +1029,7 @@ A deprecated subscript could acquire new meaning silently inside any expression.
 
 A *varargs ellipsis* denotes C varargs, not a parameter pack. C23 and C++26 permit `...` without preceding parameters. [@N3096] C++26 also permits but deprecates omitting the comma between a parameter list and C varargs. [[depr.ellipsis.comma]](https://wg21.link/depr.ellipsis.comma)
 
-A final ellipsis that could belong to an abstract (unnamed) declarator declares a pack if its type names an unexpanded template parameter pack or contains `auto`, otherwise C varargs. [[dcl.fct]/26](https://wg21.link/dcl.fct) Writing `basic_string_view<Char, Traits> svs ...` to declare a pack gives C varargs today. [@SO-STRING-VIEW-CONCAT]
+A final ellipsis that could belong to an abstract (unnamed) declarator declares a pack if its type names an unexpanded template parameter pack or contains `auto`. Otherwise, it declares C varargs. [[dcl.fct]/26](https://wg21.link/dcl.fct) Writing `basic_string_view<Char, Traits> svs ...` to declare a pack gives C varargs today. [@SO-STRING-VIEW-CONCAT]
 
 These C++26 declarations therefore differ:
 
@@ -1075,7 +1079,7 @@ Inconsistently migrated declarations and definitions can validly declare separat
 
 []{#function-types-and-overload-resolution}The alias `using F = void(int...)` becomes ill-formed: function type aliases cannot introduce homogeneous function templates. It must become `using F = void(int, ...)` to retain C varargs. Reclaimed declarations no longer match C-varargs pointer targets, though fixed-arity targets can deduce a specialization's count. Passing a formerly non-template name to callable-deducing interfaces also needs a [selected specialization, typed pointer, or wrapper](#addresses).
 
-The conversion changes can also affect well-formed metaprogramming probing callability, taking addresses, or recognizing C-varargs function types. Preserving C varargs requires commas across declarations, definitions, pointer and member-pointer types, traits, and macro-generated declarations. Ordinary expansions such as `template<class... Ts> void f(Ts...)` stay unchanged.
+The conversion changes can also affect well-formed metaprogramming that probes callability, takes addresses, or recognizes C-varargs function types. Preserving C varargs requires commas across declarations, definitions, pointer and member-pointer types, traits, and macro-generated declarations. Ordinary expansions such as `template<class... Ts> void f(Ts...)` stay unchanged.
 
 Reclamation needs grammar coordination with [@P3776R1], *More trailing commas*, including between ordinary packs and C varargs. That paper proposes trailing parameter-list commas except after C ellipsis parameters.
 
@@ -1084,6 +1088,8 @@ Reclamation needs grammar coordination with [@P3776R1], *More trailing commas*, 
 ## Proposed EWG polls {#proposed-polls}
 
 We ask EWG to take the first poll before the others. The remaining polls assume it, since the design gives a pack the same meaning with and without a parameter name ([](#compatibility)).
+
+::: {.proposed-poll label="Proposed EWG polls"}
 
 1. We want C++29 to require a comma before C varargs and to reclaim the comma-less spelling for unnamed homogeneous function parameter packs.
 2. We accept the source and link incompatibilities for comma-less C-varargs declarations that Poll 1 causes, as recorded in the [Annex C entry](#wording-compatibility).
@@ -1094,11 +1100,13 @@ We ask EWG to take the first poll before the others. The remaining polls assume 
 7. We want C++29 to support homogeneous function parameter packs in constructors.
 8. We want a tie-break preferring a trailing homogeneous function parameter pack over an ordinary trailing function parameter pack when partial ordering would otherwise leave a call ambiguous.
 
+:::
+
 ## Historical results {#historical-polls}
 
 The polls in Tables 14 to 16 concern earlier revisions, before the C++26 changes addressed here. Proposed Polls 1, 3, and 6 revisit the first, second, and last rows of Table 14. The `template <>` row is the empty template-head spelling this revision rejects ([](#alternatives)).
 
-:::: {#kona-ewgi-polls .poll-table .poll-summary}
+:::: {#kona-ewgi-polls .poll-table .poll-summary .recorded-poll label="Recorded EWGI polls"}
 
 +---------------------------------------------------------------------------------------------------+----------+----------+----------+----------+----------+
 | Poll                                                                                              | SF       | F        | N        | A        | SA       |
@@ -1116,7 +1124,7 @@ The polls in Tables 14 to 16 concern earlier revisions, before the C++26 changes
 
 ::::
 
-:::: {#cologne-ewgi-poll .poll-table}
+:::: {#cologne-ewgi-poll .poll-table .recorded-poll label="Recorded EWGI poll"}
 
 +-----------------+----------+----------+----------+----------+----------+
 | Poll            | SF       | F        | N        | A        | SA       |
@@ -1128,7 +1136,7 @@ The polls in Tables 14 to 16 concern earlier revisions, before the C++26 changes
 
 ::::
 
-:::: {#belfast-ewg-poll .poll-table}
+:::: {#belfast-ewg-poll .poll-table .recorded-poll label="Recorded EWG poll" result="Failed."}
 
 +-------------------------------------+----------+----------+----------+----------+----------+
 | Poll                                | SF       | F        | N        | A        | SA       |
@@ -1140,7 +1148,7 @@ The polls in Tables 14 to 16 concern earlier revisions, before the C++26 changes
 
 ::::
 
-The Belfast poll (Table 16) failed. Although Kona's public record identifies objections to template-introducing syntax and to conflicts with existing syntax, it does not establish why Belfast later failed. [@P1219-EWG-RECORD]
+Although Kona's public record identifies objections to template-introducing syntax and to conflicts with existing syntax, it does not establish why Belfast later failed. [@P1219-EWG-RECORD]
 
 # Implementation experience {#implementation}
 
@@ -1368,7 +1376,7 @@ A homogeneous-pack function type depends on its invented count until determined,
 
 :::: {.draftnote}
 
-Substitution-order and failure-handling wording is incomplete, particularly with template parameter packs preceding the count. Explicit counts should apply before parameter matching and omitted counts be deduced before checking constraints using them.
+Substitution-order and failure-handling wording is incomplete, particularly with template parameter packs preceding the count. Explicit counts should apply before parameter matching and omitted counts should be deduced before checking constraints using them.
 
 ::::
 

@@ -1,3 +1,12 @@
+- document: P1219R3
+  author:
+    - Ian Pike
+    - Eczbek
+    - Jan Schultke
+  original-author: James Touton
+  date: 2026-10-22
+  url: https://wg21.link/p1219r3
+  snapshot: snapshots/p1219r3
 - document: P1219R2
   author: James Touton
   date: 2019-10-05

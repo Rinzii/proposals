@@ -79,6 +79,7 @@ def render_site(root, output, directories):
     # Published papers own the existing series and revision URLs.
     directories = sorted(map(Path, directories), key=lambda path: path.parent.name == "draft")
     draft_slugs = {(path.parents[1].name, path.name) for path in directories if path.parent.name == "draft"}
+    published_slugs = {(path.parents[1].name, path.name) for path in directories if path.parent.name == "published"}
     for directory in directories:
         folder, output_stem, metadata, routes = read_paper(root, directory)
         paper_path = folder.relative_to(root / "papers")
@@ -90,9 +91,9 @@ def render_site(root, output, directories):
         compiled = root / "out/papers" / paper_path
         rendered = compiled / f"{output_stem}.html"
         pdf = compiled / f"{output_stem}.pdf"
-        canonical = (namespace / routes[0]).as_posix()
         slug_route = slug.replace("_", "-")
         share_route = Path("drafts") / language / slug_route
+        canonical = (share_route if is_draft else namespace / routes[0]).as_posix()
         destinations = {namespace / route for route in [*routes, slug_route]}
         if is_draft or (language, slug) not in draft_slugs:
             destinations.add(share_route)
@@ -107,7 +108,7 @@ def render_site(root, output, directories):
 
         aliases = {output_stem, output_stem.replace("-", "_"), *routes}
         legacy_folders = [Path(), Path("drafts/cpp"), Path("cpp")] if language == "cxx" else [namespace]
-        write_redirects(output, legacy_folders, aliases, share_route if is_draft else canonical)
+        write_redirects(output, legacy_folders, aliases, canonical)
 
         document = metadata["document"]
         manifest = folder / "revisions.yaml"
@@ -128,7 +129,7 @@ def render_site(root, output, directories):
                     shutil.copyfile(snapshot.with_suffix(".pdf"), destination / "paper.pdf")
                 item["url"] = f"{route}/"
                 write_redirects(output, legacy_folders, {route.name, route.name.lower()}, route)
-        if is_draft:
+        if is_draft and (language, slug) in published_slugs:
             continue
 
         title = html.escape(metadata["title"])
@@ -145,7 +146,7 @@ def render_site(root, output, directories):
             document_markup = f'<a class="document" href="https://github.com/cplusplus/papers/issues/{int(tracking_issue)}" aria-label="WG21 tracking issue: {html.escape(identifier)}">{html.escape(identifier)}</a>'
         date = metadata.get("date")
         date_text = date.isoformat() if hasattr(date, "isoformat") else str(date or "Not specified")
-        revisions = [{"document": document, "date": date, "url": f"{namespace / routes[-1]}/", "author": metadata.get("author"), "original-author": metadata.get("original-author"), "status": status}, *older]
+        revisions = [{"document": document, "date": date, "url": f"{canonical if is_draft else namespace / routes[-1]}/", "author": metadata.get("author"), "original-author": metadata.get("original-author"), "status": status}, *older]
         items = []
         authors = []
         for item in revisions:
