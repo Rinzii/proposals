@@ -2137,10 +2137,11 @@ is a deprecated spelling of
 <code class="sourceCode cpp"><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span><span class="op">,</span> <span class="ex">...</span><span class="op">);</span></code>
 (<a href="https://wg21.link/depr.ellipsis.comma">[depr.ellipsis.comma]</a>).
 We propose requiring the comma in C++29 whenever C varargs follow a
-parameter list. The declaration without the comma would then be
-ill-formed, but the existing rule would still determine whether a
-trailing <code class="sourceCode cpp"><span class="ex">...</span></code>
-denotes C varargs or a parameter pack.</p>
+parameter list. A
+<code class="sourceCode cpp"><span class="ex">...</span></code> that
+follows a parameter without a comma could then only be part of that
+parameter’s declarator so the declaration without the comma would be
+ill-formed.</p>
 <h1 data-number="1" id="direction"><span class="header-section-number">1</span> EWG direction<a href="#direction" class="self-link"></a></h1>
 <p>In Búzios, EWG encouraged us to address the comma in a separate
 paper. Removing the deprecated spelling would let EWG consider using
@@ -2198,8 +2199,8 @@ making a missing-comma before a C varargs ill-formed in C++29</p>
 the deprecated spelling. For example, suppose an otherwise valid program
 declares
 <code class="sourceCode cpp"><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span><span class="op">);</span></code>
-at namespace scope. Under the proposed rule, a conforming implementation
-would have to issue at least one diagnostic message (<a href="https://wg21.link/intro.compliance.general#2">[intro.compliance.general]/2</a>).</p>
+at namespace scope. Under the proposed wording, a conforming
+implementation would have to issue at least one diagnostic message (<a href="https://wg21.link/intro.compliance.general#2">[intro.compliance.general]/2</a>).</p>
 <p>We can migrate such a declaration before switching to C++29 because
 the spelling with the comma is valid in every language mode (<span class="citation" data-cites="P1219R3"><a href="https://wg21.link/p1219r3">[P1219R3]</a></span>, section 6). As
 Table 1 shows, the comma goes between the parameter list and the C
@@ -2250,76 +2251,98 @@ has only the pack expansion and
 <code class="sourceCode cpp"><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="ex">...</span><span class="op">);</span></code>
 has only C varargs. Neither needs a separator so both remain valid as
 written.</p>
+<p>There is also a case where a declaration would stay well-formed but
+change meaning. It requires an unnamed last parameter whose type names a
+pack other than a template parameter pack, such as
+<code class="sourceCode cpp"><span class="kw">decltype</span><span class="op">(</span><span class="va">v</span><span class="op">)</span></code>
+for a structured binding pack
+<code class="sourceCode cpp"><span class="va">v</span></code>. The <a href="#wording-pack-expansion">drafting note</a> in the wording shows an
+example. Inserting the comma also preserves the C++26 meaning in that
+case.</p>
 <h1 data-number="3" id="wording"><span class="header-section-number">3</span> Wording<a href="#wording" class="self-link"></a></h1>
 <p>Wording is relative to <span class="citation" data-cites="CPP-DRAFT"><a href="https://wg21.link/N5054">[N5054]</a></span>.</p>
 <h2 data-number="3.1" id="wording-functions"><span class="header-section-number">3.1</span> Functions <a href="https://wg21.link/dcl.fct" title="9.3.4.6 Functions">[dcl.fct]</a><a href="#wording-functions" class="self-link"></a></h2>
 <div id="wording-pack-expansion" class="paper-callout paper-draftnote" role="note">
-<p><span class="callout-label">Drafting note:</span> <a href="https://wg21.link/dcl.fct#27">[dcl.fct]/26</a> determines whether
-a trailing
-<code class="sourceCode cpp"><span class="ex">...</span></code> without
-a preceding comma belongs to the <span class="grammar-term">abstract-declarator</span> or the <span class="grammar-term">parameter-declaration-clause</span>. We keep the
-<span class="grammar-term">parameter-declaration-list</span>
+<p><span class="callout-label">Drafting note:</span> Today a
+<code class="sourceCode cpp"><span class="ex">...</span></code> that
+follows a parameter without a comma is either C varargs or part of that
+parameter’s declarator. <a href="https://wg21.link/dcl.fct#27">[dcl.fct]/26</a> is the rule that
+chooses between them. For example, it makes the
+<code class="sourceCode cpp"><span class="ex">...</span></code> in
+<code class="sourceCode cpp"><span class="va">Ts</span><span class="ex">...</span></code>
+part of the declarator when
+<code class="sourceCode cpp"><span class="va">Ts</span></code> is a
+template parameter pack.</p>
+<p>We remove the <span class="grammar-term">parameter-declaration-list</span>
 <code class="sourceCode cpp"><span class="ex">...</span></code>
-alternative in the grammar because the final branch of <a href="https://wg21.link/dcl.fct#27">[dcl.fct]/26</a> still selects it.
-The proposed wording makes that form ill-formed.</p>
-<p>The rule in <a href="https://wg21.link/dcl.fct#27">[dcl.fct]/26</a>
-mentions template parameter packs and
-<code class="sourceCode cpp"><span class="kw">auto</span></code>. There
-are other kinds of pack in <a href="https://wg21.link/temp.variadic#5">[temp.variadic]/5</a>,
-including function parameter packs, init-capture packs, and structured
-binding packs. To see how the rule treats a structured binding pack,
-suppose <code class="sourceCode cpp"><span class="va">v</span></code> in
-the example below has two elements, an
+alternative because it is the one that gives the C varargs meaning. Only
+the declarator meaning is left after that so the rule has nothing to
+choose between anymore. Therefore, we also remove the rule and its
+footnote.</p>
+<p>The deprecated spellings below become ill-formed without a new rule
+because each of them either no longer matches the grammar or breaks an
+existing rule for packs.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span><span class="op">);</span>      <span class="co">// ill-formed: declares a pack but int names no pack</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span> <span class="va">x</span><span class="ex">...</span><span class="op">);</span>    <span class="co">// ill-formed: no longer matches the grammar</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">g</span><span class="op">(</span><span class="kw">auto</span><span class="ex">......</span><span class="op">);</span>  <span class="co">// ill-formed: no longer matches the grammar</span></span></code></pre></div>
+<p>In the first declaration,
+<code class="sourceCode cpp"><span class="dt">int</span><span class="ex">...</span></code>
+now declares a function parameter pack. A function parameter pack is a
+pack expansion (<a href="https://wg21.link/dcl.fct#26">[dcl.fct]/25</a>)
+and a pack expansion has to name an unexpanded pack (<a href="https://wg21.link/temp.variadic#8">[temp.variadic]/8</a>). As
+<code class="sourceCode cpp"><span class="dt">int</span></code> names no
+pack, the declaration is ill-formed for the same reason that
+<code class="sourceCode cpp"><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span> <span class="va">x</span><span class="op">);</span></code>
+is ill-formed today.</p>
+<p>There is also a spelling that stays well-formed but changes meaning.
+As written, <a href="https://wg21.link/dcl.fct#27">[dcl.fct]/26</a>
+chooses the declarator meaning only if the parameter’s type names an
+unexpanded template parameter pack or contains
+<code class="sourceCode cpp"><span class="kw">auto</span></code>.
+Otherwise it chooses C varargs even if the type names a pack of another
+kind (<a href="https://wg21.link/temp.variadic#5">[temp.variadic]/5</a>). For
+example, suppose that
+<code class="sourceCode cpp"><span class="va">v</span></code> in the
+code below is a structured binding pack whose elements are an
 <code class="sourceCode cpp"><span class="dt">int</span></code> followed
 by a
 <code class="sourceCode cpp"><span class="dt">double</span></code>.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;</span><span class="kw">class</span><span class="ex">...</span><span class="op">&gt;</span> <span class="kw">struct</span> <span class="va">Types</span> <span class="op">{};</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;</span><span class="kw">class</span> <span class="va">T</span><span class="op">&gt;</span> <span class="dt">void</span> <span class="va">inspect</span><span class="op">(</span><span class="va">T</span> <span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">auto</span> <span class="op">[</span><span class="ex">...</span><span class="va">v</span><span class="op">]</span> <span class="op">=</span> <span class="va">x</span><span class="op">;</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">using</span> <span class="va">R</span> <span class="op">=</span> <span class="va">Types</span><span class="op">&lt;</span><span class="kw">decltype</span><span class="op">(</span><span class="va">v</span><span class="op">)(</span><span class="kw">decltype</span><span class="op">(</span><span class="va">v</span><span class="op">)</span><span class="ex">...</span><span class="op">)</span><span class="ex">...</span><span class="op">&gt;;</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>Under <a href="https://wg21.link/dcl.fct#27">[dcl.fct]/26</a>, the
-inner <code class="sourceCode cpp"><span class="ex">...</span></code>
-denotes C varargs because
+<div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;</span><span class="kw">class</span><span class="ex">...</span><span class="op">&gt;</span> <span class="kw">struct</span> <span class="va">Types</span> <span class="op">{};</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;</span><span class="kw">class</span> <span class="va">T</span><span class="op">&gt;</span> <span class="dt">void</span> <span class="va">inspect</span><span class="op">(</span><span class="va">T</span> <span class="va">x</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">auto</span> <span class="op">[</span><span class="ex">...</span><span class="va">v</span><span class="op">]</span> <span class="op">=</span> <span class="va">x</span><span class="op">;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">using</span> <span class="va">R</span> <span class="op">=</span> <span class="va">Types</span><span class="op">&lt;</span><span class="kw">decltype</span><span class="op">(</span><span class="va">v</span><span class="op">)(</span><span class="kw">decltype</span><span class="op">(</span><span class="va">v</span><span class="op">)</span><span class="ex">...</span><span class="op">)</span><span class="ex">...</span><span class="op">&gt;;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="co">// [dcl.fct]/26 as written: Types&lt;int(int, ...), double(double, ...)&gt;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">// proposed wording:        Types&lt;int(int, double), double(int, double)&gt;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Under <a href="https://wg21.link/dcl.fct#27">[dcl.fct]/26</a> as
+written,
 <code class="sourceCode cpp"><span class="kw">decltype</span><span class="op">(</span><span class="va">v</span><span class="op">)</span></code>
-neither names a template parameter pack nor contains
-<code class="sourceCode cpp"><span class="kw">auto</span></code>. The
-outer <code class="sourceCode cpp"><span class="ex">...</span></code>
-expands <code class="sourceCode cpp"><span class="va">v</span></code>
-(<a href="https://wg21.link/temp.variadic#8">[temp.variadic]/8</a>). For
-the first element of
-<code class="sourceCode cpp"><span class="va">v</span></code>, both
-occurrences of
-<code class="sourceCode cpp"><span class="kw">decltype</span><span class="op">(</span><span class="va">v</span><span class="op">)</span></code>
-give <code class="sourceCode cpp"><span class="dt">int</span></code> so
-the first type in
-<code class="sourceCode cpp"><span class="va">R</span></code> is
-<code class="sourceCode cpp"><span class="dt">int</span><span class="op">(</span><span class="dt">int</span><span class="op">,</span> <span class="ex">...</span><span class="op">)</span></code>.</p>
-<p>Now suppose <a href="https://wg21.link/dcl.fct#27">[dcl.fct]/26</a>
-also covered the other kinds of pack. The inner
-<code class="sourceCode cpp"><span class="ex">...</span></code> would
-then expand
-<code class="sourceCode cpp"><span class="va">v</span></code> into the
-two parameter types,
-<code class="sourceCode cpp"><span class="dt">int</span></code> and
-<code class="sourceCode cpp"><span class="dt">double</span></code>. For
-the first type in
-<code class="sourceCode cpp"><span class="va">R</span></code>, the outer
-expansion would still supply
-<code class="sourceCode cpp"><span class="dt">int</span></code> as the
-return type so the function type would be
-<code class="sourceCode cpp"><span class="dt">int</span><span class="op">(</span><span class="dt">int</span><span class="op">,</span> <span class="dt">double</span><span class="op">)</span></code>.</p>
-<p>Whether <a href="https://wg21.link/dcl.fct#27">[dcl.fct]/26</a>
-should cover those packs is a separate question. In either case, our
-proposal applies only to C varargs following a parameter list. It
-requires the comma there and preserves the current meaning of every
-other use of the ellipsis.</p>
+names a structured binding pack so the inner
+<code class="sourceCode cpp"><span class="ex">...</span></code> is C
+varargs and only the outer
+<code class="sourceCode cpp"><span class="ex">...</span></code> expands
+<code class="sourceCode cpp"><span class="va">v</span></code>. With the
+proposed wording, the inner
+<code class="sourceCode cpp"><span class="ex">...</span></code> is part
+of the declarator so it expands
+<code class="sourceCode cpp"><span class="va">v</span></code> as well.
+Writing
+<code class="sourceCode cpp"><span class="kw">decltype</span><span class="op">(</span><span class="va">v</span><span class="op">)(</span><span class="kw">decltype</span><span class="op">(</span><span class="va">v</span><span class="op">),</span> <span class="ex">...</span><span class="op">)</span></code>
+with the comma gives the first result with either wording.</p>
 </div>
-<p>Modify <a href="https://wg21.link/dcl.fct#4">[dcl.fct]/3</a> as
-follows:</p>
+<p>Modify <a href="https://wg21.link/dcl.fct#2">[dcl.fct]/1</a> and <a href="https://wg21.link/dcl.fct#4">[dcl.fct]/3</a> as follows and remove
+<a href="https://wg21.link/dcl.fct#27">[dcl.fct]/26</a> with its
+footnote:</p>
 <div id="wording-comma-requirement" class="wording wording-numbered">
-<p><a href="https://wg21.link/dcl.fct#4"><span class="marginalizedparent"><span id="pnum-1" class="marginalized">3</span></span></a> […] <span class="rm"><del>Where
+<p><a href="https://wg21.link/dcl.fct#2"><span class="marginalizedparent"><span id="pnum-1" class="marginalized">1</span></span></a> […]</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>  <em>parameter-declaration-clause</em>:</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>      ...</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>      <em>parameter-declaration-list<sub>opt</sub></em></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>      <em>parameter-declaration-list</em> , ...</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="st">-     <em>parameter-declaration-list</em> ...</span></span></code></pre></div>
+<p>[…]</p>
+<p><a href="https://wg21.link/dcl.fct#4"><span class="marginalizedparent"><span id="pnum-2" class="marginalized">3</span></span></a> […] <span class="rm"><del>Where
 syntactically correct and where
 “<code class="sourceCode cpp"><span class="ex">...</span></code>” is not
 part of an <em>abstract-declarator</em>,
@@ -2328,17 +2351,29 @@ synonymous with
 “<code class="sourceCode cpp"><span class="op">,</span> <span class="ex">...</span></code>”.
 A <em>parameter-declaration-clause</em> of the form
 <code class="sourceCode default"><em>parameter-declaration-list</em> ...</code>
-is deprecated ([depr.ellipsis.comma]).</del></span> <span class="add"><ins>The form
-<code class="sourceCode default"><em>parameter-declaration-list</em> ...</code>
-shall not be used for a
-<em>parameter-declaration-clause</em>.</ins></span> […]</p>
+is deprecated ([depr.ellipsis.comma]).</del></span> […]</p>
+<p><a href="https://wg21.link/dcl.fct#27"><span class="marginalizedparent"><span id="pnum-3" class="marginalized">26</span></span></a> <span class="rm"><del>There is
+a syntactic ambiguity when an ellipsis occurs at the end of a
+<em>parameter-declaration-clause</em> without a preceding comma. In this
+case, the ellipsis is parsed as part of the <em>abstract-declarator</em>
+if the type of the parameter either names a template parameter pack that
+has not been expanded or contains
+<code class="sourceCode cpp"><span class="kw">auto</span></code>;
+otherwise, it is parsed as part of the
+<em>parameter-declaration-clause</em>.</del></span></p>
+<p><a href="https://wg21.link/dcl.fct#footnote-69"><span class="marginalizedparent"><span id="pnum-4" class="marginalized">69)</span></span></a> <span class="rm"><del>One can
+explicitly disambiguate the parse either by introducing a comma (so the
+ellipsis will be parsed as part of the
+<em>parameter-declaration-clause</em>) or by introducing a name for the
+parameter (so the ellipsis will be parsed as part of the
+<em>declarator-id</em>).</del></span></p>
 </div>
 <h2 data-number="3.2" id="wording-deprecation"><span class="header-section-number">3.2</span> Annex D (normative)
 Compatibility features <a href="https://wg21.link/depr" title="Annex D Compatibility features">[depr]</a><a href="#wording-deprecation" class="self-link"></a></h2>
 <p>Remove <a href="https://wg21.link/depr.ellipsis.comma">[depr.ellipsis.comma]</a>:</p>
 <div id="wording-removed-ellipsis-clause" class="wording wording-change wording-numbered">
 <div class="rm paper-removal wording-numbered">
-<p><a href="https://wg21.link/depr.ellipsis.comma"><span class="marginalizedparent"><span id="pnum-2" class="marginalized">(D.5)</span></span></a> <span class="rm"><del><strong>Non-comma-separated ellipsis parameters
+<p><a href="https://wg21.link/depr.ellipsis.comma"><span class="marginalizedparent"><span id="pnum-5" class="marginalized">(D.5)</span></span></a> <span class="rm"><del><strong>Non-comma-separated ellipsis parameters
 [depr.ellipsis.comma]</strong></del></span></p>
 <p><span class="rm"><del>A <em>parameter-declaration-clause</em> of the
 form
@@ -2346,9 +2381,9 @@ form
 is deprecated ([dcl.fct]).</del></span></p>
 <div id="example-1" class="example" data-num="1">
 <span>[ <em>Example 1:</em> </span>
-<div class="sourceCode" id="cb2"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span><span class="op">);</span>         <span class="co">// deprecated</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">g</span><span class="op">(</span><span class="kw">auto</span><span class="ex">...</span><span class="op">);</span>        <span class="co">// OK, declares a function parameter pack</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">h</span><span class="op">(</span><span class="kw">auto</span><span class="ex">......</span><span class="op">);</span>     <span class="co">// deprecated</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span><span class="op">);</span>         <span class="co">// deprecated</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">g</span><span class="op">(</span><span class="kw">auto</span><span class="ex">...</span><span class="op">);</span>        <span class="co">// OK, declares a function parameter pack</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">h</span><span class="op">(</span><span class="kw">auto</span><span class="ex">......</span><span class="op">);</span>     <span class="co">// deprecated</span></span></code></pre></div>
 <span> — <em>end example</em> ]</span>
 </div>
 </div>
@@ -2368,18 +2403,23 @@ ellipsis.</ins></span></p>
 vararg function from a function with a trailing function parameter
 pack.</ins></span></p>
 <p><span class="add"><ins><strong>Effect on original feature:</strong> A
-valid C++ 2026 program that omits this comma is ill-formed. Inserting
-the comma preserves the function type.</ins></span></p>
+valid C++ 2026 program that omits this comma is ill-formed, unless the
+ellipsis can be parsed as part of the <em>abstract-declarator</em> of
+the preceding <em>parameter-declaration</em> and the type of that
+parameter names a pack that has not been expanded. In that case the
+<em>parameter-declaration</em> declares a function parameter pack and
+the parameter-type-list no longer has an ellipsis. Inserting the comma
+preserves the function type.</ins></span></p>
 <div id="example-2" class="example" data-num="1">
 <span>[ <em>Example 1:</em> </span>
-<div class="sourceCode" id="cb3"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;</span><span class="kw">class</span><span class="ex">...</span> <span class="va">Ts</span><span class="op">&gt;</span> <span class="dt">void</span> <span class="va">a</span><span class="op">(</span><span class="va">Ts</span><span class="ex">...</span><span class="op">);</span>   <span class="co">// OK, declares a function parameter pack</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">b</span><span class="op">(</span><span class="kw">auto</span><span class="ex">...</span><span class="op">);</span>                       <span class="co">// OK, declares a function parameter pack</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">c</span><span class="op">(</span><span class="dt">int</span><span class="op">,</span> <span class="ex">...</span><span class="op">);</span>                      <span class="co">// OK, declares a vararg function</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">d</span><span class="op">(</span><span class="ex">...</span><span class="op">);</span>                           <span class="co">// OK, declares a vararg function</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">e</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span><span class="op">);</span>                        <span class="co">// ill-formed; previously well-formed</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span> <span class="va">x</span><span class="ex">...</span><span class="op">);</span>                      <span class="co">// ill-formed; previously well-formed</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">g</span><span class="op">(</span><span class="kw">auto</span><span class="ex">......</span><span class="op">);</span>                    <span class="co">// ill-formed; previously well-formed</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">h</span><span class="op">(</span><span class="kw">auto</span><span class="ex">...</span><span class="op">,</span> <span class="ex">...</span><span class="op">);</span>                  <span class="co">// OK, declares a vararg function</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span><span class="op">&lt;</span><span class="kw">class</span><span class="ex">...</span> <span class="va">Ts</span><span class="op">&gt;</span> <span class="dt">void</span> <span class="va">a</span><span class="op">(</span><span class="va">Ts</span><span class="ex">...</span><span class="op">);</span>   <span class="co">// OK, declares a function parameter pack</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">b</span><span class="op">(</span><span class="kw">auto</span><span class="ex">...</span><span class="op">);</span>                       <span class="co">// OK, declares a function parameter pack</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">c</span><span class="op">(</span><span class="dt">int</span><span class="op">,</span> <span class="ex">...</span><span class="op">);</span>                      <span class="co">// OK, declares a vararg function</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">d</span><span class="op">(</span><span class="ex">...</span><span class="op">);</span>                           <span class="co">// OK, declares a vararg function</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">e</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span><span class="op">);</span>                        <span class="co">// ill-formed; previously well-formed</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span> <span class="va">x</span><span class="ex">...</span><span class="op">);</span>                      <span class="co">// ill-formed; previously well-formed</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">g</span><span class="op">(</span><span class="kw">auto</span><span class="ex">......</span><span class="op">);</span>                    <span class="co">// ill-formed; previously well-formed</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">h</span><span class="op">(</span><span class="kw">auto</span><span class="ex">...</span><span class="op">,</span> <span class="ex">...</span><span class="op">);</span>                  <span class="co">// OK, declares a vararg function</span></span></code></pre></div>
 <span> — <em>end example</em> ]</span>
 </div>
 </div>
