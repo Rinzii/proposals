@@ -104,17 +104,27 @@ def decorate_change(elem, command):
             content.append(pf.Span(pf.RawInline(command, format="latex"), *run, pf.RawInline("}", format="latex")))
             run.clear()
 
-    for child in list(elem.content):
+    children = list(elem.content)
+
+    def spaced(index):
+        return 0 <= index < len(children) and isinstance(children[index], (pf.Space, pf.SoftBreak))
+
+    for index, child in enumerate(children):
         if isinstance(child, (pf.Emph, pf.Strong, pf.SmallCaps, pf.Quoted)) or isinstance(child, pf.Link) and not child.classes:
             flush()
             decorate_change(child, command)
             content.append(child)
         elif isinstance(child, pf.Code):
+            if spaced(index - 1) and run:
+                run.pop()
+                flush()
+                content.append(pf.RawInline(r"\PaperCodeBreak ", format="latex"))
+                run.append(pf.RawInline(r"\ ", format="latex"))
             flush()
-            content.append(pf.RawInline(r"\allowbreak ", format="latex"))
             run.extend((pf.RawInline(r"\mbox{", format="latex"), child, pf.RawInline("}", format="latex")))
             flush()
-            content.append(pf.RawInline(r"\allowbreak ", format="latex"))
+            if spaced(index + 1):
+                content.append(pf.RawInline(r"\allowbreak ", format="latex"))
         else:
             run.append(child)
     flush()

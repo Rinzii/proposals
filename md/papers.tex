@@ -58,6 +58,7 @@
 \NewCommandCopy\PaperKernelSubscript\textsubscript\DeclareRobustCommand{\textsubscript}[1]{\mbox{\PaperKernelSubscript{#1}}}
 \newcommand{\PaperHighlight}[2]{\bgroup\markoverwith{\textcolor{#1}{\rule[-0.4ex]{2pt}{2.2ex}}}\ULon{#2}}
 \newcommand{\PaperUnmarked}[1]{#1}
+\newcommand{\PaperCodeBreak}{\hfil\penalty1000\hfilneg}
 \newcommand{\PaperStrikeHighlight}[1]{\bgroup\markoverwith{\rlap{\textcolor{\PaperRemovalColor}{\rule[-0.4ex]{2pt}{2.2ex}}}\rule[0.55ex]{2pt}{0.4pt}}\ULon{#1}}
 \begingroup\lccode`\~=`\ \lowercase{\endgroup\def\PaperCodeSpace{~}}
 \ExplSyntaxOn
