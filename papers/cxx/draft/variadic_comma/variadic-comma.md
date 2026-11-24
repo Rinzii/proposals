@@ -9,12 +9,8 @@ audience:
 author:
   - name: Ian Pike
     email: <ianpike98cs@gmail.com>
-  - name: Eczbek
-    email: <eczbek.void@gmail.com>
   - name: Jan Schultke
     email: <janschultke@gmail.com>
-  - name: James Touton
-    email: <bekenn@gmail.com>
 intent: Forward to CWG for C++29
 references:
   - id: "CPP-DRAFT"
@@ -236,4 +232,8 @@ void h(auto..., ...);                  // OK, declares a vararg function
 :::::
 
 ::::
+
+# Acknowledgments {#acknowledgments}
+
+Thanks to Eczbek and James Touton for their work on [@P1219R3], which this paper grew out of. Their insights and opinions were invaluable to its success.
 
