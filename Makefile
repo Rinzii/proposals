@@ -2,8 +2,8 @@ SHELL := /usr/bin/env bash
 .DEFAULT_GOAL := build
 .NOTPARALLEL:
 
-PAPER ?= cxx/published/1219_homogeneous_parameters
-PAPERS := $(patsubst papers/%/Makefile,%,$(sort $(wildcard papers/*/draft/*/Makefile papers/*/published/*/Makefile)))
+PAPER ?= cxx/released/1219_homogeneous_parameters
+PAPERS := $(patsubst papers/%/Makefile,%,$(sort $(wildcard papers/*/draft/*/Makefile papers/*/released/*/Makefile)))
 paper_matches := $(filter $(PAPER) %/$(PAPER),$(PAPERS))
 paper_dir = $(if $(filter 1,$(words $(paper_matches))),papers/$(paper_matches),$(error Select one paper with PAPER= from 'make list-papers' (requested '$(PAPER)')))
 PYTHON := md/wg21/deps/python/bin/python3

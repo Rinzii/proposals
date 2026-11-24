@@ -10,6 +10,12 @@ from urllib.parse import quote, urlsplit
 import yaml
 
 
+def document_letter(document):
+    number, separator, revision = document.upper().partition("R")
+    numbered = number[1:].isdigit() and separator and revision.isdigit()
+    return number[:1] if numbered and number[:1] in {"P", "D"} else ""
+
+
 def read_paper(root, directory):
     folder = root / directory
     rule = next(
@@ -24,15 +30,31 @@ def read_paper(root, directory):
     abstract = text.partition("\n# Abstract")[2].partition("\n\n")[2].split("\n# ", 1)[0]
     metadata["abstract"] = " ".join(abstract.replace("`", "").split())
     document = metadata["document"]
-    number, separator, revision = document.upper().partition("R")
-    numbered = (
-        number[:1] in {"P", "D"}
-        and number[1:].isdigit()
-        and separator
-        and revision.isdigit()
-    )
-    routes = [f"P{number[1:]}", document.upper()] if numbered else [folder.name.replace("_", "-")]
+    series = document.upper().partition("R")[0][1:]
+    routes = [f"P{series}", document.upper()] if document_letter(document) else [folder.name.replace("_", "-")]
     return folder, output_stem, metadata, list(dict.fromkeys(routes))
+
+
+def published_revisions(published, series):
+    # A published folder is named for the one revision frozen in it.
+    revisions = {}
+    for folder in sorted(path for path in published.iterdir() if path.is_dir()) if published.is_dir() else []:
+        number, separator, revision = folder.name.partition("_")[0].partition("r")
+        if not (number.isdigit() and separator and revision.isdigit()):
+            raise ValueError(f"Published folder must be named <number>r<revision>_<slug>: {folder}")
+        frozen = f"P{number}R{revision}"
+        entries = yaml.safe_load((folder / "revisions.yaml").read_text()) or []
+        snapshots = [(item["document"].upper(), Path(item["snapshot"]).name.upper()) for item in entries if "snapshot" in item]
+        if snapshots != [(frozen, frozen)]:
+            raise ValueError(f"{folder} must hold one snapshot and it must be {frozen}: found {snapshots}")
+        if number != series:
+            continue
+        for item in entries:
+            if "snapshot" in item:
+                item["snapshot"] = folder / item["snapshot"]
+            if item["document"].upper() not in revisions or "snapshot" in item:
+                revisions[item["document"].upper()] = item
+    return list(revisions.values())
 
 
 def author_names(authors):
@@ -76,16 +98,16 @@ def render_site(root, output, directories):
             raise FileNotFoundError(f"Missing compiled frontend asset: {assets / filename}")
     for asset in assets.glob("*.js"):
         shutil.copyfile(asset, output / asset.name)
-    # Published papers own the existing series and revision URLs.
+    # Released papers own the existing series and revision URLs.
     directories = sorted(map(Path, directories), key=lambda path: path.parent.name == "draft")
     draft_slugs = {(path.parents[1].name, path.name) for path in directories if path.parent.name == "draft"}
-    published_slugs = {(path.parents[1].name, path.name) for path in directories if path.parent.name == "published"}
+    released_slugs = {(path.parents[1].name, path.name) for path in directories if path.parent.name == "released"}
     for directory in directories:
         folder, output_stem, metadata, routes = read_paper(root, directory)
         paper_path = folder.relative_to(root / "papers")
         language, stage, slug = paper_path.parts
-        if stage not in {"draft", "published"}:
-            raise ValueError(f"Expected draft/ or published/ in {directory}")
+        if stage not in {"draft", "released"}:
+            raise ValueError(f"Expected draft/ or released/ in {directory}")
         is_draft = stage == "draft"
         namespace = Path() if language == "cxx" else Path(language)
         compiled = root / "out/papers" / paper_path
@@ -106,13 +128,13 @@ def render_site(root, output, directories):
             if pdf.exists():
                 shutil.copyfile(pdf, destination / "paper.pdf")
 
-        aliases = {output_stem, output_stem.replace("-", "_"), *routes}
+        aliases = {output_stem, output_stem.replace("-", "_"), *routes, slug_route}
         legacy_folders = [Path(), Path("drafts/cpp"), Path("cpp")] if language == "cxx" else [namespace]
         write_redirects(output, legacy_folders, aliases, canonical)
 
         document = metadata["document"]
-        manifest = folder / "revisions.yaml"
-        older = yaml.safe_load(manifest.read_text()) or [] if manifest.exists() else []
+        series = document.upper().partition("R")[0][1:] if document_letter(document) else ""
+        older = published_revisions(root / "papers" / language / "published", series)
         older = [item for item in older if item["document"].upper() != document.upper()]
         older.sort(key=lambda item: int(item["document"].upper().rpartition("R")[2]), reverse=True)
         for item in older:
@@ -120,7 +142,7 @@ def render_site(root, output, directories):
             if published_url.scheme not in {"https", "http"} or not published_url.netloc:
                 raise ValueError(f"Revision URL must be an HTTP or HTTPS address: {item['url']}")
             if "snapshot" in item:
-                snapshot = folder / item["snapshot"]
+                snapshot = item["snapshot"]
                 route = namespace / item["document"].upper()
                 destination = output / route
                 destination.mkdir(parents=True, exist_ok=True)
@@ -129,7 +151,7 @@ def render_site(root, output, directories):
                     shutil.copyfile(snapshot.with_suffix(".pdf"), destination / "paper.pdf")
                 item["url"] = f"{route}/"
                 write_redirects(output, legacy_folders, {route.name, route.name.lower()}, route)
-        if is_draft and (language, slug) in published_slugs:
+        if is_draft and (language, slug) in released_slugs:
             continue
 
         title = html.escape(metadata["title"])
@@ -156,8 +178,10 @@ def render_site(root, output, directories):
             revision_authors = author_names(item.get("author"))
             original_authors = author_names(item.get("original-author"))
             authors.extend([*revision_authors, *original_authors])
-            revision_status = str(item.get("status", "published"))
-            state = "Draft" if revision_status == "progress" else revision_status.replace("_", " ").capitalize()
+            revision_status = str(item.get("status", "progress"))
+            if revision_status == "progress":
+                revision_status = "published" if document_letter(item["document"]) == "P" else "draft"
+            state = revision_status.replace("_", " ").capitalize()
             label = html.escape(f'{item["document"]} {metadata["title"]}')
             items.append(f'<li data-status="{html.escape(revision_status)}"><time datetime="{html.escape(revision_date)}">{html.escape(revision_date)}</time><span class="revision-marker" aria-hidden="true"></span><div class="revision-description"><a href="{html.escape(item["url"])}" aria-label="{label}">R{html.escape(revision_number)}</a><span class="revision-state">{html.escape(state)}</span><span class="revision-authors">{html.escape(", ".join(revision_authors))}</span></div></li>')
         searchable = " ".join([metadata["title"], document, canonical, folder.name, metadata["abstract"], *audience, *(item["document"] for item in older), *authors]).casefold()
