@@ -2188,7 +2188,7 @@ function types</a></li>
 [expr.prim.lambda.closure]</a></li>
 </ul></li>
 <li><a href="#wording-functions" id="toc-wording-functions"><span class="toc-section-number">9.2</span> Functions [dcl.fct]</a></li>
-<li><a href="#wording-reclamation" id="toc-wording-reclamation"><span class="toc-section-number">9.3</span> Removal and reclamation</a></li>
+<li><a href="#wording-reclamation" id="toc-wording-reclamation"><span class="toc-section-number">9.3</span> Reclamation</a></li>
 <li><a href="#wording-addresses" id="toc-wording-addresses"><span class="toc-section-number">9.4</span> Address of an overload set
 [over.over]</a></li>
 <li><a href="#wording-variadic" id="toc-wording-variadic"><span class="toc-section-number">9.5</span> Variadic templates
@@ -2223,11 +2223,11 @@ Compatibility [diff.cpp26]</a></li>
 number of parameters of one declared type. One declaration replaces
 fixed-arity overload families, retaining ordinary parameter
 initialization, conversion ranking, and a compile-time count.</p>
-<p>We ask the Evolution Working Group to first confirm the C++29 pairing
-of named and unnamed packs with mandatory C-varargs commas and
-reclamation of the comma-less spelling. This gives packs the same
-meaning with or without a name, while changing declarations deprecated
-in C++26.</p>
+<p><span class="citation" data-cites="P4494R0"><a href="https://wg21.link/p4494r0">[P4494R0]</a></span> proposes mandatory
+C-varargs commas for C++29. We ask the Evolution Working Group to first
+confirm the C++29 pairing of named and unnamed packs through reclamation
+of the comma-less spelling. This gives packs the same meaning with or
+without a name, while changing declarations deprecated in C++26.</p>
 <h1 data-number="1" id="revision-history"><span class="header-section-number">1</span> Revision history<a href="#revision-history" class="self-link"></a></h1>
 <h2 data-number="1.1" id="revision-r4"><span class="header-section-number">1.1</span> R4 (draft)<a href="#revision-r4" class="self-link"></a></h2>
 <ul>
@@ -2352,9 +2352,9 @@ and unnamed
 <code class="sourceCode cpp"><span class="dt">int</span><span class="ex">...</span></code>
 packs are proposed. Since Belfast, C++26 has deprecated the comma-less
 C-varargs spelling. <a href="https://wg21.link/depr.ellipsis.comma">[depr.ellipsis.comma]</a>
-We pair <a href="#compatibility">mandatory commas and reclamation</a> in
-C++29 so parameter names do not change pack meaning. We ask EWG to
-confirm that direction <a href="#proposed-polls">first</a>.</p>
+<span class="citation" data-cites="P4494R0"><a href="https://wg21.link/p4494r0">[P4494R0]</a></span> proposes making
+the comma mandatory in C++29. We pair that requirement with <a href="#compatibility">reclamation</a> so parameter names do not change
+pack meaning. We ask EWG to confirm that direction <a href="#proposed-polls">first</a>.</p>
 <h1 data-number="3" id="examples"><span class="header-section-number">3</span> Library use cases<a href="#examples" class="self-link"></a></h1>
 <h2 data-number="3.1" id="example-count"><span class="header-section-number">3.1</span> Combine call-site diagnostics
 with count-dependent results<a href="#example-count" class="self-link"></a></h2>
@@ -3872,15 +3872,21 @@ extent independent of its count. Parenthesized unnamed pack declarators
 remain out of scope because aliases need no new declarator form.</p>
 <h1 data-number="6" id="compatibility"><span class="header-section-number">6</span> Reclaiming the deprecated
 comma-less spelling<a href="#compatibility" class="self-link"></a></h1>
-<p>The C++29 design requires a comma between a parameter list and C
-varargs and reclaims the comma-less spelling for unnamed homogeneous
-packs. Otherwise,
+<p><span class="citation" data-cites="P4494R0"><a href="https://wg21.link/p4494r0">[P4494R0]</a></span> proposes requiring
+a comma between a parameter list and C varargs in C++29. This design
+builds on that requirement and reclaims the comma-less spelling for
+unnamed homogeneous packs. Without the requirement,
 <code class="sourceCode cpp"><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span> <span class="va">args</span><span class="op">)</span></code>
 would declare a homogeneous pack while
 <code class="sourceCode cpp"><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span><span class="op">)</span></code>
 retained deprecated C varargs so adding or removing a name would change
-meaning and template status. The <a href="#proposed-polls">polls</a>
-assume this pairing. Reclamation also permits omitting unused names as
+meaning and template status. With the requirement alone,
+<code class="sourceCode cpp"><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span> <span class="va">args</span><span class="op">)</span></code>
+would declare a homogeneous pack while
+<code class="sourceCode cpp"><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span><span class="op">)</span></code>
+would be ill-formed. The <a href="#proposed-polls">polls</a> assume the
+requirement and ask EWG to confirm reclamation first. Reclamation also
+permits omitting unused names as
 <code class="sourceCode cpp"><span class="dt">void</span> <span class="va">g</span><span class="op">(</span><span class="kw">auto</span><span class="ex">...</span><span class="op">)</span></code>
 and
 <code class="sourceCode cpp"><span class="kw">template</span> <span class="op">&lt;</span><span class="kw">class</span><span class="ex">...</span> <span class="va">Ts</span><span class="op">&gt;</span> <span class="dt">void</span> <span class="va">h</span><span class="op">(</span><span class="va">Ts</span><span class="ex">...</span><span class="op">)</span></code>
@@ -3894,7 +3900,7 @@ Jan Schultke’s <span class="citation" data-cites="P3176R1"><a href="https://wg
 variadic comma</em>, chose deprecation: no proposed feature required
 removal, the earlier attempt had failed, and the motivation did not
 justify abruptly breaking code (section 6.1). This proposal requires
-removal.</p>
+removal, as proposed in <span class="citation" data-cites="P4494R0"><a href="https://wg21.link/p4494r0">[P4494R0]</a></span>.</p>
 <p>One standard cycle separates C++26 deprecation from proposed C++29
 reclamation. Adding a comma preserves C varargs in every language mode,
 permitting migration before C++29. GCC enables
@@ -3944,8 +3950,9 @@ to declare a pack gives C varargs today. <span class="citation" data-cites="SO-S
 <span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span> <span class="op">&lt;</span><span class="kw">class</span> <span class="va">T</span><span class="op">&gt;</span></span>
 <span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="va">T</span><span class="ex">...</span><span class="op">);</span></span></code></pre></div>
 <h2 data-number="6.2" id="proposed-comma-change"><span class="header-section-number">6.2</span> Proposed change<a href="#proposed-comma-change" class="self-link"></a></h2>
-<p>Requiring the comma and removing unnamed disambiguation lets
-comma-less declarations introduce homogeneous packs. Standalone
+<p>With the comma required and the unnamed disambiguation removed, as
+<span class="citation" data-cites="P4494R0"><a href="https://wg21.link/p4494r0">[P4494R0]</a></span> proposes,
+comma-less declarations can introduce homogeneous packs. Standalone
 <code class="sourceCode cpp"><span class="ex">...</span></code>,
 comma-separated C varargs, and ordinary pack expansions retain their
 meanings.</p>
@@ -4078,16 +4085,17 @@ proposes trailing parameter-list commas except after C ellipsis
 parameters.</p>
 <h1 data-number="7" id="straw-polls"><span class="header-section-number">7</span> Straw polls<a href="#straw-polls" class="self-link"></a></h1>
 <h2 data-number="7.1" id="proposed-polls"><span class="header-section-number">7.1</span> Proposed EWG polls<a href="#proposed-polls" class="self-link"></a></h2>
-<p>We ask EWG to take the first poll before the others. The remaining
-polls assume it, since the design gives a pack the same meaning with and
-without a parameter name (<a href="#compatibility">Reclaiming the
-deprecated comma-less spelling</a>).</p>
+<p>These polls assume that C++29 requires a comma before C varargs, as
+<span class="citation" data-cites="P4494R0"><a href="https://wg21.link/p4494r0">[P4494R0]</a></span> proposes. We ask
+EWG to take the first poll before the others. The remaining polls assume
+it, since the design gives a pack the same meaning with and without a
+parameter name (<a href="#compatibility">Reclaiming the deprecated
+comma-less spelling</a>).</p>
 <div class="proposed-poll paper-callout" role="group" aria-label="Proposed EWG polls">
 <p><span class="callout-label">Proposed EWG polls</span></p>
 <ol type="1">
-<li>We want C++29 to require a comma before C varargs and to reclaim the
-comma-less spelling for unnamed homogeneous function parameter
-packs.</li>
+<li>We want C++29 to reclaim the comma-less spelling for unnamed
+homogeneous function parameter packs.</li>
 <li>We accept the source and link incompatibilities for comma-less
 C-varargs declarations that Poll 1 causes, as recorded in the <a href="#wording-compatibility">Annex C entry</a>.</li>
 <li>We want homogeneous function parameter packs for C++29.</li>
@@ -4109,8 +4117,9 @@ partial ordering would otherwise leave a call ambiguous.</li>
 </div>
 <h2 data-number="7.2" id="historical-polls"><span class="header-section-number">7.2</span> Historical results<a href="#historical-polls" class="self-link"></a></h2>
 <p>The polls in Tables 14 to 16 concern earlier revisions, before the
-C++26 changes addressed here. Proposed Polls 1, 3, and 6 revisit the
-first, second, and last rows of Table 14. The
+C++26 changes addressed here. <span class="citation" data-cites="P4494R0"><a href="https://wg21.link/p4494r0">[P4494R0]</a></span> revisits the first
+row of Table 14. Proposed Polls 3 and 6 revisit its second and last
+rows. The
 <code class="sourceCode cpp"><span class="kw">template</span> <span class="op">&lt;&gt;</span></code>
 row is the empty template-head spelling this revision rejects (<a href="#alternatives">Alternatives</a>).</p>
 <div id="kona-ewgi-polls" class="poll-table poll-summary recorded-poll paper-callout" role="group" aria-label="Recorded EWGI polls">
@@ -4307,7 +4316,7 @@ document an implementation of this revision’s syntax and count
 model.</p>
 </div>
 <h1 data-number="9" id="candidate-rules"><span class="header-section-number">9</span> Wording<a href="#candidate-rules" class="self-link"></a></h1>
-<p>Wording is relative to <span class="citation" data-cites="CPP-DRAFT"><a href="https://wg21.link/N5054">[N5054]</a></span>.</p>
+<p>Wording is relative to <span class="citation" data-cites="CPP-DRAFT"><a href="https://wg21.link/N5054">[N5054]</a></span> as modified by <span class="citation" data-cites="P4494R0"><a href="https://wg21.link/p4494r0">[P4494R0]</a></span>.</p>
 <h2 data-number="9.1" id="wording-lambdas"><span class="header-section-number">9.1</span> Lambdas<a href="#wording-lambdas" class="self-link"></a></h2>
 <h3 data-number="9.1.1" id="wording-lambda-general"><span class="header-section-number">9.1.1</span> General <a href="https://wg21.link/expr.prim.lambda.general" title="7.5.6.1 General">[expr.prim.lambda.general]</a><a href="#wording-lambda-general" class="self-link"></a></h3>
 <p>Modify the first sentence of <a href="https://wg21.link/expr.prim.lambda.general#6">[expr.prim.lambda.general]/6</a>
@@ -4399,77 +4408,23 @@ clause shall be a function parameter pack.</ins></span> A function
 parameter pack is a pack expansion ([temp.variadic]) <span class="add"><ins>unless it is a homogeneous function parameter
 pack</ins></span>. […]</p>
 </div>
-<h2 data-number="9.3" id="wording-reclamation"><span class="header-section-number">9.3</span> Removal and reclamation<a href="#wording-reclamation" class="self-link"></a></h2>
-<p>Remove the comma-less alternative in <a href="https://wg21.link/dcl.fct">[dcl.fct]/1</a>, the indicated wording
-in <a href="https://wg21.link/dcl.fct">/3</a>, paragraph <a href="https://wg21.link/dcl.fct">/26</a>, and its disambiguation
-footnote:</p>
-<div class="wording wording-numbered">
-<p><a href="https://wg21.link/dcl.fct"><span class="marginalizedparent"><span id="pnum-7" class="marginalized">1</span></span></a></p>
-<div class="sourceCode" id="cb29"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>  <em>parameter-declaration-clause</em>:</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>      ...</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>      <em>parameter-declaration-list<sub>opt</sub></em></span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>      <em>parameter-declaration-list</em> , ...</span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="st">-     <em>parameter-declaration-list</em> ...</span></span></code></pre></div>
-<p>[…]</p>
-<p><a href="https://wg21.link/dcl.fct"><span class="marginalizedparent"><span id="pnum-8" class="marginalized">3</span></span></a> […] <span class="rm"><del>Where
-syntactically correct and where
-“<code class="sourceCode cpp"><span class="ex">...</span></code>” is not
-part of an <em>abstract-declarator</em>,
-“<code class="sourceCode cpp"><span class="ex">...</span></code>” is
-synonymous with
-“<code class="sourceCode cpp"><span class="op">,</span> <span class="ex">...</span></code>”.
-A <em>parameter-declaration-clause</em> of the form
-<code class="sourceCode default"><em>parameter-declaration-list</em> ...</code>
-is deprecated ([depr.ellipsis.comma]).</del></span> […]</p>
-<p>[…]</p>
-<p><a href="https://wg21.link/dcl.fct"><span class="marginalizedparent"><span id="pnum-9" class="marginalized">26</span></span></a> <span class="rm"><del>There is
-a syntactic ambiguity when an ellipsis occurs at the end of a
-<em>parameter-declaration-clause</em> without a preceding comma. In this
-case, the ellipsis is parsed as part of the <em>abstract-declarator</em>
-if the type of the parameter either names a template parameter pack that
-has not been expanded or contains
-<code class="sourceCode cpp"><span class="kw">auto</span></code>;
-otherwise, it is parsed as part of the
-<em>parameter-declaration-clause</em>.</del></span></p>
-<p><a href="https://wg21.link/dcl.fct#footnote-69"><span class="marginalizedparent"><span id="pnum-10" class="marginalized">69)</span></span></a> <span class="rm"><del>One can
-explicitly disambiguate the parse either by introducing a comma (so the
-ellipsis will be parsed as part of the
-<em>parameter-declaration-clause</em>) or by introducing a name for the
-parameter (so the ellipsis will be parsed as part of the
-<em>declarator-id</em>).</del></span></p>
-</div>
-<p>Remove <a href="https://wg21.link/depr.ellipsis.comma">[depr.ellipsis.comma]</a>:</p>
-<div class="wording wording-change wording-numbered">
-<div class="rm paper-removal wording-numbered">
-<p><a href="https://wg21.link/depr.ellipsis.comma"><span class="marginalizedparent"><span id="pnum-11" class="marginalized">(D.5)</span></span></a> <span class="rm"><del><strong>Non-comma-separated ellipsis parameters
-[depr.ellipsis.comma]</strong></del></span></p>
-<p><span class="rm"><del>A <em>parameter-declaration-clause</em> of the
-form
-<code class="sourceCode default"><em>parameter-declaration-list</em> ...</code>
-is deprecated ([dcl.fct]).</del></span></p>
-<div id="example-2" class="example" data-num="1">
-<span>[ <em>Example 1:</em> </span>
-<div class="rm">
-<div class="sourceCode" id="cb30"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span><span class="op">);</span>       <span class="co">// deprecated</span></span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">g</span><span class="op">(</span><span class="kw">auto</span><span class="ex">...</span><span class="op">);</span>      <span class="co">// OK, declares a function parameter pack</span></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">h</span><span class="op">(</span><span class="kw">auto</span><span class="ex">......</span><span class="op">);</span>   <span class="co">// deprecated</span></span></code></pre></div>
-</div>
-<span> — <em>end example</em> ]</span>
-</div>
-</div>
-</div>
-<p>A terminal abstract-declarator ellipsis then belongs to the parameter
+<h2 data-number="9.3" id="wording-reclamation"><span class="header-section-number">9.3</span> Reclamation<a href="#wording-reclamation" class="self-link"></a></h2>
+<p><span class="citation" data-cites="P4494R0"><a href="https://wg21.link/p4494r0">[P4494R0]</a></span> removes the
+comma-less alternative in <a href="https://wg21.link/dcl.fct">[dcl.fct]/1</a>, the related wording in
+<a href="https://wg21.link/dcl.fct">/3</a>, paragraph <a href="https://wg21.link/dcl.fct">/26</a> with its disambiguation
+footnote, and <a href="https://wg21.link/depr.ellipsis.comma">[depr.ellipsis.comma]</a>.
+A terminal abstract-declarator ellipsis then belongs to the parameter
 declaration under homogeneous-pack or existing ordinary expansion
 rules.</p>
 <h2 data-number="9.4" id="wording-addresses"><span class="header-section-number">9.4</span> Address of an overload set <a href="https://wg21.link/over.over" title="12.3 Address of an overload set">[over.over]</a><a href="#wording-addresses" class="self-link"></a></h2>
 <p>Insert after <a href="https://wg21.link/over.over#3">[over.over]/3</a>:</p>
 <div class="wording wording-numbered">
-<p><a href="https://wg21.link/over.over#3"><span class="marginalizedparent"><span id="pnum-12" class="marginalized">3</span></span></a> The specialization, if any,
+<p><a href="https://wg21.link/over.over#3"><span class="marginalizedparent"><span id="pnum-7" class="marginalized">3</span></span></a> The specialization, if any,
 generated by template argument deduction ([temp.over],
 [temp.deduct.funcaddr], [temp.arg.explicit]) for each function template
 named is added to the set of selected functions considered.</p>
 <div class="add wording-numbered">
-<p><span id="wording-address-count"></span><a href="#wording-address-count"><span class="marginalizedparent"><span id="pnum-13" class="marginalized">*</span></span></a> <span class="add"><ins>For a function template that declares a homogeneous
+<p><span id="wording-address-count"></span><a href="#wording-address-count"><span class="marginalizedparent"><span id="pnum-8" class="marginalized">*</span></span></a> <span class="add"><ins>For a function template that declares a homogeneous
 function parameter pack, an omitted argument for its invented count
 parameter is deduced from the target function type as specified in
 [temp.deduct.type]. A specialization is formed only if this argument is
@@ -4487,23 +4442,23 @@ follows:</p>
 patterns in paragraph 6, and the other element interpretations in
 paragraph 9.</p>
 <div class="wording wording-numbered">
-<p><a href="https://wg21.link/temp.variadic#2"><span class="marginalizedparent"><span id="pnum-14" class="marginalized">2</span></span></a> A function parameter pack is a
+<p><a href="https://wg21.link/temp.variadic#2"><span class="marginalizedparent"><span id="pnum-9" class="marginalized">2</span></span></a> A function parameter pack is a
 function parameter that accepts zero or more function arguments.</p>
-<div id="example-3" class="example" data-num="2">
+<div id="example-2" class="example" data-num="2">
 <span>[ <em>Example 2:</em> </span>
-<div class="sourceCode" id="cb31"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>  template&lt;class ... Types&gt; void f(Types ... args);</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="va">+ void g(int ... args);           // args is a homogeneous function parameter pack</span></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  f();                            // args contains no arguments</span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  f(1);                           // args contains one argument: int</span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  f(2, 1.0);                      // args contains two arguments: int and double</span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a><span class="va">+ g();                            // pack count is zero</span></span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a><span class="va">+ g(2, 1.0);                      // pack count is two and 1.0 converts to int</span></span>
-<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a><span class="va">+ g&lt;1&gt;(2, 1.0);                   // error: explicit pack count does not match two arguments</span></span></code></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>  template&lt;class ... Types&gt; void f(Types ... args);</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="va">+ void g(int ... args);           // args is a homogeneous function parameter pack</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  f();                            // args contains no arguments</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  f(1);                           // args contains one argument: int</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  f(2, 1.0);                      // args contains two arguments: int and double</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a><span class="va">+ g();                            // pack count is zero</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a><span class="va">+ g(2, 1.0);                      // pack count is two and 1.0 converts to int</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a><span class="va">+ g&lt;1&gt;(2, 1.0);                   // error: explicit pack count does not match two arguments</span></span></code></pre></div>
 <span> — <em>end example</em> ]</span>
 </div>
 <p>[…]</p>
-<p><a href="https://wg21.link/temp.variadic#5"><span class="marginalizedparent"><span id="pnum-15" class="marginalized">5</span></span></a> […] The number of elements of a
+<p><a href="https://wg21.link/temp.variadic#5"><span class="marginalizedparent"><span id="pnum-10" class="marginalized">5</span></span></a> […] The number of elements of a
 template parameter pack or a function parameter pack <span class="add"><ins>other than a homogeneous function parameter
 pack</ins></span> is the number of arguments provided for the parameter
 pack. <span class="add"><ins>The number of elements of a homogeneous
@@ -4511,13 +4466,13 @@ function parameter pack is its pack count ([dcl.fct]).</ins></span>
 […]</p>
 <p>[…]</p>
 <ul>
-<li><a href="https://wg21.link/temp.variadic#6.1"><span class="marginalizedparent"><span id="pnum-16" class="marginalized">(6.1)</span></span></a> In a function parameter
+<li><a href="https://wg21.link/temp.variadic#6.1"><span class="marginalizedparent"><span id="pnum-11" class="marginalized">(6.1)</span></span></a> In a function parameter
 pack <span class="add"><ins>that is a pack expansion</ins></span>
 ([dcl.fct]); the pattern is <span class="rm"><del>the
 <em>parameter-declaration</em> without the ellipsis</del></span><span class="add"><ins>its parameter pattern</ins></span>.</li>
 </ul>
 <p>[…]</p>
-<p><a href="https://wg21.link/temp.variadic#8"><span class="marginalizedparent"><span id="pnum-17" class="marginalized">8</span></span></a> <span class="rm"><del>A pack
+<p><a href="https://wg21.link/temp.variadic#8"><span class="marginalizedparent"><span id="pnum-12" class="marginalized">8</span></span></a> <span class="rm"><del>A pack
 whose</del></span><span class="add"><ins>An occurrence of a</ins></span>
 name <span class="rm"><del>appears</del></span><span class="add"><ins>denoting a pack is unexpanded in a construct unless it
 is</ins></span> within the pattern of a pack expansion <span class="rm"><del>is expanded by that pack expansion</del></span><span class="add"><ins>contained in that construct</ins></span>. <span class="add"><ins>A pack is unexpanded in a construct if the construct
@@ -4538,7 +4493,7 @@ number of arguments specified. An appearance of a name of a pack that is
 not expanded is ill-formed. […]</p>
 <p>[…]</p>
 <ul>
-<li><a href="https://wg21.link/temp.variadic#9.2"><span class="marginalizedparent"><span id="pnum-18" class="marginalized">(9.2)</span></span></a> if the pack is a function
+<li><a href="https://wg21.link/temp.variadic#9.2"><span class="marginalizedparent"><span id="pnum-13" class="marginalized">(9.2)</span></span></a> if the pack is a function
 parameter pack, the element is an <em>id-expression</em> designating the
 <em>i</em><sup>th</sup> function parameter that resulted from
 instantiation of the function parameter pack declaration <span class="add"><ins>or, for a homogeneous function parameter pack, the
@@ -4546,14 +4501,14 @@ instantiation of the function parameter pack declaration <span class="add"><ins>
 introduces</ins></span>;</li>
 </ul>
 <p>[…]</p>
-<p><a href="https://wg21.link/temp.variadic#15"><span class="marginalizedparent"><span id="pnum-19" class="marginalized">15</span></span></a></p>
-<div id="example-4" class="example" data-num="7">
+<p><a href="https://wg21.link/temp.variadic#15"><span class="marginalizedparent"><span id="pnum-14" class="marginalized">15</span></span></a></p>
+<div id="example-3" class="example" data-num="7">
 <span>[ <em>Example 7:</em> </span>
-<div class="sourceCode" id="cb32"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="st">- template&lt;typename ...Args&gt;</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="st">- bool all(Args ...args) { return (... &amp;&amp; args); }</span></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="va">+ bool all(bool ...args) { return (... &amp;&amp; args); }</span></span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  bool b = all(true, true, true, false);</span></code></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="st">- template&lt;typename ...Args&gt;</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="st">- bool all(Args ...args) { return (... &amp;&amp; args); }</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="va">+ bool all(bool ...args) { return (... &amp;&amp; args); }</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>  bool b = all(true, true, true, false);</span></code></pre></div>
 <p>Within the instantiation of
 <code class="sourceCode cpp"><span class="va">all</span></code>, the
 returned expression expands to
@@ -4592,7 +4547,7 @@ constraints using them.</p>
 insert before Example 1, append to Example 1, and add a new example
 immediately after it as follows:</p>
 <div class="wording wording-numbered">
-<p><a href="https://wg21.link/temp.deduct.general#1"><span class="marginalizedparent"><span id="pnum-20" class="marginalized">1</span></span></a> When a function template
+<p><a href="https://wg21.link/temp.deduct.general#1"><span class="marginalizedparent"><span id="pnum-15" class="marginalized">1</span></span></a> When a function template
 specialization is referenced, all of the template arguments shall have
 values. The values can be explicitly specified or, in some cases, be
 deduced from the use or obtained from default
@@ -4606,38 +4561,38 @@ from its parameter pattern. The parameter pattern undergoes substitution
 even when that number is zero. Explicit specification and deduction of
 equivalent count arguments identify the same specialization under the
 ordinary template-argument equivalence rules.</ins></span> […]</p>
-<div id="example-5" class="example" data-num="1">
+<div id="example-4" class="example" data-num="1">
 <span>[ <em>Example 1:</em> </span>
-<div class="sourceCode" id="cb33"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="va">Array</span><span class="op">&lt;</span><span class="va">dcomplex</span><span class="op">&gt;&amp;</span> <span class="va">cv</span><span class="op">,</span> <span class="va">Array</span><span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;&amp;</span> <span class="va">ci</span><span class="op">)</span> <span class="op">{</span></span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="va">sort</span><span class="op">(</span><span class="va">cv</span><span class="op">);</span>                     <span class="co">// calls sort(Array&lt;dcomplex&gt;&amp;)</span></span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="va">sort</span><span class="op">(</span><span class="va">ci</span><span class="op">);</span>                     <span class="co">// calls sort(Array&lt;int&gt;&amp;)</span></span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="va">Array</span><span class="op">&lt;</span><span class="va">dcomplex</span><span class="op">&gt;&amp;</span> <span class="va">cv</span><span class="op">,</span> <span class="va">Array</span><span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;&amp;</span> <span class="va">ci</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="va">sort</span><span class="op">(</span><span class="va">cv</span><span class="op">);</span>                     <span class="co">// calls sort(Array&lt;dcomplex&gt;&amp;)</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="va">sort</span><span class="op">(</span><span class="va">ci</span><span class="op">);</span>                     <span class="co">// calls sort(Array&lt;int&gt;&amp;)</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>and</p>
-<div class="sourceCode" id="cb34"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>  void g(double d) {</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    int i = convert&lt;int&gt;(d);      // calls convert&lt;int,double&gt;(double)</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    int c = convert&lt;char&gt;(d);     // calls convert&lt;char,double&gt;(double)</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="va">+ </span></span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a><span class="va">+ int sum(int... n) {</span></span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="va">+   return (0 + ... + n);</span></span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a><span class="va">+ }</span></span>
-<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="va">+ </span></span>
-<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a><span class="va">+ void h(int x, int y, int z) {</span></span>
-<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a><span class="va">+   int i = sum(x, y, z);         // selects sum&lt;3&gt;</span></span>
-<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a><span class="va">+ }</span></span></code></pre></div>
+<div class="sourceCode" id="cb32"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>  void g(double d) {</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    int i = convert&lt;int&gt;(d);      // calls convert&lt;int,double&gt;(double)</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    int c = convert&lt;char&gt;(d);     // calls convert&lt;char,double&gt;(double)</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="va">+ </span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="va">+ int sum(int... n) {</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="va">+   return (0 + ... + n);</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a><span class="va">+ }</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="va">+ </span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="va">+ void h(int x, int y, int z) {</span></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a><span class="va">+   int i = sum(x, y, z);         // selects sum&lt;3&gt;</span></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a><span class="va">+ }</span></span></code></pre></div>
 <span> — <em>end example</em> ]</span>
 </div>
 <div class="add">
-<div id="example-6" class="example" data-num="2">
+<div id="example-5" class="example" data-num="2">
 <span>[ <em>Example 2:</em> </span>
-<div class="sourceCode" id="cb35"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span> <span class="op">&lt;</span><span class="kw">class</span> <span class="va">T</span><span class="op">&gt;</span></span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="va">T</span><span class="ex">...</span> <span class="va">v</span><span class="op">);</span></span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="co">// error: homogeneous pack count is undetermined</span></span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> <span class="va">p</span> <span class="op">=</span> <span class="op">&amp;</span><span class="va">f</span><span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;;</span></span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a><span class="co">// OK, q has type void (*)(int, int, int)</span></span>
-<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> <span class="va">q</span> <span class="op">=</span> <span class="op">&amp;</span><span class="va">f</span><span class="op">&lt;</span><span class="dt">int</span><span class="op">,</span> <span class="dv">3</span><span class="op">&gt;;</span></span></code></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">template</span> <span class="op">&lt;</span><span class="kw">class</span> <span class="va">T</span><span class="op">&gt;</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="va">T</span><span class="ex">...</span> <span class="va">v</span><span class="op">);</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="co">// error: homogeneous pack count is undetermined</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> <span class="va">p</span> <span class="op">=</span> <span class="op">&amp;</span><span class="va">f</span><span class="op">&lt;</span><span class="dt">int</span><span class="op">&gt;;</span></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="co">// OK, q has type void (*)(int, int, int)</span></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a><span class="kw">auto</span> <span class="va">q</span> <span class="op">=</span> <span class="op">&amp;</span><span class="va">f</span><span class="op">&lt;</span><span class="dt">int</span><span class="op">,</span> <span class="dv">3</span><span class="op">&gt;;</span></span></code></pre></div>
 <span> — <em>end example</em> ]</span>
 </div>
 </div>
@@ -4647,7 +4602,7 @@ from a function call <a href="https://wg21.link/temp.deduct.call" title="13.10.3
 <p>In <a href="https://wg21.link/temp.deduct.call#1">[temp.deduct.call]/1</a>,
 make the inline change and insert before Example 2:</p>
 <div class="wording wording-numbered">
-<p><a href="https://wg21.link/temp.deduct.call#1"><span class="marginalizedparent"><span id="pnum-21" class="marginalized">1</span></span></a> […] For a function parameter
+<p><a href="https://wg21.link/temp.deduct.call#1"><span class="marginalizedparent"><span id="pnum-16" class="marginalized">1</span></span></a> […] For a function parameter
 pack that occurs at the end of the <em>parameter-declaration-list</em>,
 deduction is performed for each remaining argument of the call, taking
 the type <em>P</em> of the <em>declarator-id</em> of the function
@@ -4677,7 +4632,7 @@ from a type <a href="https://wg21.link/temp.deduct.type" title="13.10.3.6 Deduci
 make the inline change and insert immediately after the sentence shown
 below:</p>
 <div class="wording wording-numbered">
-<p><a href="https://wg21.link/temp.deduct.type#10"><span class="marginalizedparent"><span id="pnum-22" class="marginalized">10</span></span></a> […] Each comparison deduces
+<p><a href="https://wg21.link/temp.deduct.type#10"><span class="marginalizedparent"><span id="pnum-17" class="marginalized">10</span></span></a> […] Each comparison deduces
 template arguments for subsequent positions in the template parameter
 packs <span class="add"><ins>(if any)</ins></span> expanded by the
 function parameter pack. <span class="add"><ins>When a function
@@ -4701,7 +4656,7 @@ templates <a href="https://wg21.link/temp.func.order" title="13.7.7.3 Partial or
 <p>For the rules in <a href="#overload-ordering">Overload ordering</a>,
 insert after <a href="https://wg21.link/temp.func.order#3">[temp.func.order]/3</a>:</p>
 <div class="wording wording-numbered">
-<p><a href="https://wg21.link/temp.func.order#3"><span class="marginalizedparent"><span id="pnum-23" class="marginalized">3</span></span></a> To produce the transformed
+<p><a href="https://wg21.link/temp.func.order#3"><span class="marginalizedparent"><span id="pnum-18" class="marginalized">3</span></span></a> To produce the transformed
 template, for each type, constant, type template, variable template, or
 concept template parameter (including template parameter packs
 ([temp.variadic]) thereof) synthesize a unique type, value, class
@@ -4711,7 +4666,7 @@ template. The type replacing a placeholder in the type of the value
 synthesized for a constant template parameter is a unique synthesized
 type.</p>
 <div class="add wording-numbered">
-<p><span id="wording-ordering-count"></span><a href="#wording-ordering-count"><span class="marginalizedparent"><span id="pnum-24" class="marginalized">*</span></span></a> <span class="add"><ins>The transformation preserves each homogeneous function
+<p><span id="wording-ordering-count"></span><a href="#wording-ordering-count"><span class="marginalizedparent"><span id="pnum-19" class="marginalized">*</span></span></a> <span class="add"><ins>The transformation preserves each homogeneous function
 parameter pack and applies the usual transformation to all template
 parameters, including its count parameter. The parameter pattern is not
 expanded to the count deduced for a candidate
@@ -4724,7 +4679,7 @@ during partial ordering <a href="https://wg21.link/temp.deduct.partial" title="1
 make the inline change and insert immediately after the sentence shown
 below:</p>
 <div class="wording wording-numbered">
-<p><a href="https://wg21.link/temp.deduct.partial#8"><span class="marginalizedparent"><span id="pnum-25" class="marginalized">8</span></span></a> […] Each comparison deduces
+<p><a href="https://wg21.link/temp.deduct.partial#8"><span class="marginalizedparent"><span id="pnum-20" class="marginalized">8</span></span></a> […] Each comparison deduces
 template arguments for subsequent positions in the template parameter
 packs <span class="add"><ins>(if any)</ins></span> expanded by the
 function parameter pack. <span class="add"><ins>For partial ordering,
@@ -4763,28 +4718,44 @@ spelling with SG10 and supply its value.</p>
 </div>
 <h2 data-number="9.10" id="wording-compatibility"><span class="header-section-number">9.10</span> Annex C (informative)
 Compatibility <a href="https://wg21.link/diff.cpp26" title="C.1 C++ and ISO C++ 2026">[diff.cpp26]</a><a href="#wording-compatibility" class="self-link"></a></h2>
-<p>Add a new entry to <a href="https://wg21.link/diff.cpp26.dcl">[diff.cpp26.dcl]</a>, before the
-<a href="https://wg21.link/dcl.init" title="9.5 Initializers">[dcl.init]</a> entry:</p>
-<div class="wording wording-change">
-<div class="add">
-<p><span id="wording-compatibility-entry"></span><span class="add"><ins><strong>Affected subclause:</strong>
-[dcl.fct]</ins></span></p>
-<p><span class="add"><ins><strong>Change:</strong> An ellipsis denoting
-C varargs following a parameter-declaration-list requires a preceding
-comma. An unnamed parameter declaration ending in an ellipsis can
-declare a homogeneous function parameter pack.</ins></span></p>
-<p><span class="add"><ins><strong>Rationale:</strong> Permit unnamed
-homogeneous function parameter packs.</ins></span></p>
-<p><span class="add"><ins><strong>Effect on original feature:</strong>
-Valid C++ 2026 code using comma-less C-varargs declarations may become
-ill-formed, change meaning, or become incompatible with existing
-C-varargs definitions. Inserting the comma preserves the original
-meaning.</ins></span></p>
+<p>Modify the <a href="https://wg21.link/diff.cpp26.dcl">[diff.cpp26.dcl]</a> entry that
+<span class="citation" data-cites="P4494R0"><a href="https://wg21.link/p4494r0">[P4494R0]</a></span> adds as
+follows:</p>
+<div class="wording">
+<p><span id="wording-compatibility-entry"></span><strong>Affected
+subclause:</strong> [dcl.fct]</p>
+<p><strong>Change:</strong> A comma is required between a
+<em>parameter-declaration-list</em> and a following ellipsis. <span class="add"><ins>An unnamed parameter declaration ending in an ellipsis
+can declare a homogeneous function parameter pack.</ins></span></p>
+<p><strong>Rationale:</strong> Distinguish a vararg function from a
+function with a trailing function parameter pack. <span class="add"><ins>Permit unnamed homogeneous function parameter
+packs.</ins></span></p>
+<p><strong>Effect on original feature:</strong> A valid C++ 2026 program
+that omits this comma <span class="rm"><del>is ill-formed, unless the
+ellipsis can be parsed as part of the <em>abstract-declarator</em> of
+the preceding <em>parameter-declaration</em> and the type of that
+parameter names a pack that has not been expanded. In that case the
+<em>parameter-declaration</em> declares a function parameter pack and
+the parameter-type-list no longer has an ellipsis.</del></span> <span class="add"><ins>may become ill-formed, change meaning, or become
+incompatible with existing C-varargs definitions.</ins></span> Inserting
+the comma preserves the function type.</p>
+<div id="example-6" class="example" data-num="1">
+<span>[ <em>Example 1:</em> </span>
+<div class="sourceCode" id="cb34"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>  template&lt;class... Ts&gt; void a(Ts...);   // OK, declares a function parameter pack</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  void b(auto...);                       // OK, declares a function parameter pack</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>  void c(int, ...);                      // OK, declares a vararg function</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  void d(...);                           // OK, declares a vararg function</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="st">- void e(int...);                        // ill-formed; previously well-formed</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a><span class="va">+ void e(int...);                        // OK, declares a function parameter pack</span></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>  void f(int x...);                      // ill-formed; previously well-formed</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>  void g(auto......);                    // ill-formed; previously well-formed</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>  void h(auto..., ...);                  // OK, declares a vararg function</span></code></pre></div>
+<span> — <em>end example</em> ]</span>
 </div>
 </div>
 <h1 data-number="10" id="conclusion"><span class="header-section-number">10</span> Conclusion<a href="#conclusion" class="self-link"></a></h1>
-<p>Further design and wording work depends on EWG direction. We ask EWG
-to <a href="#compatibility">confirm mandatory C-varargs commas and
+<p>Further design and wording work depends on EWG direction. <span class="citation" data-cites="P4494R0"><a href="https://wg21.link/p4494r0">[P4494R0]</a></span> proposes mandatory
+C-varargs commas. We ask EWG to <a href="#compatibility">confirm
 reclamation for unnamed packs</a> and, on that basis, <a href="#proposed-polls">support homogeneous function parameter packs for
 C++29</a>.</p>
 <h1 data-number="11" id="acknowledgments"><span class="header-section-number">11</span> Acknowledgments<a href="#acknowledgments" class="self-link"></a></h1>
@@ -4883,6 +4854,10 @@ Indexing. <a href="https://wg21.link/p2662r3"><div class="csl-indent">https://wg
 <div id="ref-P3776R1" class="csl-entry" role="listitem">
 [P3776R1] Jan Schultke and Murat Can Çağrı. 9 September 2025. More
 trailing commas. <a href="https://wg21.link/p3776r1"><div class="csl-indent">https://wg21.link/p3776r1</div></a>
+</div>
+<div id="ref-P4494R0" class="csl-entry" role="listitem">
+[P4494R0] Ian Pike and Jan Schultke. Require the comma before C varargs.
+<a href="https://wg21.link/p4494r0"><div class="csl-indent">https://wg21.link/p4494r0</div></a>
 </div>
 <div id="ref-REDDIT-ENUM-PACK" class="csl-entry" role="listitem">
 [REDDIT-ENUM-PACK] 23 January 2023. How can I create a variadic function

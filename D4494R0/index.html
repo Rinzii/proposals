@@ -2136,7 +2136,7 @@ Compatibility [diff]</a></li>
 <code class="sourceCode cpp"><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span><span class="op">);</span></code>
 is a deprecated spelling of
 <code class="sourceCode cpp"><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span><span class="op">,</span> <span class="ex">...</span><span class="op">);</span></code>
-(<a href="https://wg21.link/depr.ellipsis.comma">[depr.ellipsis.comma]</a>).
+(<a href="https://timsong-cpp.github.io/cppwp/n5050/depr.ellipsis.comma">[depr.ellipsis.comma]</a>).
 We propose requiring the comma in C++29 whenever C varargs follow a
 parameter list. A
 <code class="sourceCode cpp"><span class="ex">...</span></code> that
@@ -2201,11 +2201,11 @@ the deprecated spelling. For example, suppose an otherwise valid program
 declares
 <code class="sourceCode cpp"><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span><span class="op">);</span></code>
 at namespace scope. Under the proposed wording, a conforming
-implementation would have to issue at least one diagnostic message (<a href="https://wg21.link/intro.compliance.general#2">[intro.compliance.general]/2</a>).</p>
+implementation would have to issue at least one diagnostic message (<a href="https://timsong-cpp.github.io/cppwp/n5050/intro.compliance.general#2">[intro.compliance.general]/2</a>).</p>
 <p>We can migrate such a declaration before switching to C++29 because
 the spelling with the comma is valid in every language mode (<span class="citation" data-cites="P1219R3"><a href="https://wg21.link/p1219r3">[P1219R3]</a></span>, section 6). As
 Table 1 shows, the comma goes between the parameter list and the C
-varargs ellipsis. Inserting it there preserves the C++ function type (<a href="https://wg21.link/dcl.fct#4">[dcl.fct]/3</a>).</p>
+varargs ellipsis. Inserting it there preserves the C++ function type (<a href="https://wg21.link/N5054#page=250">[dcl.fct]/3</a>).</p>
 <div id="migration-spellings">
 <div class="table-wrapper">
 <table>
@@ -2261,13 +2261,13 @@ example. Inserting the comma also preserves the C++26 meaning in that
 case.</p>
 <h1 data-number="3" id="wording"><span class="header-section-number">3</span> Wording<a href="#wording" class="self-link"></a></h1>
 <p>Wording is relative to <span class="citation" data-cites="CPP-DRAFT"><a href="https://wg21.link/N5054">[N5054]</a></span>.</p>
-<h2 data-number="3.1" id="wording-functions"><span class="header-section-number">3.1</span> Functions <a href="https://wg21.link/dcl.fct" title="9.3.4.6 Functions">[dcl.fct]</a><a href="#wording-functions" class="self-link"></a></h2>
+<h2 data-number="3.1" id="wording-functions"><span class="header-section-number">3.1</span> Functions <a href="https://wg21.link/N5054#page=249" title="9.3.4.6 Functions">[dcl.fct]</a><a href="#wording-functions" class="self-link"></a></h2>
 <div id="wording-pack-expansion" class="paper-callout paper-draftnote" role="note">
 <p><span class="callout-label">Drafting note:</span> Today a
 <code class="sourceCode cpp"><span class="ex">...</span></code> that
 follows a parameter without a comma is either C varargs or part of that
-parameter’s declarator. <a href="https://wg21.link/dcl.fct#27">[dcl.fct]/26</a> is the rule that
-chooses between them. For example, it makes the
+parameter’s declarator. <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct#26">[dcl.fct]/26</a>
+is the rule that chooses between them. For example, it makes the
 <code class="sourceCode cpp"><span class="ex">...</span></code> in
 <code class="sourceCode cpp"><span class="va">Ts</span><span class="ex">...</span></code>
 part of the declarator when
@@ -2287,20 +2287,20 @@ rule.</p>
 <p>In the first declaration,
 <code class="sourceCode cpp"><span class="dt">int</span><span class="ex">...</span></code>
 now declares a function parameter pack. A function parameter pack is a
-pack expansion (<a href="https://wg21.link/dcl.fct#26">[dcl.fct]/25</a>)
-and a pack expansion has to name an unexpanded pack (<a href="https://wg21.link/temp.variadic#8">[temp.variadic]/8</a>). As
-<code class="sourceCode cpp"><span class="dt">int</span></code> names no
-pack, the declaration is ill-formed for the same reason that
+pack expansion (<a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct#25">[dcl.fct]/25</a>)
+and a pack expansion has to name an unexpanded pack (<a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#8">[temp.variadic]/8</a>).
+As <code class="sourceCode cpp"><span class="dt">int</span></code> names
+no pack, the declaration is ill-formed for the same reason that
 <code class="sourceCode cpp"><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span> <span class="va">x</span><span class="op">);</span></code>
 is ill-formed today.</p>
 <p>There is also a spelling that stays well-formed but changes meaning.
-As written, <a href="https://wg21.link/dcl.fct#27">[dcl.fct]/26</a>
+As written, <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct#26">[dcl.fct]/26</a>
 chooses the declarator meaning only if the parameter’s type names an
 unexpanded template parameter pack or contains
 <code class="sourceCode cpp"><span class="kw">auto</span></code>.
 Otherwise it chooses C varargs even if the type names a pack of another
-kind (<a href="https://wg21.link/temp.variadic#5">[temp.variadic]/5</a>). For
-example, suppose that
+kind (<a href="https://timsong-cpp.github.io/cppwp/n5050/temp.variadic#5">[temp.variadic]/5</a>).
+For example, suppose that
 <code class="sourceCode cpp"><span class="va">v</span></code> in the
 code below is a structured binding pack whose elements are an
 <code class="sourceCode cpp"><span class="dt">int</span></code> followed
@@ -2314,8 +2314,8 @@ by a
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="co">// [dcl.fct]/26 as written: Types&lt;int(int, ...), double(double, ...)&gt;</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">// proposed wording:        Types&lt;int(int, double), double(int, double)&gt;</span></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
-<p>Under <a href="https://wg21.link/dcl.fct#27">[dcl.fct]/26</a> as
-written, the inner
+<p>Under <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct#26">[dcl.fct]/26</a>
+as written, the inner
 <code class="sourceCode cpp"><span class="ex">...</span></code> is C
 varargs and only the outer
 <code class="sourceCode cpp"><span class="ex">...</span></code> expands
@@ -2328,18 +2328,19 @@ Writing
 <code class="sourceCode cpp"><span class="kw">decltype</span><span class="op">(</span><span class="va">v</span><span class="op">)(</span><span class="kw">decltype</span><span class="op">(</span><span class="va">v</span><span class="op">),</span> <span class="ex">...</span><span class="op">)</span></code>
 with the comma gives the first result with either wording.</p>
 </div>
-<p>Modify <a href="https://wg21.link/dcl.fct#2">[dcl.fct]/1</a> and <a href="https://wg21.link/dcl.fct#4">[dcl.fct]/3</a> as follows and remove
-<a href="https://wg21.link/dcl.fct#27">[dcl.fct]/26</a> with its
-footnote:</p>
+<p>Modify <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct#1">[dcl.fct]/1</a>
+and <a href="https://wg21.link/N5054#page=250">[dcl.fct]/3</a> as
+follows and remove <a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct#26">[dcl.fct]/26</a>
+with its footnote:</p>
 <div id="wording-comma-requirement" class="wording wording-numbered">
-<p><a href="https://wg21.link/dcl.fct#2"><span class="marginalizedparent"><span id="pnum-1" class="marginalized">1</span></span></a> […]</p>
+<p><a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct#1"><span class="marginalizedparent"><span id="pnum-1" class="marginalized">1</span></span></a> […]</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode diff"><code class="sourceCode diff"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>  <em>parameter-declaration-clause</em>:</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>      ...</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>      <em>parameter-declaration-list<sub>opt</sub></em></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>      <em>parameter-declaration-list</em> , ...</span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="st">-     <em>parameter-declaration-list</em> ...</span></span></code></pre></div>
 <p>[…]</p>
-<p><a href="https://wg21.link/dcl.fct#4"><span class="marginalizedparent"><span id="pnum-2" class="marginalized">3</span></span></a> […] <span class="rm"><del>Where
+<p><a href="https://wg21.link/N5054#page=250"><span class="marginalizedparent"><span id="pnum-2" class="marginalized">3</span></span></a> […] <span class="rm"><del>Where
 syntactically correct and where
 “<code class="sourceCode cpp"><span class="ex">...</span></code>” is not
 part of an <em>abstract-declarator</em>,
@@ -2349,7 +2350,7 @@ synonymous with
 A <em>parameter-declaration-clause</em> of the form
 <code class="sourceCode default"><em>parameter-declaration-list</em> ...</code>
 is deprecated ([depr.ellipsis.comma]).</del></span> […]</p>
-<p><a href="https://wg21.link/dcl.fct#27"><span class="marginalizedparent"><span id="pnum-3" class="marginalized">26</span></span></a> <span class="rm"><del>There is
+<p><a href="https://timsong-cpp.github.io/cppwp/n5050/dcl.fct#26"><span class="marginalizedparent"><span id="pnum-3" class="marginalized">26</span></span></a> <span class="rm"><del>There is
 a syntactic ambiguity when an ellipsis occurs at the end of a
 <em>parameter-declaration-clause</em> without a preceding comma. In this
 case, the ellipsis is parsed as part of the <em>abstract-declarator</em>
@@ -2358,7 +2359,7 @@ has not been expanded or contains
 <code class="sourceCode cpp"><span class="kw">auto</span></code>;
 otherwise, it is parsed as part of the
 <em>parameter-declaration-clause</em>.</del></span></p>
-<p><a href="https://wg21.link/dcl.fct#footnote-69"><span class="marginalizedparent"><span id="pnum-4" class="marginalized">69)</span></span></a> <span class="rm"><del>One can
+<p><a href="https://wg21.link/N5054#page=254"><span class="marginalizedparent"><span id="pnum-4" class="marginalized">69)</span></span></a> <span class="rm"><del>One can
 explicitly disambiguate the parse either by introducing a comma (so the
 ellipsis will be parsed as part of the
 <em>parameter-declaration-clause</em>) or by introducing a name for the
@@ -2366,11 +2367,11 @@ parameter (so the ellipsis will be parsed as part of the
 <em>declarator-id</em>).</del></span></p>
 </div>
 <h2 data-number="3.2" id="wording-deprecation"><span class="header-section-number">3.2</span> Annex D (normative)
-Compatibility features <a href="https://wg21.link/depr" title="Annex D Compatibility features">[depr]</a><a href="#wording-deprecation" class="self-link"></a></h2>
-<p>Remove <a href="https://wg21.link/depr.ellipsis.comma">[depr.ellipsis.comma]</a>:</p>
+Compatibility features <a href="https://wg21.link/N5054#page=2466" title="Annex D Compatibility features">[depr]</a><a href="#wording-deprecation" class="self-link"></a></h2>
+<p>Remove <a href="https://timsong-cpp.github.io/cppwp/n5050/depr.ellipsis.comma">[depr.ellipsis.comma]</a>:</p>
 <div id="wording-removed-ellipsis-clause" class="wording wording-change wording-numbered">
 <div class="rm paper-removal wording-numbered">
-<p><a href="https://wg21.link/depr.ellipsis.comma"><span class="marginalizedparent"><span id="pnum-5" class="marginalized">(D.5)</span></span></a> <span class="rm"><del><strong>Non-comma-separated ellipsis parameters
+<p><a href="https://timsong-cpp.github.io/cppwp/n5050/depr.ellipsis.comma"><span class="marginalizedparent"><span id="pnum-5" class="marginalized">(D.5)</span></span></a> <span class="rm"><del><strong>Non-comma-separated ellipsis parameters
 [depr.ellipsis.comma]</strong></del></span></p>
 <p><span class="rm"><del>A <em>parameter-declaration-clause</em> of the
 form
@@ -2386,9 +2387,9 @@ is deprecated ([dcl.fct]).</del></span></p>
 </div>
 </div>
 <h2 data-number="3.3" id="wording-compatibility"><span class="header-section-number">3.3</span> Annex C (informative)
-Compatibility <a href="https://wg21.link/diff" title="Annex C Compatibility">[diff]</a><a href="#wording-compatibility" class="self-link"></a></h2>
-<p>Add a new entry to <a href="https://wg21.link/diff.cpp26.dcl">[diff.cpp26.dcl]</a> before the
-<a href="https://wg21.link/dcl.init" title="9.5 Initializers">[dcl.init]</a> entry:</p>
+Compatibility <a href="https://wg21.link/N5054#page=2424" title="Annex C Compatibility">[diff]</a><a href="#wording-compatibility" class="self-link"></a></h2>
+<p>Add a new entry to <a href="https://wg21.link/N5054#page=2424">[diff.cpp26.dcl]</a> before the
+<a href="https://wg21.link/N5054#page=260" title="9.5 Initializers">[dcl.init]</a> entry:</p>
 <div class="wording wording-change">
 <div class="add">
 <p><span id="wording-compatibility-entry"></span><span class="add"><ins><strong>Affected subclause:</strong>
