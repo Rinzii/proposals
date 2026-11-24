@@ -76,7 +76,7 @@ Forward D4494R0 to CWG for inclusion in C++29.
 
 Some valid C++26 programs would become ill-formed because they use the deprecated spelling. For example, suppose an otherwise valid program declares `void f(int...);` at namespace scope. Under the proposed wording, a conforming implementation would have to issue at least one diagnostic message ([[intro.compliance.general]/2](https://wg21.link/intro.compliance.general#2)).
 
-We can migrate such a declaration before switching to C++29 because the spelling with the comma is valid in every language mode ([@P1219R3], section 6). As Table 1 shows, the comma goes between the parameter list and the C varargs ellipsis. Inserting it there preserves the C++ function type ([[dcl.fct]/3](https://wg21.link/dcl.fct#4)).
+We can migrate such a declaration before switching to C++29 because the spelling with the comma is valid in every language mode ([@P1219R3], section 6). As Table 1 shows, the comma goes between the parameter list and the C varargs ellipsis. Inserting it there preserves the C++ function type ([[dcl.fct]/3](https://wg21.link/dcl.fct)).
 
 :::: {#migration-spellings}
 
@@ -106,7 +106,7 @@ Wording is relative to [@CPP-DRAFT].
 
 ::: {#wording-pack-expansion .draftnote}
 
-Today a `...` that follows a parameter without a comma is either C varargs or part of that parameter's declarator. [[dcl.fct]/26](https://wg21.link/dcl.fct#27) is the rule that chooses between them. For example, it makes the `...` in `Ts...` part of the declarator when `Ts` is a template parameter pack.
+Today a `...` that follows a parameter without a comma is either C varargs or part of that parameter's declarator. [[dcl.fct]/26](https://wg21.link/dcl.fct) is the rule that chooses between them. For example, it makes the `...` in `Ts...` part of the declarator when `Ts` is a template parameter pack.
 
 We remove the [parameter-declaration-list]{.grammar-term} `...` alternative because it is the one that gives the C varargs meaning. Only the declarator meaning is left after that so the rule has nothing to choose between anymore. Therefore, we also remove the rule and its footnote.
 
@@ -118,9 +118,9 @@ void f(int x...);    // ill-formed: no longer matches the grammar
 void g(auto......);  // ill-formed: no longer matches the grammar
 ```
 
-In the first declaration, `int...` now declares a function parameter pack. A function parameter pack is a pack expansion ([[dcl.fct]/25](https://wg21.link/dcl.fct#26)) and a pack expansion has to name an unexpanded pack ([[temp.variadic]/8](https://wg21.link/temp.variadic#8)). As `int` names no pack, the declaration is ill-formed for the same reason that `void f(int... x);` is ill-formed today.
+In the first declaration, `int...` now declares a function parameter pack. A function parameter pack is a pack expansion ([[dcl.fct]/25](https://wg21.link/dcl.fct)) and a pack expansion has to name an unexpanded pack ([[temp.variadic]/8](https://wg21.link/temp.variadic#8)). As `int` names no pack, the declaration is ill-formed for the same reason that `void f(int... x);` is ill-formed today.
 
-There is also a spelling that stays well-formed but changes meaning. As written, [[dcl.fct]/26](https://wg21.link/dcl.fct#27) chooses the declarator meaning only if the parameter's type names an unexpanded template parameter pack or contains `auto`. Otherwise it chooses C varargs even if the type names a pack of another kind ([[temp.variadic]/5](https://wg21.link/temp.variadic#5)). For example, suppose that `v` in the code below is a structured binding pack whose elements are an `int` followed by a `double`.
+There is also a spelling that stays well-formed but changes meaning. As written, [[dcl.fct]/26](https://wg21.link/dcl.fct) chooses the declarator meaning only if the parameter's type names an unexpanded template parameter pack or contains `auto`. Otherwise it chooses C varargs even if the type names a pack of another kind ([[temp.variadic]/5](https://wg21.link/temp.variadic#5)). For example, suppose that `v` in the code below is a structured binding pack whose elements are an `int` followed by a `double`.
 
 ```cpp
 template<class...> struct Types {};
@@ -133,7 +133,7 @@ template<class T> void inspect(T x) {
 }
 ```
 
-Under [[dcl.fct]/26](https://wg21.link/dcl.fct#27) as written, the inner `...` is C varargs and only the outer `...` expands `v`. With the proposed wording, the inner `...` is part of the declarator so it expands `v` as well. Writing `decltype(v)(decltype(v), ...)`{.nobreak} with the comma gives the first result with either wording.
+Under [[dcl.fct]/26](https://wg21.link/dcl.fct) as written, the inner `...` is C varargs and only the outer `...` expands `v`. With the proposed wording, the inner `...` is part of the declarator so it expands `v` as well. Writing `decltype(v)(decltype(v), ...)`{.nobreak} with the comma gives the first result with either wording.
 
 :::
 
@@ -141,11 +141,11 @@ Under [[dcl.fct]/26](https://wg21.link/dcl.fct#27) as written, the inner `...` i
 \clearpage
 ```
 
-Modify [[dcl.fct]/1](https://wg21.link/dcl.fct#2) and [[dcl.fct]/3](https://wg21.link/dcl.fct#4) as follows and remove [[dcl.fct]/26](https://wg21.link/dcl.fct#27) with its footnote:
+Modify [[dcl.fct]/1](https://wg21.link/dcl.fct) and [[dcl.fct]/3](https://wg21.link/dcl.fct) as follows and remove [[dcl.fct]/26](https://wg21.link/dcl.fct) with its footnote:
 
 :::: {#wording-comma-requirement .wording}
 
-[[1]{.pnum}](https://wg21.link/dcl.fct#2) [...]
+[[1]{.pnum}](https://wg21.link/dcl.fct) [...]
 
 ```diff
   @*parameter-declaration-clause*@:
@@ -157,11 +157,11 @@ Modify [[dcl.fct]/1](https://wg21.link/dcl.fct#2) and [[dcl.fct]/3](https://wg21
 
 [...]
 
-[[3]{.pnum}](https://wg21.link/dcl.fct#4) [...]
+[[3]{.pnum}](https://wg21.link/dcl.fct) [...]
 [Where syntactically correct and where "`...`" is not part of an *abstract-declarator*, "`...`" is synonymous with "`, ...`". A *parameter-declaration-clause* of the form `$parameter-declaration-list$ ...`{.default} is deprecated ([depr.ellipsis.comma]).]{.rm}
 [...]
 
-[[26]{.pnum}](https://wg21.link/dcl.fct#27) [There is a syntactic ambiguity when an ellipsis occurs at the end of a *parameter-declaration-clause* without a preceding comma. In this case, the ellipsis is parsed as part of the *abstract-declarator* if the type of the parameter either names a template parameter pack that has not been expanded or contains `auto`; otherwise, it is parsed as part of the *parameter-declaration-clause*.]{.rm}
+[[26]{.pnum}](https://wg21.link/dcl.fct) [There is a syntactic ambiguity when an ellipsis occurs at the end of a *parameter-declaration-clause* without a preceding comma. In this case, the ellipsis is parsed as part of the *abstract-declarator* if the type of the parameter either names a template parameter pack that has not been expanded or contains `auto`; otherwise, it is parsed as part of the *parameter-declaration-clause*.]{.rm}
 
 [[69)]{.pnum}](https://wg21.link/dcl.fct#footnote-69) [One can explicitly disambiguate the parse either by introducing a comma (so the ellipsis will be parsed as part of the *parameter-declaration-clause*) or by introducing a name for the parameter (so the ellipsis will be parsed as part of the *declarator-id*).]{.rm}
 
