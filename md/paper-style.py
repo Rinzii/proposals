@@ -191,6 +191,12 @@ def style(elem, doc):
                         label = row.content[0].content[0].content[0]
                         label.text = label.text.partition(r"\usebox")[0] + rf"\PaperCenteredCell{{{names[0]}}}{{{names[1]}}}{{{names[2]}}}"
                     return [*measured, elem]
+    if isinstance(elem, pf.Code) and "nobreak" in elem.classes:
+        elem.classes.remove("nobreak")
+        if doc.format == "latex":
+            lead = r"\PaperCodeBreak\mbox{" if isinstance(elem.prev, (pf.Space, pf.SoftBreak)) else r"\mbox{"
+            return pf.Span(pf.RawInline(lead, format="latex"), elem, pf.RawInline("}", format="latex"))
+        return
     if doc.format != "latex":
         return
     if isinstance(elem, pf.Span):

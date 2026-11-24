@@ -1,6 +1,6 @@
 ---
 title: "Require the comma before C varargs"
-document: DnnnnR0
+document: D4494R0
 status: progress
 date: 2026-11-23
 audience:
@@ -69,7 +69,7 @@ P1219R3: Homogeneous variadic function parameters. EWG Is ok with making a missi
 :::
 
 ::: {.proposed-poll label="Proposed EWG poll"}
-Forward DnnnnR0 to CWG for inclusion in C++29.
+Forward D4494R0 to CWG for inclusion in C++29.
 :::
 
 # Migration {#migration}
@@ -90,7 +90,7 @@ We can migrate such a declaration before switching to C++29 because the spelling
 
 ::::
 
-In the last row, the comma separates the pack expansion `Ts...` from the `...` for C varargs. The declaration `template<class... Ts> void g(Ts...);` has only the pack expansion and `void f(...);` has only C varargs. Neither needs a separator so both remain valid as written.
+In the last row, the comma separates the pack expansion `Ts...` from the `...` for C varargs. The declaration `template<class... Ts> void g(Ts...);`{.nobreak} has only the pack expansion and `void f(...);` has only C varargs. Neither needs a separator so both remain valid as written.
 
 There is also a case where a declaration would stay well-formed but change meaning. It requires an unnamed last parameter whose type names a pack other than a template parameter pack, such as `decltype(v)` for a structured binding pack `v`. The [drafting note](#wording-pack-expansion) in the wording shows an example. Inserting the comma also preserves the C++26 meaning in that case.
 
@@ -133,7 +133,7 @@ template<class T> void inspect(T x) {
 }
 ```
 
-Under [[dcl.fct]/26](https://wg21.link/dcl.fct#27) as written, the inner `...` is C varargs and only the outer `...` expands `v`. With the proposed wording, the inner `...` is part of the declarator so it expands `v` as well. Writing `decltype(v)(decltype(v), ...)` with the comma gives the first result with either wording.
+Under [[dcl.fct]/26](https://wg21.link/dcl.fct#27) as written, the inner `...` is C varargs and only the outer `...` expands `v`. With the proposed wording, the inner `...` is part of the declarator so it expands `v` as well. Writing `decltype(v)(decltype(v), ...)`{.nobreak} with the comma gives the first result with either wording.
 
 :::
 
