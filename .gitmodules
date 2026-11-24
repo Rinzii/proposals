@@ -1,3 +1,4 @@
 [submodule "md/wg21"]
 	path = md/wg21
 	url = https://github.com/mpark/wg21.git
+	ignore = dirty
