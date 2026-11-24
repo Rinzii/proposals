@@ -80,7 +80,7 @@ Forward DnnnnR0 to CWG for inclusion in C++29.
 
 Some valid C++26 programs would become ill-formed because they use the deprecated spelling. For example, suppose an otherwise valid program declares `void f(int...);` at namespace scope. Under the proposed wording, a conforming implementation would have to issue at least one diagnostic message ([[intro.compliance.general]/2](https://wg21.link/intro.compliance.general#2)).
 
-We can migrate such a declaration before switching to C++29 because the spelling with the comma is valid in every language mode ([@P1219R3], section 6). As Table 1 shows, the comma goes between the parameter list and the C varargs ellipsis, where C already requires it ([@P3176R1], section 2.1). Inserting it there preserves the C++ function type ([[dcl.fct]/3](https://wg21.link/dcl.fct#4)).
+We can migrate such a declaration before switching to C++29 because the spelling with the comma is valid in every language mode ([@P1219R3], section 6). As Table 1 shows, the comma goes between the parameter list and the C varargs ellipsis. Inserting it there preserves the C++ function type ([[dcl.fct]/3](https://wg21.link/dcl.fct#4)).
 
 :::: {#migration-spellings}
 
@@ -114,7 +114,7 @@ Today a `...` that follows a parameter without a comma is either C varargs or pa
 
 We remove the [parameter-declaration-list]{.grammar-term} `...` alternative because it is the one that gives the C varargs meaning. Only the declarator meaning is left after that so the rule has nothing to choose between anymore. Therefore, we also remove the rule and its footnote.
 
-The deprecated spellings below become ill-formed without a new rule because each of them either no longer matches the grammar or breaks an existing rule for packs.
+The deprecated spellings below become ill-formed without a new rule.
 
 ```cpp
 void f(int...);      // ill-formed: declares a pack but int names no pack
@@ -137,7 +137,7 @@ template<class T> void inspect(T x) {
 }
 ```
 
-Under [[dcl.fct]/26](https://wg21.link/dcl.fct#27) as written, `decltype(v)` names a structured binding pack so the inner `...` is C varargs and only the outer `...` expands `v`. With the proposed wording, the inner `...` is part of the declarator so it expands `v` as well. Writing `decltype(v)(decltype(v), ...)` with the comma gives the first result with either wording.
+Under [[dcl.fct]/26](https://wg21.link/dcl.fct#27) as written, the inner `...` is C varargs and only the outer `...` expands `v`. With the proposed wording, the inner `...` is part of the declarator so it expands `v` as well. Writing `decltype(v)(decltype(v), ...)` with the comma gives the first result with either wording.
 
 :::
 
