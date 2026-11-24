@@ -24,7 +24,8 @@
 \colorlet{shadecolor}{paper-code-bg}
 \DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\},breaklines=true,breakanywhere=true,fontsize=\PaperCodeFontSize}
 \newlanguage\PaperNoHyphenation
-\newcommand{\PaperInlineCodeBreaks}{\language\PaperNoHyphenation\let\PaperInlineOperatorTok\OperatorTok\renewcommand{\OperatorTok}[1]{\PaperInlineOperatorTok{##1}\allowbreak}}
+\newcommand{\PaperTrimCodeBreak}{\ifhmode\unpenalty\fi}
+\newcommand{\PaperInlineCodeBreaks}{\language\PaperNoHyphenation\let\PaperInlineOperatorTok\OperatorTok\renewcommand{\OperatorTok}[1]{\PaperInlineOperatorTok{##1}\allowbreak}\aftergroup\PaperTrimCodeBreak}
 \providecommand{\VERB}{}\renewcommand{\VERB}{\Verb[commandchars=\\\{\},breakanywhere=false,formatcom=\PaperInlineCodeBreaks]}
 \renewcommand{\KeywordTok}[1]{\textcolor{paper-code-keyword}{\textbf{#1}}}
 \renewcommand{\DataTypeTok}[1]{\textcolor{paper-code-type}{#1}}

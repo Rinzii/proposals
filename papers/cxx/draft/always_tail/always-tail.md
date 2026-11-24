@@ -88,7 +88,7 @@ Ordinary `return f(args...)` does not require elimination of the caller's activa
 
 # Protobuf uses the guarantee and maintains a fallback {#protobuf}
 
-In the pinned Protobuf source, `TagDispatch` calls the target selected from the field table through a function pointer. `ToTagDispatch` chooses between continuing that chain and returning to `ParseLoop`. Its `always_return = !PROTOBUF_TAILCALL` condition selects the latter when guaranteed tail calls are unavailable. [@ProtobufTailCalls]
+In the pinned Protobuf source, `TagDispatch` calls the target selected from the field table through a function pointer. `ToTagDispatch` chooses between continuing that chain and returning to `ParseLoop`. Its `always_return = !PROTOBUF_TAILCALL`{.nobreak} condition selects the latter when guaranteed tail calls are unavailable. [@ProtobufTailCalls]
 
 The fallback matters to the argument. Bounded parsing is already expressible in ordinary C++. The missing facility is a checked transfer between separately defined functions without retaining the caller. Protobuf is evidence that a real C++ library chooses this representation when it can rely on the guarantee. It is not evidence that a trampoline cannot work or must be slower.
 

@@ -390,7 +390,7 @@ struct PartialOverloads<std::index_sequence<Ns...>, Ts...>
 };
 ```
 
-`Layout` exposes these generated overloads by inheriting `PartialOverloads<std::make_index_sequence<sizeof...(Ts) + 1>, Ts...>`. A homogeneous pack [needs only one declaration](#implicit-template).
+`Layout` exposes these generated overloads by inheriting `PartialOverloads<std::make_index_sequence<sizeof...(Ts) + 1>, Ts...>`{.nobreak}. A homogeneous pack [needs only one declaration](#implicit-template).
 
 ## Preserve conversion ranking without fixed-arity wrappers {#example-casadi}
 
@@ -628,7 +628,7 @@ void two_packs(int... left, double... right);
 void trailing_varargs(int... values, ...);
 ```
 
-The pack must declare the function's or lambda call operator's own parameters. Thus `using Callback = void(int... values);` and `void register_callback(void (*callback)(int... values));` remain ill-formed: neither declares a function template to own the count. These forms need separate count-introduction and deduction rules. Ordinary expansions in aliases and nested function types stay unchanged. The exception is a captureless generic lambda's conversion template, which [shares the call operator's count](#wording-lambda-closure).
+The pack must declare the function's or lambda call operator's own parameters. Thus `using Callback = void(int... values);`{.nobreak} and `void register_callback(void (*callback)(int... values));`{.nobreak} remain ill-formed: neither declares a function template to own the count. These forms need separate count-introduction and deduction rules. Ordinary expansions in aliases and nested function types stay unchanged. The exception is a captureless generic lambda's conversion template, which [shares the call operator's count](#wording-lambda-closure).
 
 ```cpp
 void named_f(int... values);
@@ -714,13 +714,13 @@ T total(T... values) {
 
 ::::
 
-[]{#wording-signatures}Specialization identity comes from the template and its arguments, including the count converted to its parameter type. With a fixed element type, source argument types do not affect identity: `sum(1, 2)`, `sum(1.0, 2.0)`, and `sum<2>(1, 2)` all select `sum<2>`.
+[]{#wording-signatures}Specialization identity comes from the template and its arguments, including the count converted to its parameter type. With a fixed element type, source argument types do not affect identity: `sum(1, 2)`, `sum(1.0, 2.0)`, and `sum<2>(1, 2)`{.nobreak} all select `sum<2>`.
 
 The template-argument component of [[defns.signature.spec]](https://wg21.link/defns.signature.spec) and [[defns.signature.member.spec]](https://wg21.link/defns.signature.member.spec) covers the invented count without a signature change or separate pack-length component.
 
 Different template arguments can produce identical adjusted function types, which alone do not identify specializations. [[temp.deduct.general]/3-4](https://wg21.link/temp.deduct.general#3)
 
-An explicit count must equal the remaining argument count: `sum<3>(1, 2, 3)` and `sum<0>()` are valid, but `sum<3>(1, 2)`, `sum<2>(1, 2, 3)`, and `sum<0>(1)` are rejected. Ordinary constant template argument rules apply to the invented unsigned type. `sum<>()` deduces zero.
+An explicit count must equal the remaining argument count: `sum<3>(1, 2, 3)` and `sum<0>()` are valid, but `sum<3>(1, 2)`{.nobreak}, `sum<2>(1, 2, 3)`, and `sum<0>(1)` are rejected. Ordinary constant template argument rules apply to the invented unsigned type. `sum<>()` deduces zero.
 
 At zero count, the element type must be explicit, deduced elsewhere, or defaulted. Its pattern still undergoes substitution.
 
@@ -802,7 +802,7 @@ When taking `sum` or `total` addresses, the target function type supplies the co
 
 Corresponding homogeneous packs require corresponding parameter patterns and invented count parameters in the same template position. Parameter names do not distinguish declarations. Matching specialization function types alone do not make ordinary expansions correspond to homogeneous packs.
 
-The bare name `sum` supplies no target type to callable-deducing interfaces, preventing deduction in `std::thread(sum, 1, 2)`, `std::invoke(sum, 1, 2)`, and `std::function<int(int, int)> callback = sum`. [[temp.deduct.type]/5.8.3](https://wg21.link/temp.deduct.type#5.8.3) Each can use `sum<2>`, a pointer initialized with a matching target type, or a forwarding lambda. Likewise, only `decltype(sum<2>)`, not `decltype(sum)`, identifies a specialization.
+The bare name `sum` supplies no target type to callable-deducing interfaces, preventing deduction in `std::thread(sum, 1, 2)`{.nobreak}, `std::invoke(sum, 1, 2)`, and `std::function<int(int, int)> callback = sum`{.nobreak}. [[temp.deduct.type]/5.8.3](https://wg21.link/temp.deduct.type#5.8.3) Each can use `sum<2>`, a pointer initialized with a matching target type, or a forwarding lambda. Likewise, only `decltype(sum<2>)`, not `decltype(sum)`{.nobreak}, identifies a specialization.
 
 Existing explicit-specialization and explicit-instantiation syntax remains. Here, omitted counts are deduced from ordinary parameter lists:
 
@@ -867,7 +867,7 @@ Calls without pack arguments contribute no element-type comparisons. Default tem
 
 For `packed(1, 2)` in Table 9, deduction between transformed pack patterns succeeds both ways. Both declarations have trailing packs so [[temp.deduct.partial]/11](https://wg21.link/temp.deduct.partial#11) prefers neither. Adding the deduced homogeneous overload to the heterogeneous catch-all therefore makes same-type calls ambiguous. A fixed element type can still establish ordering. The candidate wording adds no preference. We would accept a tie-break preferring a homogeneous trailing pack over an ordinary one for equal-length calls, allowing this addition to existing `Ts...` overload sets, and ask EWG to decide in Poll 8 ([](#proposed-polls)).
 
-Replacing constrained emulation can also change overload selection. Beside `template <class T> void single(T)`, `void single(std::same_as<int> auto...)` loses for `single(1)`. Replacing it with `void single(int...)` produces Table 9's ambiguity. [[temp.deduct.partial]/8](https://wg21.link/temp.deduct.partial#8)
+Replacing constrained emulation can also change overload selection. Beside `template <class T> void single(T)`{.nobreak}, `void single(std::same_as<int> auto...)` loses for `single(1)`. Replacing it with `void single(int...)` produces Table 9's ambiguity. [[temp.deduct.partial]/8](https://wg21.link/temp.deduct.partial#8)
 
 []{#length-constraints}Length-dependent associated constraints require determining the count before satisfaction substitutes ordinary template arguments, including counts and enclosing specializations' arguments, without separate count bindings. Rechecking the same atomic constraint with the same arguments retains the existing consistency requirement. [[temp.constr.atomic]/3](https://wg21.link/temp.constr.atomic#3)
 
@@ -945,7 +945,7 @@ auto product = [](double... factors) {
 };
 ```
 
-Here, `product()` and `product(0.5, 0.8)` return `1.0` and `0.4`. The count lets `product.operator()<2>(0.5, 0.8)` select the specialization with count two. A current-language `std::same_as<double> auto... factors` lambda accepts both ordinary calls but takes element types as template arguments.
+Here, `product()` and `product(0.5, 0.8)` return `1.0` and `0.4`. The count lets `product.operator()<2>(0.5, 0.8)`{.nobreak} select the specialization with count two. A current-language `std::same_as<double> auto... factors`{.nobreak} lambda accepts both ordinary calls but takes element types as template arguments.
 
 For `double (*multiply)(double, double) = product`, the captureless lambda's [generic conversion function template](#wording-lambda-closure) deduces count two from the target. Unary `+product` lacks a target and count and is rejected. Conversion remains available only without a [lambda-capture]{.grammar-term} or explicit object parameter. [[expr.prim.lambda.closure]/12-14](https://wg21.link/expr.prim.lambda.closure#12)
 
@@ -1015,11 +1015,11 @@ The proposal retains this grammar. An array alias could supply an unnamed homoge
 
 # Reclaiming the deprecated comma-less spelling {#compatibility}
 
-The C++29 design requires a comma between a parameter list and C varargs and reclaims the comma-less spelling for unnamed homogeneous packs. Otherwise, `void f(int... args)` would declare a homogeneous pack while `void f(int...)` retained deprecated C varargs so adding or removing a name would change meaning and template status. The [polls](#proposed-polls) assume this pairing. Reclamation also permits omitting unused names as `void g(auto...)` and `template <class... Ts> void h(Ts...)` already do. [[depr.ellipsis.comma]](https://wg21.link/depr.ellipsis.comma)
+The C++29 design requires a comma between a parameter list and C varargs and reclaims the comma-less spelling for unnamed homogeneous packs. Otherwise, `void f(int... args)` would declare a homogeneous pack while `void f(int...)` retained deprecated C varargs so adding or removing a name would change meaning and template status. The [polls](#proposed-polls) assume this pairing. Reclamation also permits omitting unused names as `void g(auto...)` and `template <class... Ts> void h(Ts...)`{.nobreak} already do. [[depr.ellipsis.comma]](https://wg21.link/depr.ellipsis.comma)
 
 James Touton's [@P0281R0] proposed removing comma elision in 2016 but failed because of its impact on existing code ([@P3176R1], section 2). Kona's 2019 EWGI vote favored mandatory commas by 10/6/1/0/0 without establishing a C++29 reclamation timetable. [@P1219-EWG-RECORD] Jan Schultke's [@P3176R1], *The Oxford variadic comma*, chose deprecation: no proposed feature required removal, the earlier attempt had failed, and the motivation did not justify abruptly breaking code (section 6.1). This proposal requires removal.
 
-One standard cycle separates C++26 deprecation from proposed C++29 reclamation. Adding a comma preserves C varargs in every language mode, permitting migration before C++29. GCC enables `-Wdeprecated-variadic-comma-omission` by default in C++26 mode. [@GCC-CXX-DIALECT] Clang enables `-Wdeprecated-missing-comma-variadic-parameter` by default and reports P3176R1 implemented. [@CLANG-DIAGNOSTICS] [@CLANG-20-NOTES] R2's ACTCD19 header survey found 6,318 comma-less C-varargs lines: 6,182 in Boost copies (879 after deduplication) and 136 elsewhere. [@P1219R2] This predates deprecation and does not measure remaining migration cost in maintained and vendored code.
+One standard cycle separates C++26 deprecation from proposed C++29 reclamation. Adding a comma preserves C varargs in every language mode, permitting migration before C++29. GCC enables `-Wdeprecated-variadic-comma-omission`{.nobreak} by default in C++26 mode. [@GCC-CXX-DIALECT] Clang enables `-Wdeprecated-missing-comma-variadic-parameter`{.nobreak} by default and reports P3176R1 implemented. [@CLANG-DIAGNOSTICS] [@CLANG-20-NOTES] R2's ACTCD19 header survey found 6,318 comma-less C-varargs lines: 6,182 in Boost copies (879 after deduplication) and 136 elsewhere. [@P1219R2] This predates deprecation and does not measure remaining migration cost in maintained and vendored code.
 
 A one-cycle precedent is [@P1161R3]'s C++20 deprecation of unparenthesized comma subscripts and [@P2128R6]'s C++23 replacement. P2128R6 deliberately withheld multidimensional meaning from C arrays and existing `valarray` interfaces, making deprecated expressions ill-formed before any later reinterpretation. It cannot establish that immediate reinterpretation of comma-less varargs is harmless.
 
@@ -1067,7 +1067,7 @@ Requiring the comma and removing unnamed disambiguation lets comma-less declarat
 
 Table 13's first and last rows become ill-formed, requiring diagnostics. The middle rows stay valid at namespace scope without required diagnostics for changed meanings. Reclaimed `void f(int...)` becomes ill-formed at block scope, as a virtual member, or in a local non-closure class under existing template restrictions. [[dcl.fct]/24](https://wg21.link/dcl.fct) [[temp.mem]/2-3](https://wg21.link/temp.mem#2) The third row already has these restrictions.
 
-The six-dot declaration `template<class... Ts> struct S { static void f(Ts......); };` is valid today: `S<int>::f(1, 2.0)` passes its second argument through C varargs. Migration must insert a comma between the ellipses, including in named expansions: `Ts... values...` becomes `Ts... values, ...`. Removing the last ellipsis would change the interface. [@P3176R1]
+The six-dot declaration `template<class... Ts> struct S { static void f(Ts......); };` is valid today: `S<int>::f(1, 2.0)`{.nobreak} passes its second argument through C varargs. Migration must insert a comma between the ellipses, including in named expansions: `Ts... values...` becomes `Ts... values, ...`. Removing the last ellipsis would change the interface. [@P3176R1]
 
 An old `f(1, 2.5)` call to `void f(int...)` passed a double through C varargs. Reclamation instead initializes two int parameters, using an ordinary floating-integral conversion. It also permits empty calls and produces fixed-count specializations without C ellipsis. Even successful recompilation thus leaves a source and potential link compatibility break. Adoption includes approving these known source and link incompatibilities under [@SD10], which Poll 2 ([](#proposed-polls)) asks separately.
 
@@ -1079,7 +1079,7 @@ Inconsistently migrated declarations and definitions can validly declare separat
 
 []{#function-types-and-overload-resolution}The alias `using F = void(int...)` becomes ill-formed: function type aliases cannot introduce homogeneous function templates. It must become `using F = void(int, ...)` to retain C varargs. Reclaimed declarations no longer match C-varargs pointer targets, though fixed-arity targets can deduce a specialization's count. Passing a formerly non-template name to callable-deducing interfaces also needs a [selected specialization, typed pointer, or wrapper](#addresses).
 
-The conversion changes can also affect well-formed metaprogramming that probes callability, takes addresses, or recognizes C-varargs function types. Preserving C varargs requires commas across declarations, definitions, pointer and member-pointer types, traits, and macro-generated declarations. Ordinary expansions such as `template<class... Ts> void f(Ts...)` stay unchanged.
+The conversion changes can also affect well-formed metaprogramming that probes callability, takes addresses, or recognizes C-varargs function types. Preserving C varargs requires commas across declarations, definitions, pointer and member-pointer types, traits, and macro-generated declarations. Ordinary expansions such as `template<class... Ts> void f(Ts...)`{.nobreak} stay unchanged.
 
 Reclamation needs grammar coordination with [@P3776R1], *More trailing commas*, including between ordinary packs and C varargs. That paper proposes trailing parameter-list commas except after C ellipsis parameters.
 
@@ -1115,9 +1115,9 @@ The polls in Tables 14 to 16 concern earlier revisions, before the C++26 changes
 +---------------------------------------------------------------------------------------------------+----------+----------+----------+----------+----------+
 | This should be valid and declare a template: `template <class T> constexpr T min(T v1, T... vs);` | 10       | 5        | 1        | 0        | 0        |
 +---------------------------------------------------------------------------------------------------+----------+----------+----------+----------+----------+
-| This should be valid and declare a template: `template <> void foo(int... v);`                    | 0        | 4        | 7        | 2        | 3        |
+| This should be valid and declare a template: `template <> void foo(int... v);`{.nobreak}          | 0        | 4        | 7        | 2        | 3        |
 +---------------------------------------------------------------------------------------------------+----------+----------+----------+----------+----------+
-| This should be valid and declare a template: `void foo(int... v);`                                | 4        | 6        | 4        | 0        | 1        |
+| This should be valid and declare a template: `void foo(int... v);`{.nobreak}                      | 4        | 6        | 4        | 0        | 1        |
 +---------------------------------------------------------------------------------------------------+----------+----------+----------+----------+----------+
 
 : [`Table 14:`{=html} [Kona](https://github.com/cplusplus/papers/issues/297#issuecomment-466713457) EWGI polls, February 2019. [@P1219-EWG-RECORD]]{#kona-ewgi-polls-caption}
@@ -1354,7 +1354,7 @@ All of the packs expanded by a pack expansion shall have the same number of argu
   bool b = all(true, true, true, false);
 ```
 
-Within the instantiation of `all`, the returned expression expands to `((true && true) && true) && false`, which evaluates to `false`.
+Within the instantiation of `all`, the returned expression expands to `((true && true) && true) && false`{.nobreak}, which evaluates to `false`.
 
 :::::
 
