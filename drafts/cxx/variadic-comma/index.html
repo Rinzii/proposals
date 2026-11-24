@@ -2204,8 +2204,7 @@ implementation would have to issue at least one diagnostic message (<a href="htt
 <p>We can migrate such a declaration before switching to C++29 because
 the spelling with the comma is valid in every language mode (<span class="citation" data-cites="P1219R3"><a href="https://wg21.link/p1219r3">[P1219R3]</a></span>, section 6). As
 Table 1 shows, the comma goes between the parameter list and the C
-varargs ellipsis, where C already requires it (<span class="citation" data-cites="P3176R1"><a href="https://wg21.link/p3176r1">[P3176R1]</a></span>, section 2.1).
-Inserting it there preserves the C++ function type (<a href="https://wg21.link/dcl.fct#4">[dcl.fct]/3</a>).</p>
+varargs ellipsis. Inserting it there preserves the C++ function type (<a href="https://wg21.link/dcl.fct#4">[dcl.fct]/3</a>).</p>
 <div id="migration-spellings">
 <div class="table-wrapper">
 <table>
@@ -2279,9 +2278,8 @@ alternative because it is the one that gives the C varargs meaning. Only
 the declarator meaning is left after that so the rule has nothing to
 choose between anymore. Therefore, we also remove the rule and its
 footnote.</p>
-<p>The deprecated spellings below become ill-formed without a new rule
-because each of them either no longer matches the grammar or breaks an
-existing rule for packs.</p>
+<p>The deprecated spellings below become ill-formed without a new
+rule.</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode cpp"><code class="sourceCode cpp"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span><span class="ex">...</span><span class="op">);</span>      <span class="co">// ill-formed: declares a pack but int names no pack</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">f</span><span class="op">(</span><span class="dt">int</span> <span class="va">x</span><span class="ex">...</span><span class="op">);</span>    <span class="co">// ill-formed: no longer matches the grammar</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="va">g</span><span class="op">(</span><span class="kw">auto</span><span class="ex">......</span><span class="op">);</span>  <span class="co">// ill-formed: no longer matches the grammar</span></span></code></pre></div>
@@ -2316,9 +2314,7 @@ by a
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">// proposed wording:        Types&lt;int(int, double), double(int, double)&gt;</span></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>Under <a href="https://wg21.link/dcl.fct#27">[dcl.fct]/26</a> as
-written,
-<code class="sourceCode cpp"><span class="kw">decltype</span><span class="op">(</span><span class="va">v</span><span class="op">)</span></code>
-names a structured binding pack so the inner
+written, the inner
 <code class="sourceCode cpp"><span class="ex">...</span></code> is C
 varargs and only the outer
 <code class="sourceCode cpp"><span class="ex">...</span></code> expands
