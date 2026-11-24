@@ -91,6 +91,13 @@ references:
       - literal: "Jan Schultke"
     issued:
       literal: "22 November 2024"
+  - id: "P4494R0"
+    citation-label: "P4494R0"
+    title: "Require the comma before C varargs"
+    URL: "https://wg21.link/p4494r0"
+    author:
+      - literal: "Ian Pike"
+      - literal: "Jan Schultke"
   - id: "P3776R1"
     citation-label: "P3776R1"
     title: "More trailing commas"
@@ -221,7 +228,7 @@ references:
 
 We propose homogeneous function parameter packs for C++29: a variable number of parameters of one declared type. One declaration replaces fixed-arity overload families, retaining ordinary parameter initialization, conversion ranking, and a compile-time count.
 
-We ask the Evolution Working Group to first confirm the C++29 pairing of named and unnamed packs with mandatory C-varargs commas and reclamation of the comma-less spelling. This gives packs the same meaning with or without a name, while changing declarations deprecated in C++26.
+[@P4494R0] proposes mandatory C-varargs commas for C++29. We ask the Evolution Working Group to first confirm the C++29 pairing of named and unnamed packs through reclamation of the comma-less spelling. This gives packs the same meaning with or without a name, while changing declarations deprecated in C++26.
 
 # Revision history {#revision-history}
 
@@ -290,7 +297,7 @@ As in R2, one trailing homogeneous pack covers the library use cases and lets th
 
 Earlier revisions received EWGI support, but Belfast's 2019 EWG poll to accept P1219 for C++23 failed. [@P1219-EWG-RECORD] We return with library comparisons, further evidence of programmer demand, and a revised count model.
 
-Both named `int... values` and unnamed `int...` packs are proposed. Since Belfast, C++26 has deprecated the comma-less C-varargs spelling. [[depr.ellipsis.comma]](https://wg21.link/depr.ellipsis.comma) We pair [mandatory commas and reclamation](#compatibility) in C++29 so parameter names do not change pack meaning. We ask EWG to confirm that direction [first](#proposed-polls).
+Both named `int... values` and unnamed `int...` packs are proposed. Since Belfast, C++26 has deprecated the comma-less C-varargs spelling. [[depr.ellipsis.comma]](https://wg21.link/depr.ellipsis.comma) [@P4494R0] proposes making the comma mandatory in C++29. We pair that requirement with [reclamation](#compatibility) so parameter names do not change pack meaning. We ask EWG to confirm that direction [first](#proposed-polls).
 
 # Library use cases {#examples}
 
@@ -1015,9 +1022,9 @@ The proposal retains this grammar. An array alias could supply an unnamed homoge
 
 # Reclaiming the deprecated comma-less spelling {#compatibility}
 
-The C++29 design requires a comma between a parameter list and C varargs and reclaims the comma-less spelling for unnamed homogeneous packs. Otherwise, `void f(int... args)` would declare a homogeneous pack while `void f(int...)` retained deprecated C varargs so adding or removing a name would change meaning and template status. The [polls](#proposed-polls) assume this pairing. Reclamation also permits omitting unused names as `void g(auto...)` and `template <class... Ts> void h(Ts...)`{.nobreak} already do. [[depr.ellipsis.comma]](https://wg21.link/depr.ellipsis.comma)
+[@P4494R0] proposes requiring a comma between a parameter list and C varargs in C++29. This design builds on that requirement and reclaims the comma-less spelling for unnamed homogeneous packs. Without the requirement, `void f(int... args)`{.nobreak} would declare a homogeneous pack while `void f(int...)` retained deprecated C varargs so adding or removing a name would change meaning and template status. With the requirement alone, `void f(int... args)`{.nobreak} would declare a homogeneous pack while `void f(int...)` would be ill-formed. The [polls](#proposed-polls) assume the requirement and ask EWG to confirm reclamation first. Reclamation also permits omitting unused names as `void g(auto...)`{.nobreak} and `template <class... Ts> void h(Ts...)`{.nobreak} already do. [[depr.ellipsis.comma]](https://wg21.link/depr.ellipsis.comma)
 
-James Touton's [@P0281R0] proposed removing comma elision in 2016 but failed because of its impact on existing code ([@P3176R1], section 2). Kona's 2019 EWGI vote favored mandatory commas by 10/6/1/0/0 without establishing a C++29 reclamation timetable. [@P1219-EWG-RECORD] Jan Schultke's [@P3176R1], *The Oxford variadic comma*, chose deprecation: no proposed feature required removal, the earlier attempt had failed, and the motivation did not justify abruptly breaking code (section 6.1). This proposal requires removal.
+James Touton's [@P0281R0] proposed removing comma elision in 2016 but failed because of its impact on existing code ([@P3176R1], section 2). Kona's 2019 EWGI vote favored mandatory commas by 10/6/1/0/0 without establishing a C++29 reclamation timetable. [@P1219-EWG-RECORD] Jan Schultke's [@P3176R1], *The Oxford variadic comma*, chose deprecation: no proposed feature required removal, the earlier attempt had failed, and the motivation did not justify abruptly breaking code (section 6.1). This proposal requires removal, as proposed in [@P4494R0].
 
 One standard cycle separates C++26 deprecation from proposed C++29 reclamation. Adding a comma preserves C varargs in every language mode, permitting migration before C++29. GCC enables `-Wdeprecated-variadic-comma-omission`{.nobreak} by default in C++26 mode. [@GCC-CXX-DIALECT] Clang enables `-Wdeprecated-missing-comma-variadic-parameter`{.nobreak} by default and reports P3176R1 implemented. [@CLANG-DIAGNOSTICS] [@CLANG-20-NOTES] R2's ACTCD19 header survey found 6,318 comma-less C-varargs lines: 6,182 in Boost copies (879 after deduplication) and 136 elsewhere. [@P1219R2] This predates deprecation and does not measure remaining migration cost in maintained and vendored code.
 
@@ -1045,7 +1052,7 @@ void f(T...);
 
 ## Proposed change {#proposed-comma-change}
 
-Requiring the comma and removing unnamed disambiguation lets comma-less declarations introduce homogeneous packs. Standalone `...`, comma-separated C varargs, and ordinary pack expansions retain their meanings.
+With the comma required and the unnamed disambiguation removed, as [@P4494R0] proposes, comma-less declarations can introduce homogeneous packs. Standalone `...`, comma-separated C varargs, and ordinary pack expansions retain their meanings.
 
 :::: {#reclamation-compatibility }
 
@@ -1087,11 +1094,11 @@ Reclamation needs grammar coordination with [@P3776R1], *More trailing commas*, 
 
 ## Proposed EWG polls {#proposed-polls}
 
-We ask EWG to take the first poll before the others. The remaining polls assume it, since the design gives a pack the same meaning with and without a parameter name ([](#compatibility)).
+These polls assume that C++29 requires a comma before C varargs, as [@P4494R0] proposes. We ask EWG to take the first poll before the others. The remaining polls assume it, since the design gives a pack the same meaning with and without a parameter name ([](#compatibility)).
 
 ::: {.proposed-poll label="Proposed EWG polls"}
 
-1. We want C++29 to require a comma before C varargs and to reclaim the comma-less spelling for unnamed homogeneous function parameter packs.
+1. We want C++29 to reclaim the comma-less spelling for unnamed homogeneous function parameter packs.
 2. We accept the source and link incompatibilities for comma-less C-varargs declarations that Poll 1 causes, as recorded in the [Annex C entry](#wording-compatibility).
 3. We want homogeneous function parameter packs for C++29.
 4. We want C++29 to permit at most one homogeneous function parameter pack per parameter list, in trailing position, deferring declaration-site lengths and multiple or non-trailing homogeneous packs.
@@ -1104,7 +1111,7 @@ We ask EWG to take the first poll before the others. The remaining polls assume 
 
 ## Historical results {#historical-polls}
 
-The polls in Tables 14 to 16 concern earlier revisions, before the C++26 changes addressed here. Proposed Polls 1, 3, and 6 revisit the first, second, and last rows of Table 14. The `template <>` row is the empty template-head spelling this revision rejects ([](#alternatives)).
+The polls in Tables 14 to 16 concern earlier revisions, before the C++26 changes addressed here. [@P4494R0] revisits the first row of Table 14. Proposed Polls 3 and 6 revisit its second and last rows. The `template <>` row is the empty template-head spelling this revision rejects ([](#alternatives)).
 
 :::: {#kona-ewgi-polls .poll-table .poll-summary .recorded-poll label="Recorded EWGI polls"}
 
@@ -1162,7 +1169,7 @@ Complete and document an implementation of this revision's syntax and count mode
 
 # Wording {#candidate-rules}
 
-Wording is relative to [@CPP-DRAFT].
+Wording is relative to [@CPP-DRAFT] as modified by [@P4494R0].
 
 
 ## Lambdas {#wording-lambdas}
@@ -1218,65 +1225,9 @@ Modify [[dcl.fct]/22](https://wg21.link/dcl.fct), [/23](https://wg21.link/dcl.fc
 
 ::::
 
-## Removal and reclamation {#wording-reclamation}
+## Reclamation {#wording-reclamation}
 
-Remove the comma-less alternative in [[dcl.fct]/1](https://wg21.link/dcl.fct), the indicated wording in [/3](https://wg21.link/dcl.fct), paragraph [/26](https://wg21.link/dcl.fct), and its disambiguation footnote:
-
-:::: {.wording}
-
-[[1]{.pnum}](https://wg21.link/dcl.fct) 
-
-```diff
-  @*parameter-declaration-clause*@:
-      ...
-      @*parameter-declaration-list~opt~*@
-      @*parameter-declaration-list*@ , ...
--     @*parameter-declaration-list*@ ...
-```
-
-[...]
-
-
-[[3]{.pnum}](https://wg21.link/dcl.fct) [...] [Where syntactically correct and where "`...`" is not part of an *abstract-declarator*, "`...`" is synonymous with "`, ...`". A *parameter-declaration-clause* of the form `$parameter-declaration-list$ ...`{.default} is deprecated ([depr.ellipsis.comma]).]{.rm} [...]
-
-[...]
-
-[[26]{.pnum}](https://wg21.link/dcl.fct) [There is a syntactic ambiguity when an ellipsis occurs at the end of a *parameter-declaration-clause* without a preceding comma. In this case, the ellipsis is parsed as part of the *abstract-declarator* if the type of the parameter either names a template parameter pack that has not been expanded or contains `auto`; otherwise, it is parsed as part of the *parameter-declaration-clause*.]{.rm}
-
-
-[[69)]{.pnum}](https://wg21.link/dcl.fct#footnote-69) [One can explicitly disambiguate the parse either by introducing a comma (so the ellipsis will be parsed as part of the *parameter-declaration-clause*) or by introducing a name for the parameter (so the ellipsis will be parsed as part of the *declarator-id*).]{.rm}
-
-::::
-
-Remove [[depr.ellipsis.comma]](https://wg21.link/depr.ellipsis.comma):
-
-:::: {.wording}
-
-::::: {.rm}
-
-[[D.5]{.pnum}](https://wg21.link/depr.ellipsis.comma) [**Non-comma-separated ellipsis parameters [depr.ellipsis.comma]**]{.rm}
-
-[A *parameter-declaration-clause* of the form `$parameter-declaration-list$ ...`{.default} is deprecated ([dcl.fct]).]{.rm}
-
-:::::: {.example num=1}
-
-::::::: {.rm}
-
-```cpp
-void f(int...);       // deprecated
-void g(auto...);      // OK, declares a function parameter pack
-void h(auto......);   // deprecated
-```
-
-:::::::
-
-::::::
-
-:::::
-
-::::
-
-A terminal abstract-declarator ellipsis then belongs to the parameter declaration under homogeneous-pack or existing ordinary expansion rules.
+[@P4494R0] removes the comma-less alternative in [[dcl.fct]/1](https://wg21.link/dcl.fct), the related wording in [/3](https://wg21.link/dcl.fct), paragraph [/26](https://wg21.link/dcl.fct) with its disambiguation footnote, and [[depr.ellipsis.comma]](https://wg21.link/depr.ellipsis.comma). A terminal abstract-declarator ellipsis then belongs to the parameter declaration under homogeneous-pack or existing ordinary expansion rules.
 
 ## Address of an overload set [over.over] {#wording-addresses}
 
@@ -1513,19 +1464,31 @@ Settle the macro spelling with SG10 and supply its value.
 
 ## Annex C (informative) Compatibility [diff.cpp26] {#wording-compatibility}
 
-Add a new entry to [[diff.cpp26.dcl]](https://wg21.link/diff.cpp26.dcl), before the [dcl.init] entry:
+Modify the [[diff.cpp26.dcl]](https://wg21.link/diff.cpp26.dcl) entry that [@P4494R0] adds as follows:
 
 :::: {.wording}
 
-::::: {.add}
+[]{#wording-compatibility-entry}**Affected subclause:** [dcl.fct]
 
-[]{#wording-compatibility-entry}[**Affected subclause:** [dcl.fct]]{.add}
+**Change:** A comma is required between a *parameter-declaration-list* and a following ellipsis. [An unnamed parameter declaration ending in an ellipsis can declare a homogeneous function parameter pack.]{.add}
 
-[**Change:** An ellipsis denoting C varargs following a parameter-declaration-list requires a preceding comma. An unnamed parameter declaration ending in an ellipsis can declare a homogeneous function parameter pack.]{.add}
+**Rationale:** Distinguish a vararg function from a function with a trailing function parameter pack. [Permit unnamed homogeneous function parameter packs.]{.add}
 
-[**Rationale:** Permit unnamed homogeneous function parameter packs.]{.add}
+**Effect on original feature:** A valid C++ 2026 program that omits this comma [is ill-formed, unless the ellipsis can be parsed as part of the *abstract-declarator* of the preceding *parameter-declaration* and the type of that parameter names a pack that has not been expanded. In that case the *parameter-declaration* declares a function parameter pack and the parameter-type-list no longer has an ellipsis.]{.rm} [may become ill-formed, change meaning, or become incompatible with existing C-varargs definitions.]{.add} Inserting the comma preserves the function type.
 
-[**Effect on original feature:** Valid C++ 2026 code using comma-less C-varargs declarations may become ill-formed, change meaning, or become incompatible with existing C-varargs definitions. Inserting the comma preserves the original meaning.]{.add}
+::::: {.example num=1}
+
+```diff
+  template<class... Ts> void a(Ts...);   // OK, declares a function parameter pack
+  void b(auto...);                       // OK, declares a function parameter pack
+  void c(int, ...);                      // OK, declares a vararg function
+  void d(...);                           // OK, declares a vararg function
+- void e(int...);                        // ill-formed; previously well-formed
++ void e(int...);                        // OK, declares a function parameter pack
+  void f(int x...);                      // ill-formed; previously well-formed
+  void g(auto......);                    // ill-formed; previously well-formed
+  void h(auto..., ...);                  // OK, declares a vararg function
+```
 
 :::::
 
@@ -1534,7 +1497,7 @@ Add a new entry to [[diff.cpp26.dcl]](https://wg21.link/diff.cpp26.dcl), before 
 # Conclusion {#conclusion}
 
 
-Further design and wording work depends on EWG direction. We ask EWG to [confirm mandatory C-varargs commas and reclamation for unnamed packs](#compatibility) and, on that basis, [support homogeneous function parameter packs for C++29](#proposed-polls).
+Further design and wording work depends on EWG direction. [@P4494R0] proposes mandatory C-varargs commas. We ask EWG to [confirm reclamation for unnamed packs](#compatibility) and, on that basis, [support homogeneous function parameter packs for C++29](#proposed-polls).
 
 # Acknowledgments {#acknowledgments}
 
